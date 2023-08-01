@@ -10,6 +10,7 @@ export default ( { title, content, comp, scripts, url}: PageData) => {
       <link rel="stylesheet" href="/assets/css/styles.css" />
       <link rel="stylesheet" href="/components.css" />
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.css">
+      <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
       <script type="module" src="/components.js" defer></script>
       <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.5.2/cdn/shoelace-autoloader.js" defer></script>
       ${ scripts ? scripts.map((src: string) => (`<script type="module" src=${src} defer></script>` )) : ""}
@@ -18,6 +19,17 @@ export default ( { title, content, comp, scripts, url}: PageData) => {
       ${ comp.toolbar({ url: url }) }
       ${ content }
     </body>
+    <script>
+    if (window.netlifyIdentity) {
+      window.netlifyIdentity.on("init", user => {
+        if (!user) {
+          window.netlifyIdentity.on("login", () => {
+            document.location.href = "/admin/";
+          });
+        }
+      });
+    }
+  </script>
   </html>
   `
 }
