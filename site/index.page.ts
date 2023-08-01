@@ -10,7 +10,7 @@ export const url = "/";
 export default ({ comp, featured, metas }: PageData): string => {
 
   return `
-  <div class="p-7 rounded-lg text-2xl my-auto mx-auto desc opacity-90">studies on the synthesis of form</div>
+  <div class="p-7 rounded-lg text-2xl mt-20 mx-auto desc opacity-90">studies on the synthesis of form</div>
   <canvas class="full-window" id="canvas"></canvas>  
   <style>
     .desc {

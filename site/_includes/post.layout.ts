@@ -14,7 +14,7 @@ export default ( { title, tags, content, comp, header }: PageData) => {
         <div class="py-4 flex flex-wrap gap-4 items-center"><sl-icon class="text-3xl" name="tags"></sl-icon>${ tags?.map((tag:string) => `<sl-tag size="medium"><a href="/tags/${tag}">${tag}</a></sl-tag>`).join(" ") }</div>
       <div>
       <hr>
-        <script src="https://giscus.app/client.js"
+      <script src="https://giscus.app/client.js"
         data-repo="ruigil/morphopoiesis.art"
         data-repo-id="R_kgDOKCFlLQ"
         data-category="Announcements"
@@ -23,8 +23,8 @@ export default ( { title, tags, content, comp, header }: PageData) => {
         data-strict="0"
         data-reactions-enabled="1"
         data-emit-metadata="0"
-        data-input-position="bottom"
-        data-theme="preferred_color_scheme"
+        data-input-position="top"
+        data-theme="cobalt"
         data-lang="en"
         data-loading="lazy"
         crossorigin="anonymous"
