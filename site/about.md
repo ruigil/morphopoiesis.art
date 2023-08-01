@@ -1,6 +1,6 @@
 ---
 title: About
-layout: page.layout.ts
+layout: about.layout.ts
 menu:
     visible: true
     order: 3
