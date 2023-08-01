@@ -8,6 +8,7 @@ import esbuild from "lume/plugins/esbuild.ts";
 import tailwindcss from "lume/plugins/tailwindcss.ts";
 import postcss from "lume/plugins/postcss.ts";
 import metas from "lume/plugins/metas.ts";
+import netlifyCMS from "lume/plugins/netlify_cms.ts";
 
 const site = lume({
   src: "./site",
@@ -51,5 +52,6 @@ site.use(postcss());
 site.use(metas());
 site.use(katex());
 site.use(code_highlight());
+site.use(netlifyCMS());
 
 export default site;
