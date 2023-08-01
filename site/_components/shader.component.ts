@@ -8,7 +8,7 @@ export const css = `@import "./_components/css/shader.css";`;
 export default async ({ wgsl, js, title, description, comp }: PageData) => {
 
   return `
-  <div class="flex-col w-full max-w-3xl">
+  <div class="flex-col w-full max-w-3xl mx-auto">
   <sl-card class="card-overview w-full">
     <canvas slot="image" id="canvas"></canvas>
 

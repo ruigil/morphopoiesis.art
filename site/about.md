@@ -1,6 +1,5 @@
 ---
 title: About
-url: /about/
 layout: page.layout.ts
 menu:
     visible: true

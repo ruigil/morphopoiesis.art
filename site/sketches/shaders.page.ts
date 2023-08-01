@@ -6,7 +6,7 @@ export default function* ({ shaders, comp}: PageData) {
 
     for (const shader of shaders) {
         yield {
-            url: `/sketches/${shader.id}/`,
+            url: `./${shader.id}/`,
             title: shader.title,
             description: shader.description,
             content: comp.shader(shader)

@@ -9,9 +9,9 @@ import tailwindcss from "lume/plugins/tailwindcss.ts";
 import postcss from "lume/plugins/postcss.ts";
 import metas from "lume/plugins/metas.ts";
 
-
 const site = lume({
-  src: "./site"
+  src: "./site",
+  location: new URL("https://morphopoiesis.art"),
 }, {
   modules: {
     extensions: {
@@ -22,9 +22,10 @@ const site = lume({
   }
 });
 
+site.ignore("/assets/js/lib");
+
 site.copy("/assets/img");
 site.copy([".wgsl"]);
-site.ignore("/assets/js/lib");
 
 site.use(attributes());
 site.use(base_path());

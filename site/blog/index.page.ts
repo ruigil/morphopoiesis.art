@@ -2,11 +2,10 @@ import type { PageData } from "lume/core.ts";
 
 export const title = "Blog";
 export const layout = "page.layout.ts";
-export const url = "/blog/";
 export const menu = { visible: true, order: 1}
 
 
-export default ({ comp, search }: PageData) => {
+export default ({ comp, search, url }: PageData) => {
 
     const items = () => {
         const menuItems:string[] = []

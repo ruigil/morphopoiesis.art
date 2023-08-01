@@ -681,6 +681,7 @@
     "https://deno.land/x/lume@v1.18.3/plugins/nunjucks.ts": "630f49fac50046f82de2471a1410e47437a5350ee559dc53d804aeb743af977b",
     "https://deno.land/x/lume@v1.18.3/plugins/paginate.ts": "e997b33da12da9d68b72d0c7615ec49d0e187012e8ffc78dac2b558edf27f795",
     "https://deno.land/x/lume@v1.18.3/plugins/postcss.ts": "65f035d74bf4dd6cac957b44b4d738762bd5812256372bb9b272b5968a4c9868",
+    "https://deno.land/x/lume@v1.18.3/plugins/relative_urls.ts": "5bba8863218ba4831180a8e476b0d8df2403b326cc32c09d6baf09157262c21e",
     "https://deno.land/x/lume@v1.18.3/plugins/search.ts": "af3ea229915f3580962c9da6be33ca8e639b8444ce8604769968afd731b9dd3c",
     "https://deno.land/x/lume@v1.18.3/plugins/source_maps.ts": "d38cbbab19984133789628d9e575a8c3d604d8c40ac6976298bec531dd15193b",
     "https://deno.land/x/lume@v1.18.3/plugins/tailwindcss.ts": "6542757ed1778cdc7a76a47d2f986d8fcedb1c00a9fb704e383ad263ccb20cbc",
