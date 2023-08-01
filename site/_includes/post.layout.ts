@@ -30,6 +30,7 @@ export default ( { title, tags, content, comp, header }: PageData) => {
         crossorigin="anonymous"
         async>
       </script>
-    </main>
+      </main>
+      ${ comp.footer() }
   `
 }
