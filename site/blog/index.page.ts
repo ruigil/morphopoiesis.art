@@ -10,7 +10,7 @@ export default ({ comp, search, url }: PageData) => {
     const items = () => {
         const menuItems:string[] = []
         
-        search.pages("type=post").map((page) => {
+        search.pages("type=post","desc").map((page) => {
             menuItems.push(`
             <div class="rounded border p-4 w-full panel">
                 <a class="w-full flex gap-4" href="${page?.data.url}">
@@ -46,7 +46,7 @@ export default ({ comp, search, url }: PageData) => {
 
     return `
     <h1>Latest posts</h1>
-    <div class="mt-4 flex">
+    <div class="mt-4 flex flex-col gap-4">
         ${items()}
     </div>
     `
