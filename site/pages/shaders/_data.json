@@ -1,0 +1,20 @@
+{
+    "shaders": [
+      {
+        "id": "color-ifs",
+        "wgsl": "/assets/shaders/color-ifs/color-ifs.wgsl",
+        "js": "/assets/shaders/color-ifs/color-ifs.js",
+        "title": "Color IFS",
+        "description": "A simple colorized IFS fractal",
+        "image": "/assets/img/color-ifs.png"
+      },
+      {
+        "id" : "gol",
+        "wgsl": "/assets/shaders/gol/gol.wgsl",
+        "js": "/assets/shaders/gol/gol.js",
+        "title": "Game of Life",
+        "description": "Conway's Game of Life",
+        "image": "/assets/img/gol.png"
+      }
+    ]
+  }

@@ -1,0 +1,75 @@
+.navbar-container {
+    /* needs an alpha for the backdrop filter */
+/*    background-color: var(--sl-color-neutral-0);*/
+    position: sticky;
+    top: 0;
+    padding: 0 var(--margin);
+    z-index: 10;
+    opacity: 0.95;
+    border-bottom: solid 1px var(--sl-panel-border-color);
+    backdrop-filter: blur(8px);
+    & a {
+        color: var(--color-foreground);
+        font-weight: 500;
+        &:hover {
+            text-decoration: none;;
+        }
+    }
+
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    height: 70px;
+}
+
+.navbar-logo {
+    display: flex;
+    align-self: center;
+    align-items: center;
+    color: var(--color-foreground);
+    column-gap: 10px;
+
+    & span {
+        @media (max-width: 820px) {
+            display: none;
+        }
+    }
+}
+
+.navbar-menu {
+    display: flex;
+    overflow-x: none;
+    flex: 1 1 auto;
+    scrollbar-width: thin;
+
+    & li {
+        display: flex;
+
+        &:first-child {
+            margin-left: auto;
+        }
+    }
+    & sl-icon-button {
+        padding: 0 4px;
+    }
+
+    & a {
+        padding: 0 1em;
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+
+        &:hover {
+            background-image: linear-gradient(var(--link-color), var(--sl-panel-background-color));
+            background-repeat: no-repeat;
+            background-size: calc(100% - 2em) 2px;
+            background-position: center bottom;
+        }
+
+        &.is-selected {
+            background: var(--sl-panel-background-color);
+        }
+    }
+}

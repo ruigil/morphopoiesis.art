@@ -1,0 +1,145 @@
+/* Font (see https://fonts.google.com) */
+
+
+@import './light.css';
+
+@import './dark.css';
+
+@import './highlight.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Fonts 
+  --font-display: 'Epilogue', 'Epilogue-fallback', var(--font-ui);
+  --font-ui: 'Inter', 'Inter-fallback', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Oxygen, Cantarell, sans-serif;
+  --font-code: 'JetBrains Mono', 'JetBrains-fallback', 'Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace;
+*/
+  /* Text styles 
+  --text-display-size: clamp(30px, 10vw, 75px);
+  --text-display-height: 0.95;
+  --text-display: 700 var(--text-display-size)/var(--text-display-height) var(--font-display);
+  --text-display-spacing: -0.045em;
+  --text-heading-size: clamp(20px, 8vw, 50px);
+  --text-heading: 700 var(--text-heading-size)/1.1 var(--font-display);
+  --text-heading-spacing: -0.03em;
+  --text-title-size: clamp(20px, 6vw, 30px);
+  --text-title: 600 var(--text-title-size)/1.2 var(--font-display);
+  --text-title-spacing: -0.03em;
+  --text-body-size: clamp(16px, 4vw, 20px);
+  --text-body: var(--text-body-size)/1.65 var(--font-ui);
+  --text-body-bold: 600 var(--text-body-size)/1.6 var(--font-ui);
+  --text-body-spacing: -0.02em;
+  --text-caption: 15px/1.6 var(--font-ui);
+  --text-caption-bold: 600 15px/1.6 var(--font-ui);
+  --text-caption-mini: 13px/1.6 var(--font-ui);
+  --text-caption-mini-bold: 600 13px/1.6 var(--font-ui);
+  --text-code: 16px/1.6 var(--font-code);
+*/
+  /* Spaces 
+  --margin: max(25px, 5vw);
+  --max-width: 1200px;
+  --column-gap-0: 10px;
+  --column-gap-1: 25px;
+  --column-gap-2: 50px;
+  --column-gap-3: 100px;
+  --row-gap-0: 25px;
+  --row-gap-1: clamp(20px, 5vh, 50px);
+  --row-gap-2: clamp(40px, 10vh, 100px);
+  --row-gap-3: clamp(60px, 15vh, 150px);
+  --row-gap-4: clamp(80px, 20vh, 200px);
+*/
+  --max-width: 1200px;
+  --row-gap-0: 25px;
+  --margin: max(25px, 5vw);
+}
+
+:not(:defined) {
+    visibility: hidden;
+}  
+
+.spacing {
+  padding: 20px var(--margin);
+}
+
+html,
+body {
+  @apply antialiased font-sans tracking-wide;
+  background: var(--color-background);
+  color: var(--sl-color-neutral-1000);
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  @apply font-bold leading-tight mt-3;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+h1 > a,
+h2 > a,
+h3 > a,
+h4 > a,
+h5 > a,
+h6 > a,
+
+h1 {
+  @apply text-5xl;
+}
+
+h2 {
+  @apply text-3xl;
+}
+
+h3 {
+  @apply text-2xl;
+}
+
+h4 {
+  @apply text-xl;
+}
+
+a {
+  color: var(--link-color);
+}
+
+a:hover {
+  color: currentColor;
+  text-decoration: underline;
+}
+
+p {
+  @apply text-lg my-2;
+}
+
+pre {
+  @apply my-2 text-sm tracking-wider break-words;
+}
+
+
+hr {
+  @apply mt-4 mb-2 border-dotted border-b ;
+  border-color: var(--sl-panel-border-color);
+}
+
+img {
+  @apply mx-auto rounded-lg;
+  max-width: 100%;
+}
+
+blockquote {
+  @apply my-4 px-4 py-2 border-l-4 rounded-r-lg italic;
+  border-color: var(--link-color);
+  background: var(--sl-panel-background-color);
+}

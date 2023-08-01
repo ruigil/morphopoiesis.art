@@ -1,0 +1,34 @@
+.footer-social {
+    & svg {
+        display: block;
+        width: 20px;
+        height: 20px;
+        fill: currentColor;
+    }
+
+    & a {
+        display: flex;
+        align-items: center;
+        column-gap: 10px;
+        padding: 10px;
+        border-radius: 0.5rem;
+        color: var(--sl-color-neutral-500);
+
+        &:hover {
+            color: var(--link-color);
+            background: var(--sl-panel-background-color);
+        }
+    }
+}
+
+.footer {
+    display: flex;
+    padding: 20px var(--margin);
+    border-top: solid 1px var(--sl-panel-border-color);
+    color: var(--sl-color-neutral-500);
+
+    & a {
+        white-space: nowrap;
+    }
+
+}

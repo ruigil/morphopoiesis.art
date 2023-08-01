@@ -1,0 +1,10 @@
+{
+  "metas": {
+    "site": "morphopoiesis",
+    "description": "Morphopoiesis is a blog about the intersection of art, science, and technology.",
+    "twitter": "@morphopoiesis",
+    "icon": "/assets/img/morphopoeisis.svg",
+    "lang": "en",
+    "generator": true  
+  }
+}
