@@ -17,7 +17,6 @@ export async function shader(spec: any, unis?: any) {
       play.name = controls.play ? "pause" : "play";
     });
     reset.addEventListener('click', event => {
-      console.log("reset")
       controls.reset = true;
     });
     

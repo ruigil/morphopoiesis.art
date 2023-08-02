@@ -20,17 +20,14 @@ export default ({ search, metas, url } : PageData) => {
     <nav class="navbar-container">
         <div class="navbar">
             <a href="/" class="navbar-logo" aria-label="Return home">
-                <img src="/assets/img/morphopoiesis.svg" width="40" height="40"/>
+                <img src="/assets/img/morphopoiesis.svg" width="40" height="40" alt="morphopoiesis logo"/>
                 <span class="text-2xl">${ metas?.site }</span>
             </a>
 
             <ul class="navbar-menu">
             ${ items() }
                 <li  class="flex items-center">
-                    <sl-icon-button id="theme-icon" name="sun"></sl-icon-button>
-                </li>
-                <li class="flex items-center">
-                    <sl-icon-button name="search" label="Search"></sl-icon-button>
+                    <sl-icon-button id="theme-icon" name="sun" label="Change Theme"></sl-icon-button>
                 </li>
             </ul>          
         </div>

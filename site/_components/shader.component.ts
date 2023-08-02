@@ -16,7 +16,7 @@ export default async ({ wgsl, js, title, description, comp }: PageData) => {
     ${description}<br />
 
     <div slot="footer">
-      <sl-icon-button id="play" name="pause" label="Play/Pause"></sl-icon-button>
+      <sl-icon-button id="play"  name="pause" label="Play/Pause"></sl-icon-button>
       <sl-icon-button id="reset" name="rewind" label="Reset"></sl-icon-button>
       <small id="fps" class="flex grow justify-end">0 fps</small>          
     </div>

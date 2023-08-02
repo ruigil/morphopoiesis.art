@@ -11,11 +11,10 @@ export default ({ comp, search, url }: PageData, {date}:PageHelpers) => {
         const menuItems:string[] = []
         
         search.pages("type=post","date=desc").map((page) => {
-            console.log(page)
             menuItems.push(`
             <div class="rounded border p-4 w-full panel">
                 <a class="w-full flex gap-4" href="${page?.data.url}">
-                    <img src="${page?.data.header}" class="w-40 h-40 rounded-lg">
+                    <img src="${page?.data.header}" class="w-40 h-40 rounded-lg" alt="${page?.data.title}">
                     <div class="flex flex-col gap-3">
                         <div class="text-2xl">${page?.data.title}</div>
                         <div class="text-xs">${date(page?.data.date)}</div>

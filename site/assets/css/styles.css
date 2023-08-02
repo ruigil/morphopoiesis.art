@@ -3,6 +3,7 @@
 @import './dark.css';
 
 @import './highlight.css';
+@import './katex.css';
 
 @tailwind base;
 @tailwind components;
