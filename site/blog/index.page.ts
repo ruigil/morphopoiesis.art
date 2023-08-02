@@ -1,22 +1,24 @@
-import type { PageData } from "lume/core.ts";
+import type { PageData, PageHelpers } from "lume/core.ts";
 
 export const title = "Blog";
 export const layout = "page.layout.ts";
 export const menu = { visible: true, order: 1}
 
 
-export default ({ comp, search, url }: PageData) => {
+export default ({ comp, search, url }: PageData, {date}:PageHelpers) => {
 
     const items = () => {
         const menuItems:string[] = []
         
-        search.pages("type=post","desc").map((page) => {
+        search.pages("type=post","date=desc").map((page) => {
+            console.log(page)
             menuItems.push(`
             <div class="rounded border p-4 w-full panel">
                 <a class="w-full flex gap-4" href="${page?.data.url}">
-                    <img src="${page?.data.header}" class="w-32 h-32 rounded-lg">
+                    <img src="${page?.data.header}" class="w-40 h-40 rounded-lg">
                     <div class="flex flex-col gap-3">
                         <div class="text-2xl">${page?.data.title}</div>
+                        <div class="text-xs">${date(page?.data.date)}</div>
                         <div class="text-sm content ">${page?.data.content.split(' ').splice(0,40).join(' ')} - Read more...</div>
                         <div class="flex-wrap">${ page?.data.tags?.map((tag:string) => `<sl-tag size="small">${tag}</sl-tag>`).join(" ") }</div>
 
