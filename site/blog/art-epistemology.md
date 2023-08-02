@@ -3,6 +3,7 @@ title: Art, as a new epistemology
 layout: post.layout.ts
 type: post
 header: /assets/img/treeoflife.jpg
+date: 2023-07-31
 tags:
     - Emergence
     - Cognition

@@ -3,6 +3,7 @@ title: Unlimited Power
 layout: post.layout.ts
 type: post
 header: /assets/img/color-ifs.png
+date: 2023-08-01
 tags:
     - WebGPU
     - Computation

@@ -3,6 +3,7 @@ title: Tiny robots
 layout: post.layout.ts
 type: post
 header: /assets/img/gol.png
+date: Git Created
 tags:
     - WebGPU
     - Computation
