@@ -1,34 +1,23 @@
 import type { PageData } from "lume/core.ts";
+import { toolbar } from "../lib/components/server.ts";
 
-export default ( { title, content, comp, scripts, url}: PageData) => {
+export default ( data : PageData) => {
 
   return `
   <html lang="en">
     <head>
-      <title>${ title }</title>
+      <title>${data.title}</title>
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <link rel="stylesheet" href="/assets/css/styles.css" />
-      <link rel="stylesheet" href="/components.css" />
-      <script src="https://identity.netlify.com/v1/netlify-identity-widget.js defer"></script>
-      <script type="module" src="/components.js" defer></script>
+      <link rel="stylesheet" href="/assets/css/components.css" />
+      <script type="module" src="/assets/js/components.js" defer></script>
       <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.5.2/cdn/shoelace-autoloader.js" defer></script>
-      ${ scripts ? scripts.map((src: string) => (`<script type="module" src=${src} defer></script>` )) : ""}
+      ${data.scripts ? data.scripts.map((src: string) => (`<script type="module" src=${src} defer></script>`)) : ""}
     </head>
     <body class="flex flex-col sl-theme-dark">
-      ${ comp.toolbar({ url: url }) }
-      ${ content }
+      ${ toolbar(data) }
+      ${data.content}
     </body>
-    <script>
-    if (window.netlifyIdentity) {
-      window.netlifyIdentity.on("init", user => {
-        if (!user) {
-          window.netlifyIdentity.on("login", () => {
-            document.location.href = "/admin/";
-          });
-        }
-      });
-    }
-  </script>
   </html>
   `
 }

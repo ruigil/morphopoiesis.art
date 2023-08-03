@@ -1,6 +1,4 @@
 .navbar-container {
-    /* needs an alpha for the backdrop filter */
-/*    background-color: var(--sl-color-neutral-0);*/
     position: sticky;
     top: 0;
     padding: 0 var(--margin);
@@ -8,11 +6,14 @@
     opacity: 0.95;
     border-bottom: solid 1px var(--sl-panel-border-color);
     backdrop-filter: blur(8px);
+
     & a {
         color: var(--color-foreground);
         font-weight: 500;
+
         &:hover {
-            text-decoration: none;;
+            text-decoration: none;
+            ;
         }
     }
 
@@ -51,6 +52,7 @@
             margin-left: auto;
         }
     }
+
     & sl-icon-button {
         padding: 0 4px;
     }

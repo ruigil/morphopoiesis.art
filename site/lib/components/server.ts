@@ -1,15 +1,12 @@
-import type { PageData, Page, PageHelpers } from "lume/core.ts";
+import type { PageData, PageHelpers } from "lume/core.ts";
+import hljs from 'npm:highlight.js';
 
-export const css = `@import "./_components/css/footer.css";`;
-
-
-
-export default (name:PageData, {date} : PageHelpers) => {
+export const footer = (data: PageData, { date }: PageHelpers) => {
 
     return `
     <footer class="footer">
         <div class="flex place-items-center gap-2">
-            <span>© ${  date("now","yyyy") }</span> morphopoiesis
+            <span>© ${date("now", "yyyy")}</span> morphopoiesis
         </div>
         <ul class="footer-social flex flex-grow justify-end gap-4">
             <li>
@@ -34,4 +31,71 @@ export default (name:PageData, {date} : PageHelpers) => {
         </ul>
     </footer>
     `
+}
+
+export const toolbar = ({ search, metas, url }: PageData) => {
+
+    const items = () => {
+        const menuItems: string[] = []
+
+        search.pages("menu.visible=true", "menu.order").map((page) => {
+            const current = url || "/";
+            menuItems.push(`<li><a ${current === page?.data.url ? "class='is-selected'" : ''} href="${page?.data.url}">${page?.data.title}</a></li>`)
+        });
+        return menuItems.join("")
+    }
+
+    return `
+    <nav class="navbar-container">
+        <div class="navbar">
+            <a href="/" class="navbar-logo" aria-label="Return home">
+                <img src="/assets/img/morphopoiesis.svg" width="40" height="40" alt="morphopoiesis logo"/>
+                <span class="text-2xl">${metas?.site}</span>
+            </a>
+
+            <ul class="navbar-menu">
+                ${items()}
+                <li  class="flex items-center">
+                    <sl-icon-button id="theme-icon" name="sun" label="Change Theme"></sl-icon-button>
+                </li>
+            </ul>          
+        </div>
+    </nav>
+    `
+}
+
+export const code = async ({ wgsl }: PageData): Promise<string> => {
+    //@ts-ignore
+    const code = await Deno.readTextFile(`./site/${wgsl}`);
+
+    const html = hljs.highlight(code, { language: 'rust' }).value
+
+    return `<pre class="overflow-x-auto"><code>${html}</code></pre>`
+}
+
+// TODO: These components should obiously be web components
+export const shader = async (data: PageData) => {
+
+    return `
+    <div class="flex-col w-full max-w-3xl mx-auto">
+    <sl-card class="card-overview w-full">
+      <canvas slot="image" id="canvas"></canvas>
+  
+      <strong>${data.title}</strong><br />
+      ${data.description}<br />
+  
+      <div slot="footer">
+        <sl-icon-button id="play"  name="pause" label="Play/Pause"></sl-icon-button>
+        <sl-icon-button id="reset" name="rewind" label="Reset"></sl-icon-button>
+        <small id="fps" class="flex grow justify-end">0 fps</small>          
+      </div>
+    </sl-card>
+    <sl-details class="mt-4" summary="Source Code">
+      <div>
+        ${await code( data ) }
+      </div>
+    </sl-details>
+    </div>
+    <script type="module" src=${data.js} defer></script>
+  `;
 }

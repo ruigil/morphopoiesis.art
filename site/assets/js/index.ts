@@ -1,5 +1,5 @@
 
-import { WGPU, wgsl, Utils } from './lib/wgpu.ts';
+import { WGPU, wgsl, Utils } from '../../lib/webgpu/webgpu.ts';
 
 document.addEventListener('DOMContentLoaded', event => {
 

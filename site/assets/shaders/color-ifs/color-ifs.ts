@@ -1,5 +1,5 @@
-import { shader } from "../../../_components/js/shader.ts";
-import { wgsl } from "../../js/lib/wgpu.ts";
+import { shader } from "../../../lib/components/shader.ts";
+import { wgsl } from "../../../lib/webgpu/webgpu.ts";
 
 document.addEventListener('DOMContentLoaded', event => {
     colorIfs()

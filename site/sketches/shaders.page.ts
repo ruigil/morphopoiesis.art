@@ -1,15 +1,16 @@
 import type { PageData } from "lume/core.ts";
+import { shader } from '../lib/components/server.ts';
 
 export const layout = "page.layout.ts";
 
-export default function* ({ shaders, comp}: PageData) {
+export default function* ({ shaders}: PageData) {
 
-    for (const shader of shaders) {
+    for (const s of shaders) {
         yield {
-            url: `./${shader.id}/`,
-            title: shader.title,
-            description: shader.description,
-            content: comp.shader(shader)
+            url: `./${s.id}/`,
+            title: s.title,
+            description: s.description,
+            content: shader(s)
           };              
     }
 
