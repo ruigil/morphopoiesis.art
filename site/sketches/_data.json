@@ -6,7 +6,8 @@
         "js": "/assets/shaders/color-ifs/color-ifs.js",
         "title": "Color IFS",
         "description": "A simple colorized IFS fractal",
-        "image": "/assets/img/color-ifs.png"
+        "image": "/assets/img/color-ifs.png",
+        "tags": ["fractal", "ifs"]
       },
       {
         "id" : "gol",
@@ -14,7 +15,8 @@
         "js": "/assets/shaders/gol/gol.js",
         "title": "Game of Life",
         "description": "Conway's Game of Life",
-        "image": "/assets/img/gol.png"
+        "image": "/assets/img/gol.png",
+        "tags": ["ca", "life"]
       }
     ]
   }

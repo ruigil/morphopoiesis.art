@@ -448,9 +448,9 @@
 
   /* customization */
 
-  --color-background: var(--sl-color-gray-50);
+  --color-background: linear-gradient(  ,hsl(211, 78%, 95%), var(--sl-color-neutral-50));
   --sl-panel-background-color: hsl(211, 78%, 95%);
-  --sl-color-neutral-50: hsl(211, 78%, 95%);
+  --sl-color-neutral-50: rgb(224,224,224);
   --link-color: hsl(198, 56%, 35%);
 
 }

@@ -136,6 +136,7 @@ export class WGPUContext {
             this.state.canvas.height = entries[0].target.clientWidth
             this.resolution[0] = entries[0].target.clientWidth;
             this.resolution[1] = entries[0].target.clientHeight;
+            console.log("resolution", this.resolution);
         });
         this.observer.observe(this.state.canvas)
         this.state.canvas.addEventListener('mousemove', event => {

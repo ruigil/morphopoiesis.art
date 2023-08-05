@@ -52,39 +52,30 @@ fn fragmentMain( input: VertexOutput) -> @location(0) vec4f {
     return vec4f(mix(uni.bcolor/255.,uni.fcolor/255.,d), 1);
 }      
 
-fn cellIndex(cell: vec2u) -> u32 {
-    return (cell.y % u32(uni.size.y)) * u32(uni.size.x) + (cell.x % u32(uni.size.x));
+fn getIndex(x: u32, y: u32) -> u32 {
+    return (y % u32(uni.size.y)) * u32(uni.size.x) + (x % u32(uni.size.x));
 }
 
-fn cellActive(x: u32, y: u32) -> u32 {
-    return current[cellIndex(vec2(x, y))];
+fn getCell(x: u32, y: u32) -> u32 {
+  return current[getIndex(x, y)];
+}
+
+fn countNeighbors(x: u32, y: u32) -> u32 {
+  return getCell(x - 1, y - 1) + getCell(x, y - 1) + getCell(x + 1, y - 1) + 
+         getCell(x - 1, y) +                         getCell(x + 1, y) + 
+         getCell(x - 1, y + 1) + getCell(x, y + 1) + getCell(x + 1, y + 1);
 }
 
 @compute @workgroup_size(8, 8)
 fn computeMain(@builtin(global_invocation_id) cell: vec3u) {
-    let activeNeighbors = cellActive(cell.x+1, cell.y+1) +
-                        cellActive(cell.x+1, cell.y) +
-                        cellActive(cell.x+1, cell.y - 1) +
-                        cellActive(cell.x, cell.y - 1) +
-                        cellActive(cell.x - 1, cell.y - 1) +
-                        cellActive(cell.x - 1, cell.y) +
-                        cellActive(cell.x - 1, cell.y+1) +
-                        cellActive(cell.x, cell.y+1);
-                        
-    let i = cellIndex(cell.xy);
-    let m = cellIndex(vec2u( u32(sys.mouse.x * uni.size.x), u32( (1. - sys.mouse.y) * uni.size.y) ));
+    let activeNeighbors = countNeighbors(cell.x, cell.y);
+
+    let m = getIndex(u32(sys.mouse.x * uni.size.x), u32((1. - sys.mouse.y) * uni.size.y));
 
     // Conway's game of life rules:
-    switch activeNeighbors {
-        case 2: { // Active cells with 2 neighbors stay active.
-            next[i] = current[i];
-        }
-        case 3: { // Cells with 3 neighbors become or stay active.
-            next[i] = 1;
-        }
-        default: { // Cells with < 2 or > 3 neighbors become inactive.
-            next[i] = 0;
-        }
-    }
-    next[m] = 1;
+    // return alive ? 2 or 3 neighbors : 3 neighbors;
+    next[getIndex(cell.x,cell.y)] = select(u32(activeNeighbors == 3u), u32(activeNeighbors == 2u || activeNeighbors == 3u), getCell(cell.x,cell.y) == 1u); 
+    
+    next[m] = 1u;
+    
 }

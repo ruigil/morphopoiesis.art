@@ -446,12 +446,13 @@
   --sl-z-index-tooltip: 1000;
 
   /* customization */
-  --color-background: hsl(222, 47%, 11%);
+  /*--color-background: hsl(222, 47%, 11%);*/
+  --color-background:linear-gradient(hsl(222, 46%, 11%),hsl(217, 33%, 17%));
   --sl-color-neutral-200: hsl(217, 33%, 17%);
-  --sl-color-neutral-50: hsl(217, 33%, 17%);
+  --sl-color-neutral-50: hsl(222, 46%, 11%);
   --sl-color-neutral-0: hsl(217, 33%, 17%);
   --sl-panel-border-color:hsl(218, 33%, 29%);
-  --sl-panel-background-color: hsl(217, 33%, 17%);
+  --sl-panel-background-color: hsl(218, 33%, 23%);
   --link-color: hsl(198, 93%, 60%);
 
 }

@@ -1,4 +1,5 @@
-import type { PageData } from "lume/core.ts";
+import type { PageData, PageHelpers } from "lume/core.ts";
+import { post } from "./lib/components/server.ts";
 
 export const title = "Home";
 export const motto = "studies on the synthesis of form";
@@ -7,15 +8,45 @@ export const scripts = ["/assets/js/index.js"];
 export const url = "/";
 
 
-export default ({ comp, featured, metas }: PageData): string => {
+export default ({ comp, featured, metas, search }: PageData, helpers: PageHelpers): string => {
+  const items = () => {
+    const menuItems:string[] = []
+    
+    search.pages("featured=true","date=desc").map((page) => {
+        menuItems.push(post( page, helpers ))
+    });
+    //console.log(menuItems)
+    return menuItems.join("")
+}
+
 
   return `
-  <div class="p-7 rounded-lg text-2xl mt-20 mx-auto desc opacity-90">studies on the synthesis of form</div>
-  <canvas class="full-window" id="canvas"></canvas>  
+  <main class="flex flex-col flex-grow screen w-full">
+    <div class="grow"></div>
+    <div class="pt-4  text-2xl desc text-center text-5xl font-bold h-20 w-full desc backdrop-blur">studies on the synthesis of form</div>
+  </main>
+  <div class="featured w-full">
+    <div class="container w-full max-w-4xl mx-auto p-10 mb-20">
+      <h1>Featured</h1>
+      <div class="mt-4 flex flex-col gap-4">
+          ${items()}
+      </div>
+    </div>
+  </div>
+  <canvas class="full-window" id="canvas"></canvas>
   <style>
+    .screen {
+      height: calc(100vh - 70px);
+    }
+    .featured {
+      z-index: 50;
+      background-image: linear-gradient(var(--sl-color-neutral-50), var(--sl-color-neutral-0));
+    }
     .desc {
       z-index: 100;
-      background: var(--sl-color-neutral-0);
+      background-repeat: no-repeat;
+      background-size: 100% 10%;
+      background-position: center bottom;
     }
     .full-window {
       position: fixed;

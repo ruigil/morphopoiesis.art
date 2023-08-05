@@ -4,6 +4,7 @@ layout: post.layout.ts
 type: post
 header: /assets/img/treeoflife.jpg
 date: 2023-07-31
+featured: true
 tags:
     - Emergence
     - Cognition

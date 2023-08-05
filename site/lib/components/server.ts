@@ -1,4 +1,4 @@
-import type { PageData, PageHelpers } from "lume/core.ts";
+import type { Data, Page, PageData, PageHelpers } from "lume/core.ts";
 import hljs from 'npm:highlight.js';
 
 export const footer = (data: PageData, { date }: PageHelpers) => {
@@ -79,15 +79,19 @@ export const shader = async (data: PageData) => {
     return `
     <div class="flex-col w-full max-w-3xl mx-auto">
     <sl-card class="card-overview w-full">
-      <canvas slot="image" id="canvas"></canvas>
-  
+      <div slot="image" id="fullscreen" class="w-full">
+        <canvas id="canvas"></canvas>
+      </div>
       <strong>${data.title}</strong><br />
-      ${data.description}<br />
+      ${data.description}aaa<br />
+      <div class="flex-wrap">${ data.tags?.map((tag:string) => `<sl-tag >${tag}</sl-tag>`).join(" ") }</div>
   
       <div slot="footer">
         <sl-icon-button id="play"  name="pause" label="Play/Pause"></sl-icon-button>
         <sl-icon-button id="reset" name="rewind" label="Reset"></sl-icon-button>
-        <small id="fps" class="flex grow justify-end">0 fps</small>          
+        <div class="flex grow"></div>
+        <sl-icon-button id="full" name="fullscreen" label="full"></sl-icon-button>
+        <small id="fps">0 fps</small>          
       </div>
     </sl-card>
     <sl-details class="mt-4" summary="Source Code">
@@ -98,4 +102,24 @@ export const shader = async (data: PageData) => {
     </div>
     <script type="module" src=${data.js} defer></script>
   `;
+}
+
+
+export const post = (page: Page | Data | undefined, { date }:PageHelpers) => {
+    return `
+<div class="rounded border p-4 w-full panel">
+    <div class="flex flex-wrap gap-4">
+        <div class="flex-start">
+            <img src="${page!.data.header}" class="w-40 h-40 rounded-lg m-0" alt="${page!.data.title}">
+        </div>
+        <div class="flex flex-col gap-3 max-w-md">
+            <div class="text-2xl"><a href="${page!.data.url}">${page!.data.title}</a></div>
+            <div class="text-xs">${date(page!.data.date)}</div>
+            <div class="text-sm content">${page!.data.content.split(' ').splice(0,40).join(' ')} - Read more...</div>
+            <div class="flex-wrap">${ page!.data.tags?.map((tag:string) => `<sl-tag size="small">${tag}</sl-tag>`).join(" ") }</div>
+
+        </div>
+    </div>
+</div>
+`
 }

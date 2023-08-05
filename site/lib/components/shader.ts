@@ -6,7 +6,9 @@ export async function shader(spec: any, unis?: any) {
 
   const play = document.querySelector("#play") as HTMLButtonElement;
   const reset = document.querySelector("#reset") as HTMLButtonElement;
+  const full = document.querySelector("#full") as HTMLButtonElement;
   const fpsSmall = document.querySelector("#fps") as HTMLDivElement;
+  const fullscreen = document.querySelector("#fullscreen") as HTMLButtonElement;
 
   const controls = { play: true, reset: false, frames: 0 }
 
@@ -17,6 +19,18 @@ export async function shader(spec: any, unis?: any) {
 
   reset.addEventListener('click', event => {
     controls.reset = true;
+  });
+
+  full.addEventListener('click', event => {
+    if (!document.fullscreenElement) {
+      //document.documentElement.requestFullscreen();
+      fullscreen.requestFullscreen().then(() => {
+        console.log("fullscreen")
+        console.log(window.innerHeight, window.innerWidth)
+      }).catch(err => {});;
+    } else if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
   });
   
   const gpu = await new WGPU(canvas!).init();

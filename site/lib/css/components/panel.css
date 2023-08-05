@@ -1,0 +1,10 @@
+.panel {
+    border-color: var(--sl-panel-border-color);
+    background: var(--sl-panel-background-color);
+    & a {
+        text-decoration: none;
+    }
+    .content {
+        color: var(--sl-color-neutral-1000);
+    }
+}
