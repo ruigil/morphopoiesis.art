@@ -24,7 +24,6 @@
 .footer {
     display: flex;
     padding: 20px var(--margin);
-    border-top: solid 1px var(--sl-panel-border-color);
     color: var(--sl-color-neutral-500);
 
     & a {

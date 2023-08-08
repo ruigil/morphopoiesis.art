@@ -9,6 +9,5 @@ export default ( data: PageData, helpers: PageHelpers) => {
       <main class="container spacing flex flex-col flex-grow h-full w-full gap-8 mx-auto">
         ${ data.content }
       </main>
-      ${ footer(data, helpers) }
   `
 }

@@ -2,7 +2,8 @@
   "compilerOptions": {
     "lib": [
       "esnext",
-      "dom"
+      "dom",
+      "deno.window"
     ]
   },
   "tasks": {

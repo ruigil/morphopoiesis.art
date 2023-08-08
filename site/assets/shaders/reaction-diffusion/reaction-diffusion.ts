@@ -2,15 +2,16 @@ import { shader } from "../../../lib/components/shader.ts";
 import { WGPU, wgsl, Utils } from "../../../lib/webgpu/webgpu.ts";
 
 document.addEventListener('DOMContentLoaded', event => {
-    gameOfLife()
+    rd()
 });
 
-async function gameOfLife() {
+async function rd() {
 
-    const code = await wgsl(`/assets/shaders/gol/gol.wgsl`)
+    const code = await wgsl(`/assets/shaders/reaction-diffusion/reaction-diffusion.wgsl`)
+
+    const size = 512;
+    const current = Array(size * size * 2).fill(0).map((v,i) => i % 2 == 0 ? 1 : (Math.random() > 0.01 ? 0 : 1) );
     
-    const current = Array(64*64).fill(0).map(() => Math.random() > 0.5 ? 1 : 0);
-
     const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
 
     const gpu = await new WGPU(canvas!).init();
@@ -19,25 +20,25 @@ async function gameOfLife() {
         shader: code,
         geometry: {
             vertices: Utils.square(1.),
-            instances: 64 * 64
+            instances: size * size
         },
         uniforms: {
             uni: {
-                size: [64, 64],
-                fcolor: [0,0,0],
-                bcolor: [255,255,255]
+                size: [size, size]
             }
         },
         storage: [
             { name: "current", size: current.length, data: current } ,
-            { name: "next", size: 64 * 64 } 
+            { name: "next", size: size * size }, 
         ],
-        workgroupCount: [8, 8, 1],
+        workgroupCount: [size / 8, size / 8, 1],
+        computeCount: 32,
         bindings: {
-            groups: [ [0,4,1,2], [0,4,2,1] ],
+            groups: [ [0,4,1,2,3], [0,4,2,1,3] ],
             currentGroup: (frame:number) => frame % 2,
         }      
-    });
+    })
 
     code && shader(context);
+
 }

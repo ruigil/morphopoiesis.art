@@ -12,7 +12,10 @@ export interface WGPUState {
     uniforms?: Array<Uniform>;
     pipelines?: Pipelines;
     spec?: WGLSLSpec;
+    storages?: Array<Storage>;
+
     fpsListeners?: Array<FPSListener>;
+    bufferListeners?: Array<BufferListener>;
 }
 
 interface Geometry {
@@ -31,12 +34,15 @@ interface Resource {
 interface Uniform extends Resource {
     uniValues: ArrayBuffer;
     uniViews: any;
-    type: GPUBufferBindingType;
+    //type: GPUBufferBindingType;
 
 }
 
 interface Storage extends Resource {
-    type: GPUBufferBindingType;
+    //type: GPUBufferBindingType;
+    readBuffer?: GPUBuffer;
+    size: number;
+    name: string;
 }
 
 interface Pipelines {
@@ -50,6 +56,24 @@ interface Controls {
     play?: boolean;
     reset?: boolean;
     frames?: number;
+}
+
+interface WGLSLSpec {
+    shader: string;
+    geometry?: { vertices: number[], instances?: number};
+    uniforms?: any;
+    storage?: { name: string, size: number, data?: number[], read?:boolean }[];
+    workgroupCount?: Array<number>;
+    computeCount?: number;
+    bindings?: { groups: Array<Array<number>>, currentGroup: (frame:number) => number };
+}
+
+interface FPSListener {
+    onFPS: (fps: { fps: string, time: string}) => void;
+}
+
+interface BufferListener {
+    onRead: (buffer: Array<{ name: string, buffer: ArrayBuffer }>) => void;
 }
 
 export async function wgsl(name: string) {
@@ -110,19 +134,6 @@ export class WGPU {
     }
 }
 
-interface WGLSLSpec {
-    shader: string;
-    geometry?: { vertices: number[], instances?: number};
-    uniforms?: any;
-    storage?: { name: string, size: number, data?: number[] }[];
-    workgroupCount?: Array<number>;
-    bindings?: { groups: Array<Array<number>>, currentGroup: (frame:number) => number };
-}
-
-interface FPSListener {
-    onFPS: (fps: { fps: string, time: string}) => void;
-}
-
 export class WGPUContext {
     private state: WGPUState;
     private observer: ResizeObserver;
@@ -136,7 +147,6 @@ export class WGPUContext {
             this.state.canvas.height = entries[0].target.clientWidth
             this.resolution[0] = entries[0].target.clientWidth;
             this.resolution[1] = entries[0].target.clientHeight;
-            console.log("resolution", this.resolution);
         });
         this.observer.observe(this.state.canvas)
         this.state.canvas.addEventListener('mousemove', event => {
@@ -175,10 +185,10 @@ export class WGPUContext {
 
     build(wgslSpec : WGLSLSpec) {
                 
-        const reflect = new WgslReflect(wgslSpec.shader);
 
         const createShaderModule = (spec: WGLSLSpec) => {
             if (!spec.shader) throw new Error("Shader is not defined");
+
             return this.state.device.createShaderModule({
                 label: "Custom shader",
                 code: spec.shader
@@ -282,17 +292,36 @@ export class WGPUContext {
             const storage = (name:string)=> {
                 return spec.storage ? spec.storage.find((element) => element.name === name) : undefined;
             }
+            const sizeFormat = (format: string) => {
+                const formats:Record<string,number> = {
+                    f32: 4,
+                    u32: 4,
+                    i32: 4,
+                    vec2f: 8,
+                    vec3f: 16, // is it ?
+                    vec4f: 16,
+                }
+                return formats[format];
+            }
 
             for(let i = 0; i < reflect.storage.length; i++) {
                 const node = reflect.storage[i].node;
+                //console.log("node",node);
                 const sto = storage(node.name);
                 if (!sto) throw new Error(`Storage spec for ${node.name} not found`);
                 const size = sto.size;
+                const sf = sizeFormat(node.type.format.name);
+                //console.log(node.name, size, sf)
                 const storageBuffer = this.state.device.createBuffer({
                     label: "Storage Buffer",
-                    size: size * 4,
-                    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+                    size: size * sf,
+                    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | (sto.read ? GPUBufferUsage.COPY_SRC : 0),
                 });
+                const readBuffer = sto.read ? this.state.device.createBuffer({
+                        label: sto.name + " Read Buffer",
+                        size: size * sf,
+                        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
+                }) : undefined;
                 
                 const data = sto.data ? sto.data : new Array(size).fill(0);
                 const isFloat = () => node.type.format.name.endsWith('f') || node.type.format.name.startsWith('f');
@@ -303,6 +332,9 @@ export class WGPUContext {
                 stateStorage.push({
                     binding: reflect.storage[i].binding,
                     buffer: storageBuffer,
+                    readBuffer: readBuffer,
+                    size: size * sf,
+                    name: node.name,
                     type: node.access === "read_write" ? "storage" :"read-only-storage"  
                 });
 
@@ -410,6 +442,8 @@ export class WGPUContext {
             });
         }
 
+        const reflect = new WgslReflect(wgslSpec.shader);
+
         const shaderModule = createShaderModule(wgslSpec);
         const geometry = createGeometry(wgslSpec);
         const uniforms = createUniforms(wgslSpec);
@@ -451,6 +485,7 @@ export class WGPUContext {
             },
             geometry: geometry,
             uniforms: uniforms,
+            storages: storages,
             spec: wgslSpec
         });
     }
@@ -461,6 +496,15 @@ export class WGPUContext {
         return new WGPUContext({
             ...this.state,
             fpsListeners: ls
+        });
+    }
+
+    addBufferListener(listener: BufferListener) {
+            
+        const bls = this.state.bufferListeners ? [...this.state.bufferListeners, listener] : [listener];
+        return new WGPUContext({
+            ...this.state,
+            bufferListeners: bls
         });
     }
 
@@ -486,7 +530,20 @@ export class WGPUContext {
                 listener.onFPS({ fps: (frame / elapsed).toFixed(2), time: elapsed.toFixed(1)} );
             });
         }
-        const render = () => {
+
+        const readBuffers = async ()=>{
+            if (this.state.bufferListeners) {
+                const buffers = this.state.storages?.filter((element) => element.readBuffer);
+                if (!buffers || buffers.length == 0) return;
+                await Promise.all(buffers.map( buff => buff.readBuffer?.mapAsync(GPUMapMode.READ)));
+                this.state.bufferListeners.forEach((listener) => {
+                    const data = buffers.map(s=> ({ name: s.name, buffer: new Float32Array(s.readBuffer!.getMappedRange())}));
+                    listener.onRead( data );
+                    buffers.forEach(s=> s.readBuffer!.unmap() );
+                });
+            } 
+        }
+        const render = async () => {
             if (crtl.reset) {
                 frame = 0;
                 start = performance.now();
@@ -501,7 +558,8 @@ export class WGPUContext {
                 clearInterval(intid);
                 intid = 0;
             }
-            if ((crtl.play) || (crtl.frames! > 0)) {
+            // && ((frame % 61) === 0)
+            if (((crtl.play) || (crtl.frames! > 0)) ) {
                 const bindGroup = this.state.spec?.bindings ? this.state.spec.bindings.currentGroup(frame) : 0;
 
                 const encoder = this.state.device.createCommandEncoder();
@@ -525,27 +583,42 @@ export class WGPUContext {
                 }
                 
                 if (this.state.pipelines!.compute) {
-                    const computePass = encoder.beginComputePass();
-                    computePass.setPipeline(this.state.pipelines!.compute);
-                    computePass.setBindGroup(0, this.state.pipelines!.bindGroup[bindGroup]);
-        
-                    const wgc = this.state.pipelines?.workgroupCount || [1,1,1];
-                    computePass.dispatchWorkgroups(wgc[0], wgc[1], wgc[2]);
-        
-                    computePass.end();    
+                    for (let i = 0; i < (this.state.spec?.computeCount || 1); i++) {
+                        const bg = this.state.spec?.bindings ? this.state.spec.bindings.currentGroup(frame + i) : 0
+                        const computePass = encoder.beginComputePass();
+                        computePass.setPipeline(this.state.pipelines!.compute);
+                        computePass.setBindGroup(0, this.state.pipelines!.bindGroup[bg]);
+            
+                        const wgc = this.state.pipelines?.workgroupCount || [1,1,1];
+                        computePass.dispatchWorkgroups(wgc[0], wgc[1], wgc[2]);
+            
+                        computePass.end();    
+                    }
+                }
+
+                if (this.state.storages) {
+                    this.state.storages.forEach((element,i) => {
+                        if (element.readBuffer) {
+                            //console.log(element.size)
+                            encoder.copyBufferToBuffer(element.buffer, 0, element.readBuffer, 0, element.size);
+                        }
+                    });
                 }
     
                 this.state.device.queue.submit([encoder.finish()]);
+
+                await readBuffers();
+
                 if ((crtl.frames! > 0) && (crtl.reset)) {
                     crtl.reset = false;
                     crtl.frames = 0;
                 }
                 if ((crtl.frames!!=0) && ( frame > crtl.frames! )) crtl.play = false;
-                frame++; 
             
             } else {
                 idle = ((performance.now()- start)/1000) - elapsed;
             }
+            frame++; 
             requestAnimationFrame(render);
         }
         requestAnimationFrame(render);

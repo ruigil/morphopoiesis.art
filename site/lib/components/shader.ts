@@ -1,8 +1,6 @@
-import { WGPU } from "../webgpu/webgpu.ts";
+import { WGPU, WGPUContext } from "../webgpu/webgpu.ts";
 
-export async function shader(spec: any, unis?: any) {
-
-  const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
+export async function shader(gpu: WGPUContext, unis?: any) {
 
   const play = document.querySelector("#play") as HTMLButtonElement;
   const reset = document.querySelector("#reset") as HTMLButtonElement;
@@ -25,17 +23,16 @@ export async function shader(spec: any, unis?: any) {
     if (!document.fullscreenElement) {
       //document.documentElement.requestFullscreen();
       fullscreen.requestFullscreen().then(() => {
-        console.log("fullscreen")
-        console.log(window.innerHeight, window.innerWidth)
+        //console.log("fullscreen")
+        //console.log(window.innerHeight, window.innerWidth)
       }).catch(err => {});;
     } else if (document.exitFullscreen) {
       document.exitFullscreen();
     }
   });
-  
-  const gpu = await new WGPU(canvas!).init();
 
-  gpu.build(spec)
-    .addFPSListener({ onFPS: (fps) => { fpsSmall.textContent = fps.fps + " fps" } })
-    .draw(unis, controls);
+  gpu
+  .addFPSListener({ onFPS: (fps) => { fpsSmall.textContent = fps.fps + " fps" } })
+  .draw(unis,controls)
+  
 }

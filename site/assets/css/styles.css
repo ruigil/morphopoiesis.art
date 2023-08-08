@@ -22,6 +22,13 @@
 .spacing {
   padding: 20px var(--margin);
 }
+.about img {
+  width: 24px;
+  height: 24px;
+  color:aqua;
+  margin: 5px;
+  display: inline-block;
+}
 
 html,
 body {

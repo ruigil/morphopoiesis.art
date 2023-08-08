@@ -1,5 +1,5 @@
 import { shader } from "../../../lib/components/shader.ts";
-import { wgsl } from "../../../lib/webgpu/webgpu.ts";
+import { WGPU, wgsl } from "../../../lib/webgpu/webgpu.ts";
 
 document.addEventListener('DOMContentLoaded', event => {
     colorIfs()
@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', event => {
 async function colorIfs() {
 
     const code = await wgsl("/assets/shaders/color-ifs/color-ifs.wgsl");
-    
-    code && shader({ shader: code });
+    const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
+
+    const gpu = await new WGPU(canvas!).init();
+ 
+    code && shader( gpu.build({ shader: code }) );
 }

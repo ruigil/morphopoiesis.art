@@ -1,13 +1,13 @@
 {
     "shaders": [
       {
-        "id": "color-ifs",
-        "wgsl": "/assets/shaders/color-ifs/color-ifs.wgsl",
-        "js": "/assets/shaders/color-ifs/color-ifs.js",
-        "title": "Color IFS",
-        "description": "A simple colorized IFS fractal",
-        "image": "/assets/img/color-ifs.png",
-        "tags": ["fractal", "ifs"]
+        "id" : "reaction-diffusion",
+        "wgsl": "/assets/shaders/reaction-diffusion/reaction-diffusion.wgsl",
+        "js": "/assets/shaders/reaction-diffusion/reaction-diffusion.js",
+        "title": "Reaction Diffusion",
+        "description": "Reaction diffusion with a Gray-Scott model. Move your mouse to explore the generation of different patterns.",
+        "image": "/assets/img/rd.png",
+        "tags": ["cellular automata","reaction diffusion", "mouse"]
       },
       {
         "id" : "gol",
@@ -16,7 +16,20 @@
         "title": "Game of Life",
         "description": "Conway's Game of Life",
         "image": "/assets/img/gol.png",
-        "tags": ["ca", "life"]
+        "tags": ["cellular automata", "life", "mouse"]
+      },
+      {
+        "id": "color-ifs",
+        "wgsl": "/assets/shaders/color-ifs/color-ifs.wgsl",
+        "js": "/assets/shaders/color-ifs/color-ifs.js",
+        "title": "Color IFS",
+        "description": "A simple colorized IFS fractal",
+        "image": "/assets/img/color-ifs.png",
+        "tags": ["fractal", "ifs","mouse"]
       }
-    ]
-  }
+    ],
+    "debug": {
+      "id": "reaction-diffusion",
+      "js": "/assets/shaders/reaction-diffusion/reaction-diffusion.js"
+    }
+}

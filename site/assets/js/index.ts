@@ -25,25 +25,34 @@ document.addEventListener('DOMContentLoaded', event => {
     const body = document.querySelector('body');
     const styles = getComputedStyle(body!);
 
-    const color = {
-      //bcolor: getRGBValues(styles.backgroundColor),
-      bcolor: [0,0,24],
-      //fcolor: getRGBValues(styles.color)
-      fcolor: [16,128,224]
+    const isDark = (): boolean => {
+      const currentMode = window.matchMedia("(prefers-color-scheme: dark)").matches.toString();
+      return (localStorage.getItem("dark-theme") || currentMode) === "true"; // true = "dark", false = "light"
     }
+
+    const color = isDark() ? {
+      //bcolor: getRGBValues(styles.backgroundColor),
+      bcolor: [16,24,42],
+      //fcolor: getRGBValues(styles.color)
+      fcolor: [224,128,16]
+    } :
+    {
+      bcolor: [240,240,240],
+      fcolor: [196,96,0]
+    };
 
     const observer = new MutationObserver(mutations => {
       mutations.forEach(mutation => {
         if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-          console.log('Style changed:', mutation.target.classList.length);
+          //console.log('Style changed:', mutation.target.classList.length);
           //const styles = getComputedStyle(body!);
           let dark = mutation.target.classList.contains('sl-theme-dark');
           if (dark) {
-            color.bcolor.splice(0,3, ...[0,0,24] );
-            color.fcolor.splice(0,3, ...[16,128,224]);
+            color.bcolor.splice(0,3, ...[16,24,42] );
+            color.fcolor.splice(0,3, ...[224,128,16]);
           } else {
             color.bcolor.splice(0,3, ...[240,240,240] );
-            color.fcolor.splice(0,3, ...[0,96,196]);
+            color.fcolor.splice(0,3, ...[196,96,0]);
           }
         }
       });
@@ -74,7 +83,6 @@ document.addEventListener('DOMContentLoaded', event => {
             currentGroup: (frame:number) => frame % 2,
         }      
     })
-    //.addFPSListener( { onFPS: (fps) => { console.log(fps.fps + " fps") } })
     .draw({ uni: { size: [size, size], fcolor: color.fcolor, bcolor: color.bcolor }});
   }
 

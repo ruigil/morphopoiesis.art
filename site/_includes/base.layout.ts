@@ -1,7 +1,7 @@
-import type { PageData } from "lume/core.ts";
-import { toolbar } from "../lib/components/server.ts";
+import type { PageData, PageHelpers } from "lume/core.ts";
+import { toolbar, footer } from "../lib/components/server.ts";
 
-export default ( data : PageData) => {
+export default ( data : PageData, helpers: PageHelpers) => {
 
   return `
   <html lang="en">
@@ -26,6 +26,7 @@ export default ( data : PageData) => {
     <body class="flex flex-col sl-theme-dark">
       ${ toolbar(data) }
       ${data.content}
+      ${ footer(data, helpers) }
     </body>
   </html>
   `

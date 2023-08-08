@@ -35,6 +35,5 @@ export default ( data: PageData, helpers:PageHelpers) => {
         async>
       </script>
       </main>
-      ${ footer(data,helpers) }
   `
 }

@@ -32,6 +32,8 @@ export default ({ shaders, comp }: PageData ) : string => {
         </sl-card>`
     });
     
-    return `<div class="flex flex-wrap gap-4 w-full">${grid.join(" ")}</div>`
+    return `
+    <div class="font-bold text-center w-full text-xl">These sketches are studies done with WebGSL shaders.</div>
+    <div class="flex flex-wrap gap-4 w-full">${grid.join(" ")}</div>`
 
 }
