@@ -9,7 +9,8 @@ async function gameOfLife() {
 
     const code = await wgsl(`/assets/shaders/gol/gol.wgsl`)
     
-    const current = Array(64*64).fill(0).map(() => Math.random() > 0.5 ? 1 : 0);
+    const size = 128;
+    const current = Array(size*size).fill(0).map(() => Math.random() > 0.5 ? 1 : 0);
 
     const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
 
@@ -19,20 +20,20 @@ async function gameOfLife() {
         shader: code,
         geometry: {
             vertices: Utils.square(1.),
-            instances: 64 * 64
+            instances: size * size
         },
         uniforms: {
             uni: {
-                size: [64, 64],
+                size: [size, size],
                 fcolor: [0,0,0],
                 bcolor: [255,255,255]
             }
         },
         storage: [
             { name: "current", size: current.length, data: current } ,
-            { name: "next", size: 64 * 64 } 
+            { name: "next", size: size * size } 
         ],
-        workgroupCount: [8, 8, 1],
+        workgroupCount: [size / 8, size / 8, 1],
         bindings: {
             groups: [ [0,4,1,2], [0,4,2,1] ],
             currentGroup: (frame:number) => frame % 2,

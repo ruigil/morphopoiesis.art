@@ -9,7 +9,7 @@ export default ( data: PageData, helpers:PageHelpers) => {
       <div class="flex items-center w-full h-60" style="background-image: url(${data.header}); background-size: cover;" ">
         <div class="mx-auto text-5xl p-7 rounded-lg opacity-90 font-bold" style="background: var(--sl-color-neutral-0)">${data.title}</div>  
       </div>
-      <main class="container spacing flex flex-col flex-grow h-full gap-8 mx-auto">
+      <main class="container spacing flex flex-col flex-grow h-full gap-8 mx-auto" data-pagefind-body>
       <div class="max-w-4xl mx-auto">
         ${ data.content }
         <div class="py-4 flex flex-wrap gap-4 items-center">

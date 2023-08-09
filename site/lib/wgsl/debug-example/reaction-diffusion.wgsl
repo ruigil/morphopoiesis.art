@@ -77,7 +77,7 @@ fn computeMain(@builtin(global_invocation_id) cell: vec3u) {
 
     // we divide the screen in 9 areas and we use 
     // the mouse position to select the pattern
-    let m = floor(sys.mouse * 3);
+    let m = floor(sys.mouse * 3.);
     let ai = params[u32(m.y) * 3u + u32(m.x)];
 
     // calculate the value and store it in the next buffer

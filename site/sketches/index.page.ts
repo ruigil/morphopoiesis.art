@@ -16,24 +16,39 @@ type Shader = {
 
 export default ({ shaders, comp }: PageData ) : string => {
 
-    const grid = shaders.map((shader:Shader) => {
-        return `<sl-card class="card-overview  w-96">
-            <a slot="image" href="./${shader.id}">
-            <img
-                src="${shader.image}"
-                alt="${shader.description}"
-            />
-            </a>
-      
-            <strong>${shader.title}</strong><br />
-            ${shader.description}<br />
-            <small>6 weeks old</small>
-            <div class="flex-wrap">${ shader.tags?.map((tag:string) => `<sl-tag size="small">${tag}</sl-tag>`).join(" ") }</div>
-        </sl-card>`
-    });
+    const items = () => {
+        const tags:Map<string,number> = new Map()
+
+        const list = shaders.map((shader:Shader) => {
+            shader.tags.map((tag:string) => tags.set(tag, tags.get(tag) ? tags.get(tag)! + 1 : 1))
+
+            return `<sl-card class="card-overview  w-96">
+                <a slot="image" href="./${shader.id}">
+                <img
+                    src="${shader.image}"
+                    alt="${shader.description}"
+                />
+                </a>
+                <div class="flex flex-col gap-2">
+                <strong>${shader.title}</strong>
+                <div>${shader.description}</div>
+                <div class="flex-wrap">${ shader.tags?.map((tag:string) => `<sl-tag size="small">${tag}</sl-tag>`).join(" ") }</div>
+                </div>
+            </sl-card>`
+        });
+
+        return {
+            shaders : list.join(""),
+            tags: Array.from(tags).map( t => `<sl-tag size="large"><div class="pr-2"><a href="">${t[0]}</a></div> <sl-badge pill>${t[1]}</sl-badge></sl-tag>`).join("")
+        }
+    
+    }
+
+    const data = items();
     
     return `
-    <div class="font-bold text-center w-full text-xl">These sketches are studies done with WebGSL shaders.</div>
-    <div class="flex flex-wrap gap-4 w-full">${grid.join(" ")}</div>`
+    <div id="tags" class="flex flex-wrap gap-2">${ data.tags }</div>
+    <h1>Latest sketches</h1>
+    <div class="flex flex-wrap gap-4 w-full">${ data.shaders }</div>`
 
 }

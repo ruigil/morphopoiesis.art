@@ -42,7 +42,7 @@ fn vertexMain(input : VertexInput) -> VertexOutput {
     var output: VertexOutput;
     output.pos = vec4f(vec2(cellPos), 0., 1.); //[0.1,0.1]...[0.9,0.9] cell vertex positions
     output.uv = vec2f(input.pos.xy); // [-1,-1]...[1,1]
-    output.cell = vec2(cell.x,cell.y); // [0,0],[1,1] ... [size.x, size.y]
+    output.cell = cell; // [0,0],[1,1] ... [size.x, size.y]
     output.state = state; // the current state
     return output;
 }

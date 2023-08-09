@@ -5,7 +5,7 @@
         "wgsl": "/assets/shaders/reaction-diffusion/reaction-diffusion.wgsl",
         "js": "/assets/shaders/reaction-diffusion/reaction-diffusion.js",
         "title": "Reaction Diffusion",
-        "description": "Reaction diffusion with a Gray-Scott model. Move your mouse to explore the generation of different patterns.",
+        "description": "Move your mouse to explore the generation of different patterns.",
         "image": "/assets/img/rd.png",
         "tags": ["cellular automata","reaction diffusion", "mouse"]
       },

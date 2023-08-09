@@ -8,6 +8,9 @@ import tailwindcss from "lume/plugins/tailwindcss.ts";
 import postcss from "lume/plugins/postcss.ts";
 import metas from "lume/plugins/metas.ts";
 import codeHighlight from "lume/plugins/code_highlight.ts";
+import sitemap from "lume/plugins/sitemap.ts";
+import feed from "lume/plugins/feed.ts";
+import pagefind from "lume/plugins/pagefind.ts";
 
 // config
 const site = lume({
@@ -30,6 +33,7 @@ site.copy([".wgsl"]);
 
 // plugins
 site.use(attributes());
+site.use(sitemap());
 site.use(base_path());
 site.use(date());
 site.use(tailwindcss( { extensions: [".html"] } ));
@@ -37,6 +41,19 @@ site.use(postcss());
 site.use(metas());
 site.use(katex());
 site.use(codeHighlight());
+site.use(pagefind());
+site.use(feed({
+  output: ["/notes.rss", "/notes.json"],
+  query: "type=post",
+  info: {
+    title: "=site.title",
+    description: "=site.description",
+  },
+  items: {
+    title: "=title",
+    description: "=excerpt",
+  },
+}));
 site.use(esbuild({
   extensions: [".ts", ".js"],
   esm: {},

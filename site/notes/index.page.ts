@@ -8,20 +8,29 @@ export const menu = { visible: true, order: 1}
 
 export default ({ comp, search, url }: PageData, helpers :PageHelpers) => {
 
+
     const items = () => {
-        const menuItems:string[] = []
-        
+        const notes:string[] = []
+        const tags:Map<string,number> = new Map()
         search.pages("type=post","date=desc").map((page) => {
-            menuItems.push(post( page, helpers ))
+            page?.data.tags?.map((tag:string) => tags.set(tag, tags.get(tag) ? tags.get(tag)! + 1 : 1))
+            notes.push(post( page, helpers ))
         });
         //console.log(menuItems)
-        return menuItems.join("")
+        return {
+            notes: notes.join(""),
+            tags: Array.from(tags).map( t => `<sl-tag size="large"><div class="pr-2"><a href="">${t[0]}</a></div> <sl-badge pill>${t[1]}</sl-badge></sl-tag>`).join("")
+        }
     }
 
+    const data = items();
+
     return `
-    <div class="mx-auto max-w-4xl mt-4 flex flex-col gap-4">
-        <h1>Latest posts</h1>
-        ${items()}
+    <div id="search"></div>
+    <div id="tags" class="flex flex-wrap gap-2">${ data.tags }</div>
+    <h1>Latest notes</h1>
+    <div class="mt-4 flex flex-wrap gap-4">
+        ${ data.notes }
     </div>
     `
 

@@ -22,13 +22,14 @@
 .spacing {
   padding: 20px var(--margin);
 }
-.about img {
-  width: 24px;
-  height: 24px;
-  color:aqua;
-  margin: 5px;
-  display: inline-block;
+
+.social svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
 }
+
 
 html,
 body {
