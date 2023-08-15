@@ -63,8 +63,11 @@ document.addEventListener('DOMContentLoaded', event => {
     gpu.build({
         shader: code,
         geometry: {
-            vertices: Utils.square(1.),
-            instances: size*size
+          vertex: {
+            data: Utils.square(1.),
+            attributes: ["pos"],
+            instances: size * size    
+         }
         },
         uniforms: {
             uni: {
