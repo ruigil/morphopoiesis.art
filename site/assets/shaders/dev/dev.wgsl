@@ -65,8 +65,8 @@ fn vert_main(
 @fragment
 fn frag_main(input : VertexOutput) -> @location(0) vec4<f32> {
     // draw a a little circle for the active cell
-  let d = (1. - smoothstep(0.,.001, length( vec2(abs(input.uv.x) + .015,input.uv.y)) - .03 )  ) ;
-  return vec4(vec2(d),0.,1.);
+  let d = (1. - smoothstep(0.,.001, length( vec2(abs(input.uv.x) + .02,input.uv.y)) - .04 )  ) ;
+  return vec4(vec2(d),0.4,1.);
 }
 
 // https://github.com/austinEng/Project6-Vulkan-Flocking/blob/master/data/shaders/computeparticles/particle.comp

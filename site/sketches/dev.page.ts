@@ -1,9 +1,8 @@
 import type { PageData } from "lume/core.ts";
-import { shader } from '../lib/components/server.ts';
 
 export const layout = "page.layout.ts";
 
-export default  async ({ debug }: PageData) => {
+export default  async (pd: PageData) => {
 
  
     const board = `
@@ -11,7 +10,7 @@ export default  async ({ debug }: PageData) => {
       <div slot="image" id="fullscreen" class="w-full">
         <canvas id="canvas"></canvas>
       </div>
-        <div>${debug.id}</div>
+        <div>DEV</div>
       <div slot="footer">
         <sl-icon-button id="play"  name="pause" label="Play/Pause"></sl-icon-button>
         <sl-icon-button id="reset" name="rewind" label="Reset"></sl-icon-button>
@@ -20,7 +19,7 @@ export default  async ({ debug }: PageData) => {
         <small id="fps">0 fps</small>          
       </div>
     </sl-card>
-    <script type="module" src=${debug.js} defer></script>
+    <script type="module" src='/assets/shaders/dev/dev.js' defer></script>
     `
     const debugPanel = `
     <sl-card class="card-overview w-full">

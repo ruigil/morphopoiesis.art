@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', event => {
 
 async function rd() {
 
-    const code = await wgsl(`/assets/shaders/dev/boids.wgsl`)
+    const code = await wgsl(`/assets/shaders/dev/dev.wgsl`)
 
     const size = 20;
     const initialParticleData = new Array(size * 4);

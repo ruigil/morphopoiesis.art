@@ -27,9 +27,5 @@
         "image": "/assets/img/color-ifs.png",
         "tags": ["fractal", "ifs","mouse"]
       }
-    ],
-    "debug": {
-      "id": "dev",
-      "js": "/assets/shaders/dev/boids.js"
-    }
+    ]
 }
