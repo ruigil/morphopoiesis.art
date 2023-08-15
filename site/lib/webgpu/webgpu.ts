@@ -1,6 +1,6 @@
 /// <reference types="./webgpu.d.ts" />
 
-import { WgslReflect } from "./wgsl_reflect.module.js";
+import { ArrayType, TemplateType, Type, WgslReflect } from "./wgsl_reflect.module.js";
 
 export interface WGPUState {
     canvas: HTMLCanvasElement;
@@ -21,8 +21,9 @@ export interface WGPUState {
 interface Geometry {
     vertexBuffer: GPUBuffer;
     vertexCount: number;
-    vertexBufferLayout?: GPUVertexBufferLayout;
+    vertexBufferLayout?: GPUVertexBufferLayout[];
     instances?: number;
+    instanceBuffers: GPUBuffer[];
 }
 
 interface Resource {
@@ -43,6 +44,7 @@ interface Storage extends Resource {
     readBuffer?: GPUBuffer;
     size: number;
     name: string;
+    vertex: boolean;
 }
 
 interface Pipelines {
@@ -58,11 +60,19 @@ interface Controls {
     frames?: number;
 }
 
+interface VAttr {
+    data?: Array<number>;
+    attributes: Array<string>;
+    instances?: number;
+}
+
 interface WGLSLSpec {
     shader: string;
-    geometry?: { vertices: number[], instances?: number};
+    //geometry?: { vertices: number[], instances?: number};
+    geometry?: { vertex: VAttr, instance?: VAttr };
+
     uniforms?: any;
-    storage?: { name: string, size: number, data?: number[], read?:boolean }[];
+    storage?: { name: string, size: number, data?: number[], read?:boolean, vertex?:boolean, }[];
     workgroupCount?: Array<number>;
     computeCount?: number;
     bindings?: { groups: Array<Array<number>>, currentGroup: (frame:number) => number };
@@ -196,13 +206,34 @@ export class WGPUContext {
         }
 
         const createGeometry = (spec: WGLSLSpec) => {
-            const square = (x: number) => ([
-                -x, -x, x, -x, x,  x,
-                -x, -x, x,  x, -x,  x,
-            ])
 
-            const vertices = new Float32Array(spec.geometry ? spec.geometry.vertices : square(1.)) 
+            const buffersLayout:GPUVertexBufferLayout[] = [];
 
+            // iterate over the inputs of the vertex shader and create the vertex buffer layout with the attributes passed as parameters
+            const makeLayout = ( step: GPUVertexStepMode, attrs: Array<string> ):GPUVertexBufferLayout => {
+                const type = (format:string,name:string) => `${(format == 'f32' ? 'float32' : 'int32')}x${ name == 'vec2' ? '2' : name == 'vec3' ? '3' : '4'}`;
+                const inputs = reflect.entry?.vertex[0].inputs;
+                let stride = 0;
+                const battrs = inputs.filter( (i:any) => attrs.some( a => a === i.name) && i.locationType === 'location').map( (i:any): GPUVertexAttribute => {                
+                    //console.log(i)
+                    const attr = {
+                        shaderLocation: i.location,
+                        offset: stride,
+                        format: type(i.type.format.name, i.type.name) as GPUVertexFormat,
+                    } 
+                    stride += (i.type.name == 'vec2' ? 2 : i.type.name == 'vec3' ? 3 : 4) * 4;
+                    return attr;                    
+                });
+                return {
+                    arrayStride: stride,
+                    stepMode: step,
+                    attributes: battrs
+                }
+            }
+
+            const vertices = new Float32Array(spec.geometry && spec.geometry.vertex.data || Utils.square(1.) ) 
+            // there is always a vertex buffer
+            buffersLayout.push(makeLayout("vertex",spec.geometry?.vertex.attributes || ["pos"]))
             const vertexBuffer = this.state.device.createBuffer({
                 label: "Geometry vertices",
                 size: vertices.byteLength,
@@ -210,7 +241,25 @@ export class WGPUContext {
             });
             this.state.device.queue.writeBuffer(vertexBuffer, 0, vertices);
 
+            // if there is an instance buffer, create the buffer layout
+            let instancesBuffer:Array<GPUBuffer> = [];
+            if (spec.geometry && spec.geometry.instance) {
+                buffersLayout.push(makeLayout("instance",spec.geometry?.instance.attributes))
+                // if there is data create the vertex buffer
+                if (spec.geometry.instance.data) {
+                    const vertices = new Float32Array(spec.geometry && spec.geometry.instance.data )
+
+                    instancesBuffer = [this.state.device.createBuffer({
+                        label: "Geometry instance",
+                        size: vertices.byteLength,
+                        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+                    })];
+                    this.state.device.queue.writeBuffer(vertexBuffer, 0, vertices);     
+                }
+            }
+
             // this assumes that the vertex shader has a single input of type vec2f at location 0
+            /*
             const vertexBufferLayout:GPUVertexBufferLayout = {
                 arrayStride: 8,
                 attributes: [{
@@ -219,12 +268,17 @@ export class WGPUContext {
                     shaderLocation: 0, // Position, see vertex shader
                 }],
             };
+            */
+            console.log("buffers layouts",buffersLayout);
+            const instancesCount = spec.geometry && (spec.geometry.vertex.instances || spec.geometry.instance?.instances) || 1;
+            console.log(instancesCount);
             return {
                 vertices: vertices,
                 vertexBuffer: vertexBuffer,
                 vertexCount: vertices.length / 2,
-                vertexBufferLayout: vertexBufferLayout,
-                instances: spec.geometry?.instances || 1
+                vertexBufferLayout: buffersLayout,
+                instances: instancesCount,
+                instanceBuffers: instancesBuffer
             }
         }
 
@@ -252,9 +306,12 @@ export class WGPUContext {
                         const size = member.size / 4;
                         const value = uni[member.name] || Array(size).fill(0);
                         const type = member.type.name;
+                        //console.log("member", member.name, "type", type, "size", size, "value", value)
                         const offset = member.offset;
                         uniformViews[info.name][member.name] = isFloat(type) ? new Float32Array(uniformArray, offset, size) : new Uint32Array(uniformArray, offset, size);
-                        uniformViews[info.name][member.name].set(value);
+                        value[Symbol.iterator] ? 
+                            uniformViews[info.name][member.name].set(value) : 
+                            uniformViews[info.name][member.name].set([value]);
                     }
                 } else {
                     const size = info!.size / 4;
@@ -292,16 +349,42 @@ export class WGPUContext {
             const storage = (name:string)=> {
                 return spec.storage ? spec.storage.find((element) => element.name === name) : undefined;
             }
-            const sizeFormat = (format: string) => {
+            const sizeFormat = (type: Type) : {size: number, format: string} => {
                 const formats:Record<string,number> = {
                     f32: 4,
                     u32: 4,
                     i32: 4,
-                    vec2f: 8,
-                    vec3f: 16, // is it ?
-                    vec4f: 16,
                 }
-                return formats[format];
+                const sformats:Record<string,string> = {
+                    f32: 'float',
+                    u32: 'uint',
+                    i32: 'int',
+                }
+                const sizes:Record<string,number> = {
+                    vec2: 2,
+                    vec3: 4, // is it ?
+                    vec4: 4,
+                }
+
+                //console.log(type)
+                if (type instanceof TemplateType) {
+                    //console.log("type", type.name, "format",type.format.name)
+                    return { size: formats[type.format.name] * sizes[type.name], format: sformats[type.format.name] };    
+                }
+                if (type instanceof ArrayType) {
+                    //console.log("type", type.name, "format",type.format.name)
+                    if (type.format.name.endsWith('32')) return { size: formats[type.format.name], format: sformats[type.format.name] };
+                    return sizeFormat(type.format);  
+                }
+
+                const struct = reflect.structs.find( e => e.name == type.name);
+                //console.log("format", type.name, "struct", struct)
+
+                const sum = struct.members.reduce((acc:number, curr:any) => { 
+                    return acc + sizeFormat(curr.type).size 
+                }, 0);
+                //console.log("sum",sum)                
+                return { size: sum, format: 'float' } // float ?
             }
 
             for(let i = 0; i < reflect.storage.length; i++) {
@@ -310,22 +393,23 @@ export class WGPUContext {
                 const sto = storage(node.name);
                 if (!sto) throw new Error(`Storage spec for ${node.name} not found`);
                 const size = sto.size;
-                const sf = sizeFormat(node.type.format.name);
-                //console.log(node.name, size, sf)
+                // gives a byte size and format for the type present in the storage buffer
+                const sf = sizeFormat(node.type);
+                console.log(node.name, size, sf.size, sf.format)
                 const storageBuffer = this.state.device.createBuffer({
                     label: "Storage Buffer",
-                    size: size * sf,
-                    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | (sto.read ? GPUBufferUsage.COPY_SRC : 0),
+                    size: size * sf.size,
+                    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | (sto.read ? GPUBufferUsage.COPY_SRC : 0) | ((sto.vertex ? GPUBufferUsage.VERTEX : 0)),
                 });
                 const readBuffer = sto.read ? this.state.device.createBuffer({
                         label: sto.name + " Read Buffer",
-                        size: size * sf,
+                        size: size * sf.size,
                         usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
                 }) : undefined;
                 
-                const data = sto.data ? sto.data : new Array(size).fill(0);
-                const isFloat = () => node.type.format.name.endsWith('f') || node.type.format.name.startsWith('f');
-                const stArray = isFloat() ? new Float32Array(size) : new Uint32Array(size);
+                const s = size * (sf.size/4);
+                const data = sto.data ? sto.data : new Array(s).fill(0);
+                const stArray = sf.format === 'float' ? new Float32Array(s) : sf.format === 'uint' ? new Uint32Array(s) : new Int32Array(s);                
                 stArray.set(data);
                 this.state.device.queue.writeBuffer(storageBuffer, 0, stArray);
                 
@@ -333,8 +417,9 @@ export class WGPUContext {
                     binding: reflect.storage[i].binding,
                     buffer: storageBuffer,
                     readBuffer: readBuffer,
-                    size: size * sf,
-                    name: node.name,
+                    size: size * sf.size, // for read buffer copy size
+                    name: node.name, // for notifying listeners of read 
+                    vertex: sto.vertex || false,
                     type: node.access === "read_write" ? "storage" :"read-only-storage"  
                 });
 
@@ -364,13 +449,14 @@ export class WGPUContext {
             // this is needed because we use two different piplines and they must share the same layout
             // to be able to reuse the same variables and uniforms
             const bindGroupLayout = this.state.device.createBindGroupLayout({
-                label: "Cell Bind Group Layout",
+                label: "Bind Group Layout",
                 entries: entries
             });
             return bindGroupLayout;
         }
 
         const createBindGroups = (spec:WGLSLSpec, resources:Resource[]) => {
+            // there is something wrong with the bindgroups. Thex should be create based on the bindings defined in the shader
             const buffers = new Array<any>(reflect.getBindGroups()[0].length)
             //console.log("length ",reflect.getBindGroups()[0].length)
             //console.log("resources",resources)
@@ -430,7 +516,7 @@ export class WGPUContext {
                 vertex: {
                   module: shaderModule,
                   entryPoint: vertexEntryPoint,
-                  buffers: [geometry.vertexBufferLayout]
+                  buffers: geometry.vertexBufferLayout
                 },
                 fragment: {
                   module: shaderModule,
@@ -448,6 +534,8 @@ export class WGPUContext {
         const geometry = createGeometry(wgslSpec);
         const uniforms = createUniforms(wgslSpec);
         const storages = createStorage(wgslSpec);
+        // we assume that instance buffers are in the same order as the bind groups
+        geometry.instanceBuffers = storages.filter(s => s.vertex).map( s => s.buffer )
 
         const resources = [...uniforms, ...storages];
         
@@ -573,6 +661,7 @@ export class WGPUContext {
                     
                     pass.setPipeline(this.state.pipelines!.render);
                     pass.setVertexBuffer(0, this.state.geometry!.vertexBuffer);
+                    this.state.geometry!.instanceBuffers.length > 0 && pass.setVertexBuffer(1, this.state.geometry!.instanceBuffers[bindGroup])
                     elapsed = ((performance.now() - start) / 1000) - idle;
             
          

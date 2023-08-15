@@ -29,7 +29,7 @@
       }
     ],
     "debug": {
-      "id": "reaction-diffusion",
-      "js": "/assets/shaders/reaction-diffusion/reaction-diffusion.js"
+      "id": "dev",
+      "js": "/assets/shaders/dev/boids.js"
     }
 }

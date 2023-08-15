@@ -19,7 +19,7 @@ struct Uni {
 @group(0) @binding(2) var<storage, read_write> next: array<u32>;
 
 struct VertexInput {
-    @location(0) pos: vec2f,
+    @location(0) pos: vec2<f32>,
     @builtin(instance_index) instance: u32
 };
 

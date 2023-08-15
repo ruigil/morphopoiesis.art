@@ -13,11 +13,11 @@ struct Uni {
 
 @group(0) @binding(0) var<uniform> uni: Uni;
 @group(0) @binding(4) var<uniform> sys: Sys;
-@group(0) @binding(1) var<storage> current: array<vec2f>;
-@group(0) @binding(2) var<storage, read_write> next: array<vec2f>;
+@group(0) @binding(1) var<storage> current: array<vec2<f32>>;
+@group(0) @binding(2) var<storage, read_write> next: array<vec2<f32>>;
 
 struct VertexInput {
-    @location(0) pos: vec2f,
+    @location(0) pos: vec2<f32>,
     @builtin(instance_index) instance: u32
 };
 
@@ -88,6 +88,7 @@ fn computeMain(@builtin(global_invocation_id) cell: vec3u) {
     let pos = vec2u(floor(sys.mouse.xy * uni.size));
     let index = pos.y * u32(uni.size.y) + pos.x;
     next[index].y = 1.;
+
 }
 
 // convert a color in hsv color space to rgb 

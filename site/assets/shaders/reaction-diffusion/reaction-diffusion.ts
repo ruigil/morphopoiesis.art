@@ -19,8 +19,11 @@ async function rd() {
     const context = gpu.build({
         shader: code,
         geometry: {
-            vertices: Utils.square(1.),
-            instances: size * size
+            vertex: {
+                data: Utils.square(1.),
+                attributes: ["pos"],
+                instances: size * size    
+            }
         },
         uniforms: {
             uni: {
@@ -28,8 +31,8 @@ async function rd() {
             }
         },
         storage: [
-            { name: "current", size: current.length, data: current } ,
-            { name: "next", size: size * size }, 
+            { name: "current", size: size * size, data: current } ,
+            { name: "next", size: size * size}, 
         ],
         workgroupCount: [size / 8, size / 8, 1],
         computeCount: 32,

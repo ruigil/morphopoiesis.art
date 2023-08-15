@@ -11,7 +11,7 @@ struct Sys {
 @group(0) @binding(0) var<uniform> sys: Sys;
 
 @vertex
-fn vertexMain(@location(0) pos: vec2f) -> @builtin(position) vec4f  {
+fn vertexMain(@location(0) pos: vec2<f32>) -> @builtin(position) vec4f  {
     return vec4f(pos,0.,1.);
 }
 
