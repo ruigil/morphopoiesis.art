@@ -11,6 +11,7 @@ import codeHighlight from "lume/plugins/code_highlight.ts";
 import sitemap from "lume/plugins/sitemap.ts";
 import feed from "lume/plugins/feed.ts";
 import pagefind from "lume/plugins/pagefind.ts";
+import imagick from "lume/plugins/imagick.ts";
 
 // config
 const site = lume({
@@ -28,7 +29,7 @@ const site = lume({
 
 // assets
 site.ignore("/lib");
-site.copy("/assets/img");
+site.copy("/assets/img/svg");
 site.copy([".wgsl"]);
 
 // plugins
@@ -42,6 +43,7 @@ site.use(metas());
 site.use(katex());
 site.use(codeHighlight());
 site.use(pagefind());
+site.use(imagick());
 site.use(feed({
   output: ["/notes.rss", "/notes.json"],
   query: "type=post",

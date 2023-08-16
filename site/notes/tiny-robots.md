@@ -2,7 +2,7 @@
 title: Tiny robots
 layout: post.layout.ts
 type: post
-header: /assets/img/gol.png
+header: /assets/img/gol
 date: Git Created
 tags:
     - WebGPU
@@ -14,7 +14,7 @@ In every scientific domain there is an foundational object of study. Physicists 
 
 Cellular automata is the name given to a discrete model of computation invented by [John Von Neumann](https://en.wikipedia.org/wiki/John_von_Neumann) in the 1940's. To describe it, imagine all space is divided into a grid of cells, within each is a tiny robot.  Each robot has a current state,  and a set of rules  to determine what will be their next state, based on their current state and the state of its local neighbours.  The neighbours are all the other robots in their adjacent cells.
 
-![GRID](/assets/img/ca-grid.svg)
+![GRID](/assets/img/svg/ca-grid.svg)
 
 It seems like a toy model, but it is very powerful. Von Neumann invented this model, to accomplish his objective of designing a machine whose complexity would grow akin to biological organisms. For that to happen, it decided that the minimum complexity required would be a machine that self-replicated., and he managed to design one called the [Universal Constructor](https://en.wikipedia.org/wiki/Von_Neumann_universal_constructor), a cellular automata that has 29 states, and is able to self-replicate. 
 
@@ -24,4 +24,4 @@ Let pause briefly for the implications of this. This system is a simple iterativ
 
 Here is a the Game of Life [implemented](/sketches/gol/) with WebGPU.
 
-[![GOL](/assets/img/gol.png)](/sketches/gol/)
+[![GOL](/assets/img/gol-big.webp)](/sketches/gol/)

@@ -1,3 +1,5 @@
 .vscode/
 _site/
 _bin/
+site/_cache/
+

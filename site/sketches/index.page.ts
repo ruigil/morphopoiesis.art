@@ -25,7 +25,7 @@ export default ({ shaders, comp }: PageData ) : string => {
             return `<sl-card class="card-overview  w-96">
                 <a slot="image" href="./${shader.id}">
                 <img
-                    src="${shader.image}"
+                    src="${shader.image}.webp"
                     alt="${shader.description}"
                 />
                 </a>

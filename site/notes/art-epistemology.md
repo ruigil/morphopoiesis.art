@@ -2,7 +2,7 @@
 title: Art, as a new epistemology
 layout: post.layout.ts
 type: post
-header: /assets/img/treeoflife.jpg
+header: /assets/img/treeoflife
 date: 2023-07-31
 featured: true
 tags:
@@ -48,6 +48,6 @@ So, if we cannot separate the process of knowing, from our own subjective world,
 
 When we look at the beautiful hydrodynamic shape of a shark, or the ultra quiet feathers of an owl, we realize that these shapes are knowledge that Nature has «crystallized» in living things adapted to their environments. When we see a [paramecium](http://en.wikipedia.org/wiki/Paramecium) swimming in a sugar gradient, we marvel how such a simple life form, «know-how» to do that. This process of cognition has accelerated with humans, and exploded in our cybernetic days. So what we call mind can no longer be something limited to the human brain, but something that extends through circuits and relationships, outside our bodies connecting with a bigger Mind, in which the human mind is only a subsystem. Mind becomes the whole evolutive structure itself. As Gregory Bateson said: [«This larger Mind is comparable to God and is perhaps what some people mean by “God,” but it is still immanent in the total interconnected social system and planetary ecology»](https://faculty.washington.edu/jernel/521/Form.htm)
 
-![The Tree of Life](/assets/img/treeoflife.jpg)
+![The Tree of Life](/assets/img/treeoflife-big.webp)
 
 This image represents the [«Tree Of Life»](http://en.wikipedia.org/wiki/Tree_of_life). Its a work of art, that covers the wall of the Wat Xieng Thong temple, in Luangprabang, Laos. The myth of the Tree Of Life, is common to many ancient civilizations, and is a metaphor, for the ascension of complexity of life forms, from earth to heaven, or the path to God. One, does not need to stretch the imagination, to see in this image the knowledge of evolution or that everything is connected, centuries before Darwin or quantum mechanics. It is a structure that diversifies but keeps its whole coherence intact. The kabbalah used the myth of the Tree of Life as a model of creation, and it is no coincidence, that the Tree of Life from where Adam ate the forbidden fruit, was [the tree of knowledge](http://en.wikipedia.org/wiki/Tree_of_the_knowledge_of_good_and_evil) of good and evil… As we keep wandering through the Total Library, we will find Borges own words: [«the task of art is to transform what is continuously happening to us, to transform all these things into symbols, into music, into something which can last in memory.»](https://www.youtube.com/watch?v=mJeLGd3JV2I)

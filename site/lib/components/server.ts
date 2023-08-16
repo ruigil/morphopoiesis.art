@@ -41,7 +41,7 @@ export const toolbar = ({ search, metas, url }: PageData) => {
     <nav class="navbar-container">
         <div class="navbar">
             <a href="/" class="navbar-logo" aria-label="Return home">
-                <img src="/assets/img/morphopoiesis.svg" width="40" height="40" alt="morphopoiesis logo"/>
+                <img src="/assets/img/svg/morphopoiesis.svg" width="40" height="40" alt="morphopoiesis logo"/>
                 <span class="text-2xl">${metas?.site}</span>
             </a>
 
@@ -103,7 +103,7 @@ export const post = (page: Page | Data | undefined, { date }: PageHelpers) => {
 <div class="max-w-4xl rounded border p-4 panel visible">
     <div class="flex flex-wrap gap-4">
         <div class="flex-start">
-            <img src="${page!.data.header}" class="w-40 h-40 rounded-lg m-0" alt="${page!.data.title}">
+            <img src="${page!.data.header}-small.webp" class="w-40 h-40 rounded-lg m-0" alt="${page!.data.title}">
         </div>
         <div class="flex flex-col gap-3 max-w-md">
             <div class="text-2xl"><a href="${page!.data.url}">${page!.data.title}</a></div>

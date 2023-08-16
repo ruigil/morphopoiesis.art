@@ -55,7 +55,6 @@ export class WGPU {
         context.configure({
             device: device,
             format: navigator.gpu.getPreferredCanvasFormat(),
-            //alphaMode: "premultiplied"
         });
 
         return new WGPUContext({

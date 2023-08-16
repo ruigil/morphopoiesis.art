@@ -2,7 +2,7 @@
 title: Euler and Lagrange
 layout: post.layout.ts
 type: post
-header: /assets/img/boids.png
+header: /assets/img/boids
 date: Git Created
 tags:
     - Boids
@@ -28,5 +28,5 @@ Cellular automata model the world as *fields* while Boids model the world as *pa
 
 Here is an [implementation](/sketches/boids/) of the Boids algorithm on the GPU, which kind of hurts because it has no advantage to a CPU implementation (it's not parallelizable). On the other hand, cellular automata and GPU's, (because they are massively parallelizable), are a match made in heaven.
 
-[![boids](/assets/img/boids.png)](/sketches/boids/)
+[![boids](/assets/img/boids-big.webp)](/sketches/boids/)
 

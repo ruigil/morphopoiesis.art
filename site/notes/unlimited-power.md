@@ -2,7 +2,7 @@
 title: Unlimited Power
 layout: post.layout.ts
 type: post
-header: /assets/img/color-ifs.png
+header: /assets/img/color-ifs
 date: 2023-08-01
 tags:
     - WebGPU
@@ -16,7 +16,7 @@ We had a good run. From the 60.000 operations per seconds on the Intel 4004 in t
 
 Sure, we can't double the number of transistors, to squeeze more juice, but there is other ways to get more raw compute power, **parallelism**, raising the number of cores is the new way forward. Gone are the days were CPU had only one core, today the latest CPU's typically have tens of computing cores, but even they are been outpaced by the latest GPU inside your graphics card with many thousands of cores. The end result is this.
 
-![GPUVSCPU](/assets/img/gpu3.webp)
+![GPUVSCPU](/assets/img/svg/gpu3.webp)
 
 These little beasts have been pushing the limit of computing power, and now, we the enormous demand of compute hungry AI deep learning models, the number of cores will tend to grow exponentially. Can we use it? Sure. Recently, all this compute power was made available to web developers with the latest [WebGPU API](https://www.w3.org/TR/webgpu/). This API is an evolution of the old graphics libraries ([WebGL](https://registry.khronos.org/webgl/specs/latest/1.0/)) to make this available to generic computing without being explicily tied to graphics but also to get more performance from the GPU.
 
@@ -41,4 +41,4 @@ It's written in [WGSL](https://www.w3.org/TR/WGSL/), an it's a little program th
 
 Here [try it](/sketches/color-ifs/), you can play with your mouse.
 
-![ColorIFS](/assets/img/color-ifs.png)
+![ColorIFS](/assets/img/color-ifs-big.webp)

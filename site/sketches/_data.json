@@ -6,7 +6,7 @@
         "js": "/assets/shaders/boids/boids.js",
         "title": "Boids",
         "description": "Android birds with flocking behaviour. You can play with your mouse to attract them.",
-        "image": "/assets/img/boids.png",
+        "image": "/assets/img/boids",
         "tags": ["boids","particles","mouse"]
       },
       {
@@ -15,7 +15,7 @@
         "js": "/assets/shaders/reaction-diffusion/reaction-diffusion.js",
         "title": "Reaction Diffusion",
         "description": "Move your mouse to explore the generation of different patterns.",
-        "image": "/assets/img/rd.png",
+        "image": "/assets/img/rd",
         "tags": ["cellular automata","reaction diffusion", "mouse"]
       },
       {
@@ -24,7 +24,7 @@
         "js": "/assets/shaders/gol/gol.js",
         "title": "Game of Life",
         "description": "Conway's Game of Life",
-        "image": "/assets/img/gol.png",
+        "image": "/assets/img/gol",
         "tags": ["cellular automata", "life", "mouse"]
       },
       {
@@ -33,7 +33,7 @@
         "js": "/assets/shaders/color-ifs/color-ifs.js",
         "title": "Color IFS",
         "description": "A simple colorized IFS fractal",
-        "image": "/assets/img/color-ifs.png",
+        "image": "/assets/img/color-ifs",
         "tags": ["fractal", "ifs","mouse"]
       }
     ]
