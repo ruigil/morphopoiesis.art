@@ -7,7 +7,7 @@ export default (data: PageData, helpers: PageHelpers) => {
 
   return `
       <main class="container spacing flex flex-col flex-grow h-full w-full gap-8 mx-auto">
-        <div class="max-w-3xl mx-auto">
+        <div class="max-w-3xl mx-auto about">
           ${data.content}
           <hr>
           <div class="flex place-items-center gap-2 social py-5">

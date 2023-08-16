@@ -1,6 +1,15 @@
 {
     "shaders": [
       {
+        "id" : "boids",
+        "wgsl": "/assets/shaders/boids/boids.wgsl",
+        "js": "/assets/shaders/boids/boids.js",
+        "title": "Boids",
+        "description": "Android birds with flocking behaviour. You can play with your mouse to attract them.",
+        "image": "/assets/img/boids.png",
+        "tags": ["boids","particles","mouse"]
+      },
+      {
         "id" : "reaction-diffusion",
         "wgsl": "/assets/shaders/reaction-diffusion/reaction-diffusion.wgsl",
         "js": "/assets/shaders/reaction-diffusion/reaction-diffusion.js",

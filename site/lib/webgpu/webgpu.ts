@@ -1,100 +1,8 @@
 /// <reference types="./webgpu.d.ts" />
 
+import { BufferListener, Controls, FPSListener, Geometry, ReadStorage, Resource, Uniform, VertexStorage, WGLSLSpec, WGPUState, Storages, Storage } from "./webgpu.interfaces.ts";
 import { ArrayType, TemplateType, Type, WgslReflect } from "./wgsl_reflect.module.js";
 
-export interface WGPUState {
-    canvas: HTMLCanvasElement;
-    context: GPUCanvasContext;
-    adapter: GPUAdapter;
-    device: GPUDevice;
-    clearValue?: GPUColor;
-    geometry?: Geometry;
-    uniforms?: Array<Uniform>;
-    pipelines?: Pipelines;
-    spec?: WGLSLSpec;
-    storages?: Storages;
-
-    fpsListeners?: Array<FPSListener>;
-    bufferListeners?: Array<BufferListener>;
-}
-
-interface Geometry {
-    vertexBuffer: GPUBuffer;
-    vertexCount: number;
-    vertexBufferLayout?: GPUVertexBufferLayout[];
-    instances?: number;
-    instanceBuffer?: GPUBuffer | undefined;
-}
-
-interface Resource {
-    binding: number;
-    buffer: GPUBuffer;
-    type: GPUBufferBindingType;
-}
-
-interface Uniform extends Resource {
-    uniValues: ArrayBuffer;
-    uniViews: any;
-}
-
-interface Storage extends Resource {
-}
-
-interface ReadStorage  {
-    srcBuffer: GPUBuffer;
-    dstBuffer: GPUBuffer;
-    size: number;
-    name: string;
-}
-
-interface VertexStorage {
-    buffer: GPUBuffer;
-}
-
-interface Storages {
-    storages: Array<Storage>;
-    readStorages: Array<ReadStorage>;
-    vertexStorages: Array<VertexStorage>;
-}
-
-interface Pipelines {
-    render?: GPURenderPipeline;
-    compute?: GPUComputePipeline;
-    bindGroup: Array<GPUBindGroup>;
-    workgroupCount?: Array<number>;
-}
-
-interface Controls {
-    play?: boolean;
-    reset?: boolean;
-    frames?: number;
-}
-
-interface VAttr {
-    data?: Array<number>;
-    attributes: Array<string>;
-    instances?: number;
-}
-
-interface WGLSLSpec {
-    shader: string;
-    //geometry?: { vertices: number[], instances?: number};
-    geometry?: { vertex: VAttr, instance?: VAttr };
-
-    uniforms?: any;
-    storage?: { name: string, size: number, data?: number[], read?:boolean, vertex?:boolean, }[];
-    workgroupCount?: Array<number>;
-    computeCount?: number;
-    bindings?: { groups: Array<Array<number>>, currentGroup: (frame:number) => number };
-}
-
-interface FPSListener {
-    onFPS: (fps: { fps: string, time: string}) => void;
-}
-
-interface BufferListener {
-    onRead: (buffer: Array<{ name: string, buffer: ArrayBuffer }>) => void;
-}
 
 export async function wgsl(name: string) {
     const response = await fetch(name);
@@ -111,6 +19,13 @@ export class Utils {
         -x, -x,
         x,  x,
         -x,  x,
+        ]
+    }
+    static triangle(x: number) {
+        return [
+        -x, -x, 
+        x, -x,
+        0,  x,
         ]
     }
 }
@@ -140,7 +55,7 @@ export class WGPU {
         context.configure({
             device: device,
             format: navigator.gpu.getPreferredCanvasFormat(),
-            alphaMode: "premultiplied"
+            //alphaMode: "premultiplied"
         });
 
         return new WGPUContext({
@@ -164,6 +79,8 @@ export class WGPUContext {
         this.observer = new ResizeObserver((entries) => {
             this.state.canvas.width = entries[0].target.clientWidth * devicePixelRatio;
             this.state.canvas.height = entries[0].target.clientWidth * devicePixelRatio;
+            //this.state.canvas.width = entries[0].devicePixelContentBoxSize[0].inlineSize;
+            //this.state.canvas.height = entries[0].devicePixelContentBoxSize[0].blockSize;
             this.resolution[0] = entries[0].target.clientWidth;
             this.resolution[1] = entries[0].target.clientHeight;
         });
@@ -256,9 +173,24 @@ export class WGPUContext {
             }
         }
 
-        const createUniforms = (spec: WGLSLSpec, reflect: WgslReflect) : Uniform[] => {
+        const sizeFormat = (type: Type): {size: number, format: string} => {
+            if (type instanceof ArrayType) return sizeFormat(type.format)
+            if (type instanceof TemplateType) return { size: reflect.getTypeInfo(type)!.size, format: type.format.name }
+            const struct = reflect.structs.find( e => e.name == type.name);
+            if (struct) {
+                return struct.members.reduce((acc:any, curr:any) => { 
+                    const sf = sizeFormat(curr.type);
+                    return { size : acc.size + sf.size, format: sf.format }  
+                }, {size: 0, format: ''});    
+            }
+            if (type.name.startsWith('vec') && type.name.endsWith('f')) return { size: parseInt(type.name.substring(3,4)) * 4, format: 'f32' } 
+            if (type.name.startsWith('vec') && type.name.endsWith('u')) return { size: parseInt(type.name.substring(3,4)) * 4, format: 'u32' } 
+            if (type.name.startsWith('vec') && type.name.endsWith('i')) return { size: parseInt(type.name.substring(3,4)) * 4, format: 'i32' } 
 
-            const isFloat = (type: string) => { return type.endsWith('f') || type.startsWith('f') }
+            return { size: 4, format: type.name }
+        }
+
+        const createUniforms = (spec: WGLSLSpec, reflect: WgslReflect) : Uniform[] => {
 
             const uniforms = spec.uniforms || {};
             const uniformsBinding:Array<Uniform> = [];
@@ -271,18 +203,23 @@ export class WGPUContext {
                 const uniformArray = new ArrayBuffer(info!.size);
                 const uniformViews:any = {};
 
-
                 if (info.members) {
                     uniformViews[info.name] = {};
                     const uni = uniforms[info.name] || {};
                     for (let i=0; i< info!.members.length; i++) {
                         const member = info.members[i];
+                        //console.log(member)
                         const size = member.size / 4;
                         const value = uni[member.name] || Array(size).fill(0);
-                        const type = member.type.name;
+                        const sf = sizeFormat(member.type);
                         //console.log("member", member.name, "type", type, "size", size, "value", value)
+                        //console.log("iterator", value[Symbol.iterator])
                         const offset = member.offset;
-                        uniformViews[info.name][member.name] = isFloat(type) ? new Float32Array(uniformArray, offset, size) : new Uint32Array(uniformArray, offset, size);
+                        uniformViews[info.name][member.name] = 
+                            sf.format === 'f32' ? new Float32Array(uniformArray, offset, size) : 
+                            sf.format === 'u32' ? new Uint32Array(uniformArray, offset, size) : 
+                            new Int32Array(uniformArray, offset, size);
+
                         value[Symbol.iterator] ? 
                             uniformViews[info.name][member.name].set(value) : 
                             uniformViews[info.name][member.name].set([value]);
@@ -290,9 +227,12 @@ export class WGPUContext {
                 } else {
                     const size = info!.size / 4;
                     const value = uniforms[info.name] || Array(size).fill(0);
-                    const type = info.type.name;
+                    const sf = sizeFormat(info.type);
                     const offset = 0;
-                    uniformViews[info.name] = isFloat(type) ? new Float32Array(uniformArray, offset, size) : new Uint32Array(uniformArray, offset, size);
+                    uniformViews[info.name] = 
+                        sf.format === 'f32' ? new Float32Array(uniformArray, offset, size) : 
+                        sf.format === 'u32' ? new Uint32Array(uniformArray, offset, size) : 
+                        new Int32Array(uniformArray, offset, size);
                     uniformViews[info.name].set(value);
                 }
                 
@@ -325,41 +265,6 @@ export class WGPUContext {
             const storage = (name:string)=> {
                 return spec.storage ? spec.storage.find((element) => element.name === name) : undefined;
             }
-            const sizeFormat = (type: Type) : {size: number, format: string} => {
-                const formats:Record<string,number> = {
-                    f32: 4,
-                    u32: 4,
-                    i32: 4,
-                }
-                const sformats:Record<string,string> = {
-                    f32: 'float',
-                    u32: 'uint',
-                    i32: 'int',
-                }
-                const sizes:Record<string,number> = {
-                    vec2: 2,
-                    vec3: 4, // is it ?
-                    vec4: 4,
-                }
-
-                //console.log(type)
-                if (type instanceof TemplateType) {
-                    //console.log("type", type.name, "format",type.format.name)
-                    return { size: formats[type.format.name] * sizes[type.name], format: sformats[type.format.name] };    
-                }
-                if (type instanceof ArrayType) {
-                    // in case array of a primitive type u32, f32 or i32
-                    if (type.format.name.endsWith('32')) return { size: formats[type.format.name], format: sformats[type.format.name] };
-                    return sizeFormat(type.format);  
-                }
-
-                // in case it is not a template or array type we assume a structural type.
-                const struct = reflect.structs.find( e => e.name == type.name);
-                const sum = struct.members.reduce((acc:number, curr:any) => { 
-                    return acc + sizeFormat(curr.type).size 
-                }, 0);
-                return { size: sum, format: 'float' } // float ?
-            }
 
             for(let i = 0; i < reflect.storage.length; i++) {
                 const node = reflect.storage[i].node;
@@ -369,7 +274,9 @@ export class WGPUContext {
                 // gives a byte size and format for the type present in the storage buffer
                 // we need this to allocate the right size given the type of the buffer
                 // so we can copy the data from the spec to the buffer
+                //const sf = sizeFormat(node.type);
                 const sf = sizeFormat(node.type);
+                //console.log(node.name,sf);
                 
                 //console.log(node.name, size, sf.size, sf.format)
                 const storageBuffer = this.state.device.createBuffer({
@@ -399,7 +306,7 @@ export class WGPUContext {
                 
                 const s = size * (sf.size/4); // divided by 4 because we are using 32 bits
                 const data = sto.data ? sto.data : new Array(s).fill(0);
-                const stArray = sf.format === 'float' ? new Float32Array(s) : sf.format === 'uint' ? new Uint32Array(s) : new Int32Array(s);                
+                const stArray = sf.format === 'f32' ? new Float32Array(s) : sf.format === 'u32' ? new Uint32Array(s) : new Int32Array(s);                
                 stArray.set(data);
                 this.state.device.queue.writeBuffer(storageBuffer, 0, stArray);
                 
@@ -525,7 +432,6 @@ export class WGPUContext {
             });
         }
 
-
         const reflect = new WgslReflect(wgslSpec.shader);
 
         const shaderModule = createShaderModule(wgslSpec);
@@ -539,12 +445,12 @@ export class WGPUContext {
         const bindGroups = createBindGroups(wgslSpec, resources);
 
         const pipelineLayout = createPipelineLayout(bindGroupLayout);
+        
+        const renderPipeline = createRenderPipeline(shaderModule, pipelineLayout, reflect);
 
         const computePipeline = createComputePipeline(shaderModule, pipelineLayout, reflect);
         if (computePipeline && !wgslSpec.workgroupCount)
             throw new Error("You have a compute shader but 'workgroupCount' is not defined.");
-        
-        const renderPipeline = createRenderPipeline(shaderModule, pipelineLayout, reflect);
             
         return new WGPUContext({
             ...this.state,
@@ -664,7 +570,7 @@ export class WGPUContext {
                         colorAttachments: [{
                             view: this.state.context.getCurrentTexture().createView(),
                             loadOp: "clear",
-                            clearValue: {r: 0.0, g: 0.0, b: 0.4, a: 1.0},
+                            clearValue: {r: 1.0, g: 1.0, b: 1., a: 1.0},
                             storeOp: "store",
                          }]
                     });

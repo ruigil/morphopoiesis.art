@@ -22,6 +22,9 @@
 .spacing {
   padding: 20px var(--margin);
 }
+.about {
+  fill: currentColor;
+}
 
 .social svg {
   display: block;

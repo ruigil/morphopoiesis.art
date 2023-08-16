@@ -52,7 +52,7 @@ fn fragmentMain( input: VertexOutput) -> @location(0) vec4f {
 
     // we use the state to control the color
     let v = input.state;
-    let color:vec3f = hsv2rgb(vec3f( abs(v.y-v.x)  , 1., v.y + .01 ));
+    let color:vec3f = hsv2rgb(vec3f( abs(v.y-v.x)  , 1., pow(v.y + 0.001 ,.5) ));
 
     return vec4f( tosRGB(color), 1.);
 }      

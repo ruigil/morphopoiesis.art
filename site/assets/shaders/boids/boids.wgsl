@@ -27,7 +27,6 @@ struct Particles {
 @binding(4) @group(0) var<uniform> sys : Sys;
 @binding(1) @group(0) var<storage, read> particlesA : Particles;
 @binding(2) @group(0) var<storage, read_write> particlesB : Particles;
-@binding(3) @group(0) var<storage, read_write> debug: array<vec4<f32>>;
 
 
 struct VertexOutput {
@@ -81,8 +80,6 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
   var pos : vec2<f32>;
   var vel : vec2<f32>;
 
-  debug[0] = vec4<f32>(f32(arrayLength(&particlesA.particles)), params.distances.x, params.distances.y, params.distances.z);
-
   let pd = params.distances * params.scale;
   for (var i = 0u; i < arrayLength(&particlesA.particles); i++) {
     if (i == index) { continue; }
@@ -129,8 +126,11 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
     cVel = ((cVel / f32(cVelCount)) - vVel) * params.forces.z;
   }
 
+  // mouse attraction
+  let cMouse = (normalize( ((2. * vec2(sys.mouse.x, 1. - sys.mouse.y)) - 1.) - vPos) - vVel) * 0.001;
+
   // add all contributions
-  vVel += cSep + cVel + cPos;
+  vVel += cSep + cVel + cPos + cMouse;
 
   // normalize velocity
   vVel = normalize(vVel) ;
@@ -150,7 +150,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
   if (vPos.y > 1.0) {
     vPos.y = -1.0;
   }
-  // Write back
+  // Write next state
   particlesB.particles[index].pos = vPos;
   particlesB.particles[index].vel = vVel;
 }

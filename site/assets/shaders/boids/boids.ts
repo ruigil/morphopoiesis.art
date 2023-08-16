@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', event => {
 
 async function boids() {
 
-    const code = await wgsl(`/assets/shaders/dev/dev.wgsl`)
+    const code = await wgsl(`/assets/shaders/boids/boids.wgsl`)
 
     const size = 1000;
     const initialParticleData = new Array(size * 4);
@@ -19,8 +19,7 @@ async function boids() {
     }
 
     const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
-    const value = document.querySelector("#value") as HTMLCanvasElement;
-
+ 
     const gpu = await new WGPU(canvas!).init();
 
     const context = gpu.build({
@@ -56,15 +55,7 @@ async function boids() {
             currentGroup: (frame:number) => frame % 2,
         }      
     })
-    .addBufferListener({ 
-        onRead: (buffer:Array<any>) => { 
-            const v = buffer[0].buffer
-            value.textContent = `
-            [ ${ Array(4).fill(0).map( (e:any,i:number):number => v[i].toFixed(4) ).join(",") }];
-            `
-        }
-    });
-
+ 
     code && shader(context);
 
 }
