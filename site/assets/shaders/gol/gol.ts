@@ -1,11 +1,6 @@
-import { shader } from "../../../lib/components/shader.ts";
 import { WGPU, wgsl, Utils } from "../../../lib/webgpu/webgpu.ts";
 
-document.addEventListener('DOMContentLoaded', event => {
-    gameOfLife()
-});
-
-async function gameOfLife() {
+export const gameOfLife = async () => {
 
     const code = await wgsl(`/assets/shaders/gol/gol.wgsl`)
     
@@ -16,7 +11,7 @@ async function gameOfLife() {
 
     const gpu = await new WGPU(canvas!).init();
 
-    const context = gpu.build({
+    return gpu.build({
         shader: code,
         geometry: {
             vertex: {
@@ -43,5 +38,4 @@ async function gameOfLife() {
         }      
     });
 
-    code && shader(context);
 }

@@ -93,7 +93,7 @@ export const shader = async (data: PageData) => {
       </div>
     </sl-details>
     </div>
-    <script type="module" src=${data.js} defer></script>
+    <script type="module" src="${data.js}-page.js" defer></script>
   `;
 }
 

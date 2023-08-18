@@ -4,7 +4,8 @@
 struct Sys {
     time: f32,
     resolution: vec2f,
-    mouse: vec2f
+    mouse: vec2f,
+    aspect: vec2f
 };
 
 struct Uni {
@@ -28,12 +29,22 @@ struct VertexOutput {
     @location(2) state: vec2f
 }
 
+fn getIndex(cell : vec2<f32>) -> u32 { 
+    return u32( (cell.y%uni.size.y) * uni.size.y + (cell.x % uni.size.x) );
+}
+
 @vertex
 fn vertexMain(input : VertexInput) -> VertexOutput {
     let i = f32(input.instance); 
     let cell = vec2f(i % uni.size.x,  floor(i / uni.size.y) );
-    let state = current[input.instance]; 
-    let factor = select(sys.resolution/sys.resolution.x,sys.resolution/sys.resolution.y,sys.resolution.y > sys.resolution.x);
+
+    let c1 = current[getIndex( vec2(cell.x + input.pos.x ,  cell.y) )];
+    let c2 = current[getIndex( vec2(cell.x + input.pos.x, cell.y - input.pos.y) )];
+    let c3 = current[getIndex( vec2(cell.x , cell.y - input.pos.y) )];
+    let c4 = current[input.instance];    
+     
+    // multisample the state to reduce aliasing
+    let state = (c1 + c2 + c3 + c4) / 4.0;
 
     // The cell(0,0) is a the top left corner of the screen.
     // The cell(uni.size.x,uni.size.y) is a the bottom right corner of the screen.
@@ -41,7 +52,7 @@ fn vertexMain(input : VertexInput) -> VertexOutput {
     let cellPos = (input.pos + 1.) / uni.size - 1. + cellOffset;
 
     var output: VertexOutput;
-    output.pos = vec4f(vec2(cellPos / factor), 0., 1.); //[0.1,0.1]...[0.9,0.9] cell vertex positions
+    output.pos = vec4f(vec2(cellPos / sys.aspect), 0., 1.); //[0.1,0.1]...[0.9,0.9] cell vertex positions
     output.uv = vec2f(input.pos.xy); // [-1,-1]...[1,1]
     output.cell = cell; // [0,0],[1,1] ... [size.x, size.y]
     output.state = state; // the current state
@@ -85,11 +96,11 @@ fn computeMain(@builtin(global_invocation_id) cell: vec3u) {
     let v = rd( cell.xy, vec2u(uni.size), ai.x, ai.y);
     next[cell.y * u32(uni.size.y) + cell.x] = clamp(v, vec2(0.), vec2(1.));
 
-    let factor = select(sys.resolution/sys.resolution.x,sys.resolution/sys.resolution.y,sys.resolution.y > sys.resolution.x);
-    let half = select( vec2((1. - factor.x) * .5, 0.), vec2(0.,(1. - factor.y) * .5),factor.x > factor.y);
+    // scale mouse by aspect ratio. We crop on the short side, so we must compensate for mouse coordinates
+    let half = select( vec2((1. - sys.aspect.x) * .5, 0.), vec2(0.,(1. - sys.aspect.y) * .5), sys.aspect.x > sys.aspect.y);
 
     // we add a small amount of B in the mouse position
-    let pos = vec2u(floor(( half + (sys.mouse * factor)) * uni.size));
+    let pos = vec2u(floor(( half + (sys.mouse * sys.aspect)) * uni.size));
     let index = pos.y * u32(uni.size.y) + pos.x;
     next[index].y = 1.;
 

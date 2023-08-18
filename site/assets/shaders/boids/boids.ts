@@ -1,11 +1,6 @@
-import { shader } from "../../../lib/components/shader.ts";
 import { WGPU, wgsl, Utils } from "../../../lib/webgpu/webgpu.ts";
 
-document.addEventListener('DOMContentLoaded', event => {
-    boids()
-});
-
-async function boids() {
+export const boids = async () => {
 
     const code = await wgsl(`/assets/shaders/boids/boids.wgsl`)
 
@@ -22,7 +17,7 @@ async function boids() {
  
     const gpu = await new WGPU(canvas!).init();
 
-    const context = gpu.build({
+    return gpu.build({
         shader: code,
         geometry: {
             vertex: {
@@ -54,8 +49,6 @@ async function boids() {
             groups: [ [0,4,1,2,3], [0,4,2,1,3] ],
             currentGroup: (frame:number) => frame % 2,
         }      
-    })
- 
-    code && shader(context);
+    });
 
 }

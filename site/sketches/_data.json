@@ -3,7 +3,7 @@
       {
         "id" : "boids",
         "wgsl": "/assets/shaders/boids/boids.wgsl",
-        "js": "/assets/shaders/boids/boids.js",
+        "js": "/assets/shaders/boids/boids",
         "title": "Boids",
         "description": "Android birds with flocking behaviour. You can play with your mouse to attract them.",
         "image": "/assets/img/boids",
@@ -12,7 +12,7 @@
       {
         "id" : "reaction-diffusion",
         "wgsl": "/assets/shaders/reaction-diffusion/reaction-diffusion.wgsl",
-        "js": "/assets/shaders/reaction-diffusion/reaction-diffusion.js",
+        "js": "/assets/shaders/reaction-diffusion/reaction-diffusion",
         "title": "Reaction Diffusion",
         "description": "Move your mouse to explore the generation of different patterns.",
         "image": "/assets/img/rd",
@@ -21,7 +21,7 @@
       {
         "id" : "gol",
         "wgsl": "/assets/shaders/gol/gol.wgsl",
-        "js": "/assets/shaders/gol/gol.js",
+        "js": "/assets/shaders/gol/gol",
         "title": "Game of Life",
         "description": "Conway's Game of Life",
         "image": "/assets/img/gol",
@@ -30,7 +30,7 @@
       {
         "id": "color-ifs",
         "wgsl": "/assets/shaders/color-ifs/color-ifs.wgsl",
-        "js": "/assets/shaders/color-ifs/color-ifs.js",
+        "js": "/assets/shaders/color-ifs/color-ifs",
         "title": "Color IFS",
         "description": "A simple colorized IFS fractal",
         "image": "/assets/img/color-ifs",

@@ -453,7 +453,7 @@
   --sl-color-neutral-0: hsl(217, 33%, 17%);
   --sl-panel-border-color:hsl(218, 33%, 29%);
   --sl-panel-background-color: hsl(218, 33%, 23%);
-  --link-color: hsl(198, 93%, 60%);
+  --link-color: rgb(58, 191, 248);
 
   --pagefind-ui-scale: 1;
   --pagefind-ui-primary: #034ad8;

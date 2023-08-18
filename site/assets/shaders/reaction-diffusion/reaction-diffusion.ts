@@ -1,11 +1,6 @@
-import { shader } from "../../../lib/components/shader.ts";
 import { WGPU, wgsl, Utils } from "../../../lib/webgpu/webgpu.ts";
 
-document.addEventListener('DOMContentLoaded', event => {
-    rd()
-});
-
-async function rd() {
+export const rd = async () => {
 
     const code = await wgsl(`/assets/shaders/reaction-diffusion/reaction-diffusion.wgsl`)
 
@@ -16,7 +11,7 @@ async function rd() {
 
     const gpu = await new WGPU(canvas!).init();
 
-    const context = gpu.build({
+    return gpu.build({
         shader: code,
         geometry: {
             vertex: {
@@ -41,7 +36,5 @@ async function rd() {
             currentGroup: (frame:number) => frame % 2,
         }      
     })
-
-    code && shader(context);
 
 }

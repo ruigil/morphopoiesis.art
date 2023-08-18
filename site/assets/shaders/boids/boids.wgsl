@@ -4,7 +4,8 @@
 struct Sys {
     time: f32,
     resolution: vec2f,
-    mouse: vec2f
+    mouse: vec2f,
+    aspect: vec2f
 };
 
 struct Particle {
@@ -41,7 +42,6 @@ fn vert_main(
   @location(1) particleVel : vec2<f32>,
   @location(2) apos : vec2<f32>
 ) -> VertexOutput {
-  let factor = select(sys.resolution/sys.resolution.x,sys.resolution/sys.resolution.y,sys.resolution.y > sys.resolution.x);
 
   let angle = -atan2(particleVel.x, particleVel.y);
   let pos = vec2(
@@ -50,7 +50,7 @@ fn vert_main(
   ) * params.scale; // scale
   
   var output : VertexOutput;
-  output.position = vec4((pos/factor) + particlePos, 0.0, 1.0);
+  output.position = vec4((pos/sys.aspect) + particlePos, 0.0, 1.0);
   output.uv = apos;
   output.color = vec4(
     1.0 - sin(angle + 1.0) - particleVel.y,

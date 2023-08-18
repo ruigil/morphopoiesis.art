@@ -71,6 +71,7 @@ export class WGPUContext {
     private observer: ResizeObserver;
     private mouse: Array<number> = [0,0];
     private resolution: Array<number> = [0,0];
+    private aspectRatio: Array<number> = [1,1];
 
     constructor( state: WGPUState) {
         this.state = {...state};
@@ -82,6 +83,9 @@ export class WGPUContext {
             //this.state.canvas.height = entries[0].devicePixelContentBoxSize[0].blockSize;
             this.resolution[0] = entries[0].target.clientWidth;
             this.resolution[1] = entries[0].target.clientHeight;
+            const factor = this.resolution[0] > this.resolution[1] ? this.resolution[0] : this.resolution[1];
+            this.aspectRatio[0] = this.resolution[0] / factor;
+            this.aspectRatio[1] = this.resolution[1] / factor;
         });
         this.observer.observe(this.state.canvas)
         this.state.canvas.addEventListener('mousemove', event => {
@@ -561,7 +565,14 @@ export class WGPUContext {
 
                 const encoder = this.state.device.createCommandEncoder();
 
-                setUniforms({ sys: { frame: frame, time: elapsed, mouse: this.mouse, resolution: this.resolution }, ...unis });
+                setUniforms({ 
+                    sys: { 
+                        frame: frame, 
+                        time: elapsed, 
+                        mouse: this.mouse, 
+                        resolution: this.resolution,
+                        aspect: this.aspectRatio 
+                    }, ...unis });
      
                 // render pipeline
                 if (this.state.pipelines?.render) {
