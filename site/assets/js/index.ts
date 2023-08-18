@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', event => {
 
     const gpu = await new WGPU(canvas!).init();
     
-    const size = 128;
+    const size = 256;
     const current = Array(size*size).fill(0).map(() => Math.random() > 0.3 ? 1 : 0);
 
     const body = document.querySelector('body');
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', event => {
             { name: "current", size: current.length, data: current } ,
             { name: "next", size: size * size } 
         ],
-        workgroupCount: [16, 16, 1],
+        workgroupCount: [size/8, size/8, 1],
         bindings: {
             groups: [ [0,4,1,2], [0,4,2,1] ],
             currentGroup: (frame:number) => frame % 2,

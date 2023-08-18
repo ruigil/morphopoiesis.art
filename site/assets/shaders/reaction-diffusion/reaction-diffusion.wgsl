@@ -33,14 +33,15 @@ fn vertexMain(input : VertexInput) -> VertexOutput {
     let i = f32(input.instance); 
     let cell = vec2f(i % uni.size.x,  floor(i / uni.size.y) );
     let state = current[input.instance]; 
-    
+    let factor = select(sys.resolution/sys.resolution.x,sys.resolution/sys.resolution.y,sys.resolution.y > sys.resolution.x);
+
     // The cell(0,0) is a the top left corner of the screen.
     // The cell(uni.size.x,uni.size.y) is a the bottom right corner of the screen.
     let cellOffset = vec2(cell.x, uni.size.y - cell.y - 1.) / uni.size * 2.; 
     let cellPos = (input.pos + 1.) / uni.size - 1. + cellOffset;
 
     var output: VertexOutput;
-    output.pos = vec4f(vec2(cellPos), 0., 1.); //[0.1,0.1]...[0.9,0.9] cell vertex positions
+    output.pos = vec4f(vec2(cellPos / factor), 0., 1.); //[0.1,0.1]...[0.9,0.9] cell vertex positions
     output.uv = vec2f(input.pos.xy); // [-1,-1]...[1,1]
     output.cell = cell; // [0,0],[1,1] ... [size.x, size.y]
     output.state = state; // the current state
@@ -84,8 +85,11 @@ fn computeMain(@builtin(global_invocation_id) cell: vec3u) {
     let v = rd( cell.xy, vec2u(uni.size), ai.x, ai.y);
     next[cell.y * u32(uni.size.y) + cell.x] = clamp(v, vec2(0.), vec2(1.));
 
+    let factor = select(sys.resolution/sys.resolution.x,sys.resolution/sys.resolution.y,sys.resolution.y > sys.resolution.x);
+    let half = select( vec2((1. - factor.x) * .5, 0.), vec2(0.,(1. - factor.y) * .5),factor.x > factor.y);
+
     // we add a small amount of B in the mouse position
-    let pos = vec2u(floor(sys.mouse.xy * uni.size));
+    let pos = vec2u(floor(( half + (sys.mouse * factor)) * uni.size));
     let index = pos.y * u32(uni.size.y) + pos.x;
     next[index].y = 1.;
 

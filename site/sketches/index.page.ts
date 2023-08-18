@@ -47,7 +47,6 @@ export default ({ shaders, comp }: PageData ) : string => {
     const data = items();
     
     return `
-    <div id="tags" class="flex flex-wrap gap-2">${ data.tags }</div>
     <h1>Latest sketches</h1>
     <div class="flex flex-wrap gap-4 w-full">${ data.shaders }</div>`
 

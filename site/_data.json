@@ -3,7 +3,8 @@
     "site": "morphopoiesis",
     "description": "Morphopoiesis is a blog about the intersection of art, science, and technology.",
     "twitter": "@morphopoiesis",
-    "icon": "/assets/img/morphopoeisis.svg",
+    "icon": "/assets/img/svg/morphopoeisis.svg",
+    "keywords": ["morpho","poiesis","generative","art","emergence","information","computation","algorithms","webgpu","wgsl"],
     "lang": "en",
     "generator": true  
   }

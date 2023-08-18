@@ -33,7 +33,9 @@ struct VertexOutput {
 fn vertexMain(input : VertexInput) -> VertexOutput {
     let i = f32(input.instance); 
     let cell = vec2f(i % uni.size.x, floor(i / uni.size.y) );
-    let state = f32(current[input.instance]); 
+    let state = f32(current[input.instance]);
+    let factor = select(sys.resolution/sys.resolution.x,sys.resolution/sys.resolution.y,sys.resolution.y > sys.resolution.x);
+    
 
     // The cell(0,0) is a the top left corner of the screen.
     // The cell(uni.size.x,uni.size.y) is a the bottom right corner of the screen.
@@ -41,7 +43,7 @@ fn vertexMain(input : VertexInput) -> VertexOutput {
     let cellPos = (input.pos + 1.) / uni.size - 1. + cellOffset;
 
     var output: VertexOutput;
-    output.pos = vec4f(cellPos, 0., 1.);
+    output.pos = vec4f(cellPos / factor, 0., 1.);
     output.uv = vec2f(input.pos.xy);
     output.state = state;
     return output;
@@ -77,8 +79,11 @@ fn computeMain(@builtin(global_invocation_id) cell: vec3u) {
         u32(ns == 2u || ns == 3u), // if the cell is alive, does it have 2 or 3 neighbours ?
         current[idx] == 1u); // if the cell is alive ?
     
+    let factor = select(sys.resolution/sys.resolution.x,sys.resolution/sys.resolution.y,sys.resolution.y > sys.resolution.x);
+    let half = select( vec2((1. - factor.x) * .5, 0.), vec2(0.,(1. - factor.y) * .5),factor.x > factor.y);
+    
     // mouse noise 
-    let m = vec2u(sys.mouse * uni.size);
+    let m = vec2u(( half + (sys.mouse * factor)) * uni.size);
     next[m.y * size.y + m.x] = 1u;
 
 }

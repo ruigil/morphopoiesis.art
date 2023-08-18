@@ -27,7 +27,6 @@ export default ({ comp, search, url }: PageData, helpers :PageHelpers) => {
 
     return `
     <div id="search"></div>
-    <div id="tags" class="flex flex-wrap gap-2">${ data.tags }</div>
     <h1>Latest notes</h1>
     <div class="mt-4 flex flex-wrap gap-4">
         ${ data.notes }
