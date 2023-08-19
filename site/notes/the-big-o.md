@@ -1,5 +1,5 @@
 ---
-title: Euler and Lagrange
+title: The Big-O
 layout: post.layout.ts
 type: post
 header: /assets/img/boids
