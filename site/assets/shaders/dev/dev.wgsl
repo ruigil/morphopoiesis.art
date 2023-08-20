@@ -4,153 +4,69 @@
 struct Sys {
     time: f32,
     resolution: vec2f,
-    mouse: vec2f
+    mouse: vec2f,
+    aspect: vec2f
 };
 
-struct Particle {
+
+struct SimParams {
+  size: vec2<f32>,
+  deltaT : f32,
+  scale: f32,
+  forces : vec4<f32>,
+  distances : vec3<f32>
+}
+
+struct Agent {
   pos : vec2<f32>,
   vel : vec2<f32>,
 }
 
-struct SimParams {
-  deltaT : f32,
-  scale: f32,
-  forces : vec3<f32>,
-  distances : vec3<f32>
-}
-
-struct Particles {
-  particles : array<Particle>,
-}
-
-@binding(0) @group(0) var<uniform> params : SimParams;
-@binding(4) @group(0) var<uniform> sys : Sys;
-@binding(1) @group(0) var<storage, read> particlesA : Particles;
-@binding(2) @group(0) var<storage, read_write> particlesB : Particles;
-@binding(3) @group(0) var<storage, read_write> debug: array<vec4<f32>>;
-
+struct VertexInput {
+    @location(0) pos: vec2<f32>,
+    @builtin(instance_index) instance: u32
+};
 
 struct VertexOutput {
-  @builtin(position) position : vec4<f32>,
-  @location(0) uv : vec2<f32>,
-  @location(4) color : vec4<f32>,
+    @builtin(position) pos: vec4f,
+    @location(0) uv: vec2f,
+    @location(1) state: f32
 }
+
+@group(0) @binding(0) var<uniform> sys : Sys;
+@group(0) @binding(1) var<uniform> params : SimParams;
+@group(0) @binding(2) var<storage, read> trailMapA : array<f32>;
+@group(0) @binding(3) var<storage, read_write> trailMapB : array<f32>;
+@group(0) @binding(4) var<storage, read_write> agents : array<Agent>;
+@group(0) @binding(5) var<storage, read_write> debug : array<vec4<f32>>;
+
 
 @vertex
-fn vert_main(
-  @location(0) particlePos : vec2<f32>,
-  @location(1) particleVel : vec2<f32>,
-  @location(2) apos : vec2<f32>
-) -> VertexOutput {
-
-  let angle = -atan2(particleVel.x, particleVel.y);
-  let pos = vec2(
-    (apos.x * cos(angle)) - (apos.y * sin(angle)),
-    (apos.x * sin(angle)) + (apos.y * cos(angle))
-  ) * params.scale; // scale
+fn vertMain( input: VertexInput) -> VertexOutput {
   
-  var output : VertexOutput;
-  output.position = vec4(pos + particlePos, 0.0, 1.0);
-  output.uv = apos;
-  output.color = vec4(
-    1.0 - sin(angle + 1.0) - particleVel.y,
-    pos.x * 100.0 - particleVel.y + 0.1,
-    particleVel.x + cos(angle + 0.5),
-    1.0);
-  return output;
-}
+    let i = f32(input.instance); 
+    let cell = vec2f(i % params.size.x, floor(i / params.size.y) );
+    let state = f32(trailMapA[input.instance]);
 
+    // The cell(0,0) is a the top left corner of the screen.
+    // The cell(uni.size.x,uni.size.y) is a the bottom right corner of the screen.
+    let cellOffset = vec2(cell.x, params.size.y - cell.y - 1.) / params.size * 2.; 
+    let cellPos = (input.pos + 1.) / params.size - 1. + cellOffset;
+
+    var output: VertexOutput;
+    output.pos = vec4f(cellPos / sys.aspect, 0., 1.);
+    output.uv = vec2f(input.pos.xy);
+    output.state = state;
+    return output;
+}
+//* vec3(0.8,0.6+sin(sys.time)*.2
 @fragment
 fn frag_main(input : VertexOutput) -> @location(0) vec4<f32> {
-  let d = (1. - smoothstep(0.,.01, length( vec2(abs(input.uv.x) + .7,input.uv.y)) - .9 )  ) ;
-  return vec4(vec3(d),0.0);
+  let d = (1. - smoothstep(0.,.01, length( vec2(input.uv.x,input.uv.y)) - .9 )  ) ;
+  return vec4(vec3( d) ,1.0);
 }
 
-@compute @workgroup_size(64)
-fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
-  var index = GlobalInvocationID.x;
+@compute @workgroup_size(8, 8)
+fn main(@builtin(global_invocation_id) globalInvocationID : vec3<u32>) {
 
-  var vPos = particlesA.particles[index].pos;
-  var vVel = particlesA.particles[index].vel;
-  var cSep = vec2(0.0);
-  var cVel = vec2(0.0);
-  var cPos = vec2(0.0);
-  var cSepCount = 0u;
-  var cVelCount = 0u;
-  var cPosCount = 0u;
-  var pos : vec2<f32>;
-  var vel : vec2<f32>;
-
-  debug[0] = vec4<f32>(f32(arrayLength(&particlesA.particles)), params.distances.x, params.distances.y, params.distances.z);
-
-  let pd = params.distances * params.scale;
-  for (var i = 0u; i < arrayLength(&particlesA.particles); i++) {
-    if (i == index) { continue; }
-
-    pos = particlesA.particles[i].pos.xy;
-    vel = particlesA.particles[i].vel.xy;
-
-    let d = distance(pos, vPos);
-    // rule separtation - for every nearby boid, add a repulsion force
-    if ((d < pd.x) ){
-      var diff = normalize(vPos - pos);
-      diff /= d; // weight by distance
-      cSep += diff;
-      cSepCount++;
-    }
-
-    // rule cohesion - for every nearby boid, calculate its average position
-    if ((d < pd.y) ) {
-      cPos += pos;
-      cPosCount++;
-    }
-
-    // rule alignment - for every nearby boid, calculate its average velocity
-    if ((d < pd.z) ) {
-      cVel += vel;
-      cVelCount++;
-    }
-
-  }
-
-  // steering = desired - velocity * max_force
-
-  // separation
-  if (cSepCount > 0u) {
-    cSep = (normalize( cSep / vec2(f32(cSepCount)) ) - vVel ) * params.forces.x;
-  }
-  // cohesion
-  if (cPosCount > 0u) {
-    cPos = (cPos / f32(cPosCount));
-    cPos = (normalize(cPos - vPos) - vVel) * params.forces.y;
-  }
-  // alignment
-  if (cVelCount > 0u) {
-    cVel = ((cVel / f32(cVelCount)) - vVel) * params.forces.z;
-  }
-
-  // add all contributions
-  vVel += cSep + cVel + cPos;
-
-  // normalize velocity
-  vVel = normalize(vVel) ;
-  // scale simulation speed
-  vPos = vPos + (vVel * params.deltaT);
-  
-  // Wrap around boundary
-  if (vPos.x < -1.0) {
-    vPos.x = 1.0;
-  }
-  if (vPos.x > 1.0) {
-    vPos.x = -1.0;
-  }
-  if (vPos.y < -1.0) {
-    vPos.y = 1.0;
-  }
-  if (vPos.y > 1.0) {
-    vPos.y = -1.0;
-  }
-  // Write back
-  particlesB.particles[index].pos = vPos;
-  particlesB.particles[index].vel = vVel;
 }

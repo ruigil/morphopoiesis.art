@@ -9,9 +9,10 @@ async function boids() {
 
     const code = await wgsl(`/assets/shaders/dev/dev.wgsl`)
 
-    const size = 1000;
-    const initialParticleData = new Array(size * 4);
-    for (let i = 0; i < size; ++i) {
+    const numParticles = 1000;
+    const size = 32;
+    const initialParticleData = new Array(numParticles * 4);
+    for (let i = 0; i < numParticles; ++i) {
       initialParticleData[4 * i + 0] = 2 * (Math.random() - 0.5);
       initialParticleData[4 * i + 1] = 2 * (Math.random() - 0.5);
       initialParticleData[4 * i + 2] = 2 * (Math.random() - 0.5) * 0.01;
@@ -22,37 +23,34 @@ async function boids() {
     const value = document.querySelector("#value") as HTMLCanvasElement;
 
     const gpu = await new WGPU(canvas!).init();
-
     const context = gpu.build({
         shader: code,
         geometry: {
             vertex: {
-                data: Utils.triangle(1.),
-                attributes: ["apos"]    
-            },
-            instance: {
-                attributes: ["particlePos","particleVel"],
-                instances: size     
+                data: Utils.square(1.),
+                attributes: ["pos"],
+                instances: size * size    
             }
         },
         uniforms: {
             params: {
-                deltaT: .0004,
-                scale: .02,
-                forces: [.004, .002, .002], // max velocity is 1.
+                size: [size, size],
+                deltaT: .01,
+                scale: .015,
+                forces: [.04, .025, .025, .02], // last one is mouse force
                 // separation, cohesion, alignment
                 distances: [2., 4., 6.] // boid size is 1.
             }
         },
         storage: [
-            { name: "particlesA", size: size , data: initialParticleData, vertex: true} ,
-            { name: "particlesB", size: size , vertex: true}, 
+            { name: "agents", size: numParticles , data: initialParticleData} ,
+            { name: "trailMapA", size: size * size } ,
+            { name: "trailMapB", size: size * size } ,
             { name: "debug", size: 1, read: true}, 
         ],
-        workgroupCount: [Math.ceil(size / 64), 1, 1],
-        computeCount: 32,
+        workgroupCount: [size / 8, size / 8, 1],
         bindings: {
-            groups: [ [0,4,1,2,3], [0,4,2,1,3] ],
+            groups: [ [0,1,2,3,4,5], [0,1,2,4,3,5] ],
             currentGroup: (frame:number) => frame % 2,
         }      
     })

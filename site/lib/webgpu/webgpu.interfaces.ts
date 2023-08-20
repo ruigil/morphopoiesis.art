@@ -9,6 +9,7 @@ export interface WGPUState {
     pipelines?: Pipelines;
     spec?: WGLSLSpec;
     storages?: Storages;
+    clearColor?: {r:number,g:number,b:number,a:number};
 
     fpsListeners?: Array<FPSListener>;
     bufferListeners?: Array<BufferListener>;
@@ -81,6 +82,7 @@ export interface WGLSLSpec {
     storage?: { name: string, size: number, data?: number[], read?:boolean, vertex?:boolean, }[];
     workgroupCount?: Array<number>;
     computeCount?: number;
+    clearColor?: {r:number,g:number,b:number,a:number}
     bindings?: { groups: Array<Array<number>>, currentGroup: (frame:number) => number };
 }
 

@@ -181,10 +181,9 @@ export class WGPUContext {
             if (type instanceof TemplateType) return { size: reflect.getTypeInfo(type)!.size, format: type.format.name }
             const struct = reflect.structs.find( e => e.name == type.name);
             if (struct) {
-                return struct.members.reduce((acc:any, curr:any) => { 
-                    const sf = sizeFormat(curr.type);
-                    return { size : acc.size + sf.size, format: sf.format }  
-                }, {size: 0, format: ''});    
+               // the size of struct takes into account alignment but the format must take into account members.
+               // it is not the case and will fail when not f32
+               return { size: reflect.getTypeInfo(type)?.size, format: 'f32'}    
             }
             if (type.name.startsWith('vec') && type.name.endsWith('f')) return { size: parseInt(type.name.substring(3,4)) * 4, format: 'f32' } 
             if (type.name.startsWith('vec') && type.name.endsWith('u')) return { size: parseInt(type.name.substring(3,4)) * 4, format: 'u32' } 
@@ -277,9 +276,7 @@ export class WGPUContext {
                 // gives a byte size and format for the type present in the storage buffer
                 // we need this to allocate the right size given the type of the buffer
                 // so we can copy the data from the spec to the buffer
-                //const sf = sizeFormat(node.type);
                 const sf = sizeFormat(node.type);
-                //console.log(node.name,sf);
                 
                 //console.log(node.name, size, sf.size, sf.format)
                 const storageBuffer = this.state.device.createBuffer({
@@ -436,6 +433,7 @@ export class WGPUContext {
         }
 
         const reflect = new WgslReflect(wgslSpec.shader);
+        //console.log("reflect",reflect)
 
         const shaderModule = createShaderModule(wgslSpec);
         const geometry = createGeometry(wgslSpec, reflect);
@@ -466,6 +464,7 @@ export class WGPUContext {
             geometry: geometry,
             uniforms: uniforms,
             storages: storages,
+            clearColor: wgslSpec.clearColor || {r:0,g:0,b:0,a:1},
             spec: wgslSpec
         });
     }
@@ -580,7 +579,7 @@ export class WGPUContext {
                         colorAttachments: [{
                             view: this.state.context.getCurrentTexture().createView(),
                             loadOp: "clear",
-                            clearValue: {r: 1.0, g: 1.0, b: 1., a: 1.0},
+                            clearValue: this.state.clearColor,
                             storeOp: "store",
                          }]
                     });
@@ -588,6 +587,8 @@ export class WGPUContext {
                     pass.setPipeline(this.state.pipelines!.render);
                     pass.setVertexBuffer(0, this.state.geometry!.vertexBuffer);
 
+                    // we must always have two vertex buffers when instancing from storage, because
+                    // you cant' have a writing storage and reading vertex at the same time.
                     if (this.state.storages && this.state.storages.vertexStorages.length > 0) {
                         pass.setVertexBuffer(1, this.state.storages.vertexStorages[bindGroup].buffer)
                     } else if (this.state.geometry?.instanceBuffer) {
