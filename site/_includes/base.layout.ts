@@ -6,7 +6,7 @@ const footer = (data: PageData, { date }: PageHelpers) => {
   <footer class="footer">
       <div class="flex place-items-center gap-2 w-full">
           <span>© ${date("now", "yyyy")}</span> morphopoiesis
-          <a href="/notes.rss">
+          <a href="/notes.rss" aria-label="RSS Feed">
           <svg version="1.1" id="Icons" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32" xml:space="preserve">
               <g>
                   <path d="M6,21c-2.8,0-5,2.2-5,5s2.2,5,5,5s5-2.2,5-5S8.8,21,6,21z"/>
