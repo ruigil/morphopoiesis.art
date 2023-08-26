@@ -26,7 +26,7 @@ Here, **'N'** is the number of birds. The algorithm, like cellular automata, is 
 
 Cellular automata model the world as *fields* while Boids model the world as *particles*. This distinction appears very often in simulations, like fluid flow, where it is called [Eulerian (fields) and Lagrangian (particles)](https://eng.libretexts.org/Bookshelves/Civil_Engineering/Book%3A_All_Things_Flow_-_Fluid_Mechanics_for_the_Natural_Sciences_(Smyth)/05%3A_Fluid_Kinematics/5.01%3A_Lagrangian_and_Eulerian_descriptions). Of course that not all particle algorithms have O(n^2) complexity but sometimes a design choice can have a big impact on the performance of the algorithm. 
 
-Here is an [implementation](/sketches/boids/) of the Boids algorithm on the GPU. Compared to the original algorithm, the only thing added, was a blinking property to each boid. They try to synchronize their movement and velocity but also their blinking phase with their neighbours. The algorithm works a little bit like heat dissipation, where they try to average out their properties with their neighbours and values tend to converge overtime, but instead of maximum entropy, a global coordination emerges and they create flocking and blinking patterns. 
+Here is an [implementation](/sketches/boids/) of the Boids algorithm on the GPU. They try to synchronize their movement and velocity but also their blinking phase with their neighbours. The algorithm works a little bit like heat dissipation, where they try to average out their properties with their neighbours and values tend to converge overtime, but instead of maximum entropy, a global coordination emerges and they create flocking and blinking patterns. 
 
 [![boids](/assets/img/boids-big.webp)](/sketches/boids/)
 

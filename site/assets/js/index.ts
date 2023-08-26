@@ -1,8 +1,6 @@
 
-import { WGPU, wgsl, Utils } from '../../lib/webgpu/webgpu.ts';
-import { boids } from '../shaders/boids/boids.ts'
-import { rd } from '../shaders/reaction-diffusion/reaction-diffusion.ts'
-import { gameOfLife } from '../shaders/gol/gol.ts'
+import { draw } from '../../lib/webgpu/webgpu.ts';
+import { gol } from '../shaders/gol/gol.ts'
 
 document.addEventListener('DOMContentLoaded', async (event) => {
 
@@ -54,8 +52,8 @@ document.addEventListener('DOMContentLoaded', async (event) => {
 
     observer.observe(body!, { attributes: true });
 
-    const context = await gameOfLife();
-    context.draw({ uni: { fcolor: color.fcolor, bcolor: color.bcolor }});
+    const context = await gol();
+    draw(context, { uni: { fcolor: color.fcolor, bcolor: color.bcolor }});
   }
 
   landing();

@@ -1,14 +1,30 @@
-import type { PageData, PageHelpers } from "lume/core.ts";
-import { post } from "./lib/components/server.ts";
+import type { Data, Page, PageData, PageHelpers } from "lume/core.ts";
 
 export const title = "Home";
 export const motto = "studies on the synthesis of form";
 export const layout = "base.layout.ts";
-export const scripts = ["/assets/js/index.js"];
 export const url = "/";
 
+const post = (page: Page | Data | undefined, { date }: PageHelpers) => {
+  return `
+<div class="rounded border w-full p-4 panel visible">
+  <div class="flex flex-wrap gap-4">
+      <div class="flex-start">
+          <img src="${page!.data.header}-small.webp" class="w-40 h-40 rounded-lg m-0" alt="${page!.data.title}">
+      </div>
+      <div class="flex flex-col gap-3 max-w-md">
+          <div class="text-2xl"><a href="${page!.data.url}">${page!.data.title}</a></div>
+          <div class="text-xs"><sl-relative-time date="${date(page!.data.date)}"></sl-relative-time></div>
+          <div class="text-sm content">${page!.data.content.split(' ').splice(0, 10).join(' ')}...</div>
+          <div class="flex-wrap">${page!.data.tags?.map((tag: string) => `<sl-tag size="small">${tag}</sl-tag>`).join(" ")}</div>
 
-export default ({ comp, featured, metas, search }: PageData, helpers: PageHelpers): string => {
+      </div>
+  </div>
+</div>
+`
+}
+
+export default ({ search }: PageData, helpers: PageHelpers): string => {
   const items = () => {
     const menuItems:string[] = []
     
@@ -17,7 +33,7 @@ export default ({ comp, featured, metas, search }: PageData, helpers: PageHelper
     });
     //console.log(menuItems)
     return menuItems.join("")
-}
+  }
 
 
   return `
@@ -56,6 +72,7 @@ export default ({ comp, featured, metas, search }: PageData, helpers: PageHelper
       width: 100vw;
       height: 100vh;
     }
-  <style>
+  </style>
+  <script type="module" src="/assets/js/index.js" defer></script>
   `
 };

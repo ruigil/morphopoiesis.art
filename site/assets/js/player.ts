@@ -1,6 +1,6 @@
-import { WGPU, WGPUContext } from "../webgpu/webgpu.ts";
+import { WGPUContext, draw } from "../../lib/webgpu/webgpu.ts";
 
-export async function shader(gpu: WGPUContext, unis?: any) {
+export async function player(gpu: WGPUContext, unis?: any) {
 
   const play = document.querySelector("#play") as HTMLButtonElement;
   const reset = document.querySelector("#reset") as HTMLButtonElement;
@@ -31,8 +31,8 @@ export async function shader(gpu: WGPUContext, unis?: any) {
     }
   });
 
-  gpu
-  .addFPSListener({ onFPS: (fps) => { fpsSmall.textContent = fps.fps + " fps" } })
-  .draw(unis,controls)
+  const context = gpu.addFPSListener({ onFPS: (fps) => { fpsSmall.textContent = fps.fps + " fps" } })
+  
+  draw(context, unis,controls)
   
 }

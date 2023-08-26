@@ -36,11 +36,6 @@ struct VertexOutput {
 @group(0) @binding(2) var<storage, read> trailMapA : array<vec2<f32>>;
 @group(0) @binding(3) var<storage, read_write> trailMapB : array<vec2<f32>>;
 @group(0) @binding(4) var<storage, read_write> agents : array<Agent>;
-@group(0) @binding(5) var<storage, read_write> debug : array<vec4<f32>>;
-
-fn getIndex(cell : vec2<f32>) -> u32 { 
-    return u32( (cell.y%params.size.y) * params.size.y + (cell.x % params.size.x) );
-}
 
 @vertex
 fn vertMain( input: VertexInput) -> VertexOutput {
@@ -83,7 +78,7 @@ fn computeTrailmap(@builtin(global_invocation_id) cell : vec3<u32>) {
 fn sense(pos: vec2<f32>, angle: f32, sa: f32) -> vec2<f32> {
   // the mouse x influences the sensor distance
   let smd = ((sys.mouse.y) * 50.);
-  // calculate the senor position an return the trail map value at that position
+  // calculate the sensor position an return the trail map value at that position
   let sensePos = (vec2<f32>(cos(angle + sa), sin(angle + sa)) * (params.sd + smd)) / params.size;
   let index = vec2<u32>( floor( ((pos + sensePos + 1.) * .5) * (params.size))) % vec2<u32>(params.size);
   return trailMapA[ index.y * u32(params.size.x) + index.x ];
@@ -199,7 +194,7 @@ fn pcg3d(pv:vec3u) -> vec3u {
 
     return v;
 }
-
+// converts from HSV to RGB
 fn hsv2rgb(c :vec3f) -> vec3f {
     let k = vec4f(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
     let p = abs(fract(c.xxx + k.xyz) * 6.0 - k.www);

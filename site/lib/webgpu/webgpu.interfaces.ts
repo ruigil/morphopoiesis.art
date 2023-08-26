@@ -3,13 +3,12 @@ export interface WGPUState {
     context: GPUCanvasContext;
     adapter: GPUAdapter;
     device: GPUDevice;
-    clearValue?: GPUColor;
     geometry?: Geometry;
     uniforms?: Array<Uniform>;
     pipelines?: Pipelines;
-    spec?: WGLSLSpec;
     storages?: Storages;
     clearColor?: {r:number,g:number,b:number,a:number};
+    spec?: () => WGPUSpec;
 
     fpsListeners?: Array<FPSListener>;
     bufferListeners?: Array<BufferListener>;
@@ -54,18 +53,19 @@ export interface Storages {
     vertexStorages: Array<VertexStorage>;
 }
 
+export interface Compute {
+    pipeline: GPUComputePipeline;
+    workgroups: [number,number,number];
+    instances: number;
+}
+
 export interface Pipelines {
     render?: GPURenderPipeline;
-    compute?: GPUComputePipeline;
+    compute: Compute[];
     bindGroup: Array<GPUBindGroup>;
     workgroupCount?: Array<number>;
 }
 
-export interface Controls {
-    play?: boolean;
-    reset?: boolean;
-    frames?: number;
-}
 
 export interface VAttr {
     data?: Array<number>;
@@ -73,15 +73,13 @@ export interface VAttr {
     instances?: number;
 }
 
-export interface WGLSLSpec {
+export interface WGPUSpec {
     shader: string;
-    //geometry?: { vertices: number[], instances?: number};
     geometry?: { vertex: VAttr, instance?: VAttr };
-
     uniforms?: any;
-    storage?: { name: string, size: number, data?: number[], read?:boolean, vertex?:boolean, }[];
-    workgroupCount?: Array<number>;
-    computeCount?: number;
+    storage?: Array<{ name: string, size: number, data?: number[], read?:boolean, vertex?:boolean, }>;
+    compute?: Array<{ name: string, workgroups: [number,number,number], instances?: number }>;
+    computeGroupCount?: number;
     clearColor?: {r:number,g:number,b:number,a:number}
     bindings?: { groups: Array<Array<number>>, currentGroup: (frame:number) => number };
 }

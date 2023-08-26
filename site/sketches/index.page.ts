@@ -29,7 +29,7 @@ export default ({ shaders, comp }: PageData ) : string => {
                     alt="${shader.description}"
                 />
                 </a>
-                <div class="flex flex-col gap-2">
+                <div class="flex flex-col gap-2 h-32">
                 <strong>${shader.title}</strong>
                 <div>${shader.description}</div>
                 <div class="flex-wrap">${ shader.tags?.map((tag:string) => `<sl-tag size="small">${tag}</sl-tag>`).join(" ") }</div>

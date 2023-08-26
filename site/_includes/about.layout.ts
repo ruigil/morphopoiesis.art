@@ -1,5 +1,4 @@
 import type { PageData, PageHelpers } from "lume/core.ts";
-import { footer } from "../lib/components/server.ts";
 
 export const layout = "base.layout.ts";
 

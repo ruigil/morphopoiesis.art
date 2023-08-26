@@ -11,7 +11,7 @@ struct Sys {
 struct Particle {
   pos : vec2<f32>,
   vel : vec2<f32>,
-  syn : vec2<f32>
+  pha : vec2<f32>
 }
 
 struct SimParams {
@@ -36,12 +36,12 @@ struct VertexOutput {
 struct VertexInput {
   @location(0) partPos : vec2<f32>,
   @location(1) partVel : vec2<f32>,
-  @location(2) syn : vec2<f32>,
+  @location(2) partPha : vec2<f32>,
   @location(3) apos : vec2<f32>
 }
 
 @vertex
-fn vert_main( input: VertexInput) -> VertexOutput {
+fn vertMain( input: VertexInput) -> VertexOutput {
 
   let angle = -atan2(input.partVel.x, input.partVel.y);
   let pos = vec2(
@@ -52,7 +52,7 @@ fn vert_main( input: VertexInput) -> VertexOutput {
   var output : VertexOutput;
   output.position = vec4((pos/sys.aspect) + input.partPos, 0.0, 1.0);
   output.uv = input.apos;
-  output.state = input.syn;
+  output.state = input.partPha;
   return output;
 }
 
@@ -61,30 +61,30 @@ fn color( phase: f32) -> f32 {
 }
 
 @fragment
-fn frag_main(input : VertexOutput) -> @location(0) vec4<f32> {
+fn fragMain(input : VertexOutput) -> @location(0) vec4<f32> {
   let d = (1. - smoothstep(0.,.01, length( vec2(abs(input.uv.x) + .6,input.uv.y)) - .9 )  ) ;
   let phase = ((input.state.x * 3.14) + sys.time) * 10.;
   return vec4(vec3(1. - d) * vec3(color(phase+3.14) , color(phase + 1.52), color(phase )),1.0);
 }
 
 @compute @workgroup_size(64)
-fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
+fn computeMain(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
   var index = GlobalInvocationID.x;
 
   var vPos = particlesA[index].pos;
   var vVel = particlesA[index].vel;
-  var vSyn = particlesA[index].syn;
+  var vPha = particlesA[index].pha;
   var cSep = vec2(0.0);
   var cVel = vec2(0.0);
   var cPos = vec2(0.0);
-  var cSyn = vec2(0.0);
+  var cPha = vec2(0.0);
   var cSepCount = 0u;
   var cVelCount = 0u;
   var cPosCount = 0u;
-  var cSynCount = 0u;
+  var cPhaCount = 0u;
   var pos : vec2<f32>;
   var vel : vec2<f32>;
-  var syn : vec2<f32>;
+  var pha : vec2<f32>;
 
   let pd = params.distances * params.scale;
   for (var i = 0u; i < arrayLength(&particlesA); i++) {
@@ -92,7 +92,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
     pos = particlesA[i].pos.xy;
     vel = particlesA[i].vel.xy;
-    syn = particlesA[i].syn.xy;
+    pha = particlesA[i].pha.xy;
 
     let d = distance(pos, vPos);
     // rule separtation - for every nearby boid, add a repulsion force
@@ -117,15 +117,12 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
     // rule phase sync - for every nearby boid, calculate its average phase
     if ((d < pd.w) ) {
-      cSyn += syn;
-      cSynCount++;
+      cPha += pha;
+      cPhaCount++;
     }
-
-
   }
 
   // steering = desired - velocity * max_force
-
   // separation
   if (cSepCount > 0u) {
     cSep = (normalize( cSep / vec2(f32(cSepCount)) ) - vVel ) * params.forces.x;
@@ -140,8 +137,8 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
     cVel = ((cVel / f32(cVelCount)) - vVel) * params.forces.z;
   }
   // average phase 
-  if (cSynCount > 0u) {
-    cSyn = ((cSyn / f32(cSynCount)) - vSyn) * 0.01; // phase sync
+  if (cPhaCount > 0u) {
+    cPha = (cPha / f32(cPhaCount) - vPha) * 0.005; // phase sync
   }
 
   // mouse attraction
@@ -154,24 +151,17 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
   vVel = normalize(vVel) ;
   // scale simulation speed
   vPos = vPos + (vVel * params.deltaT);
+  // if the phase is to small, ignore the sync, to create a level of uncertainty
+  vPha = vPha + select( cPha, vec2(0.), abs(cPha.x) < 0.0003);
   
   // Wrap around boundary
-  if (vPos.x < -1.0) {
-    vPos.x = 1.0;
-  }
-  if (vPos.x > 1.0) {
-    vPos.x = -1.0;
-  }
-  if (vPos.y < -1.0) {
-    vPos.y = 1.0;
-  }
-  if (vPos.y > 1.0) {
-    vPos.y = -1.0;
-  }
+  if (vPos.x < -1.0) { vPos.x += 2.0; }
+  if (vPos.x > 1.0) { vPos.x -= 2.0; }
+  if (vPos.y < -1.0) { vPos.y += 2.0; }
+  if (vPos.y > 1.0) { vPos.y -= 2.0; }
+
   // Write next state
   particlesB[index].pos = vPos;
   particlesB[index].vel = vVel;
-
-  // if the sync is to small, ignore it, to create a level of uncertainty
-  particlesB[index].syn = vSyn + select( cSyn, vec2(0.), abs(cSyn.x) < 0.001);
+  particlesB[index].pha = vPha;
 }

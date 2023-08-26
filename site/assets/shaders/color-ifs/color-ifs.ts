@@ -1,11 +1,12 @@
-import { WGPU, wgsl } from "../../../lib/webgpu/webgpu.ts";
+import { WGPUContext } from "../../../lib/webgpu/webgpu.ts";
 
-export const colorIfs = async () => {
+export const colorIFS = async () => {
 
-    const code = await wgsl("/assets/shaders/color-ifs/color-ifs.wgsl");
     const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
-
-    const gpu = await new WGPU(canvas!).init();
  
-    return gpu.build({ shader: code }) ;
+    const code = await (await fetch(`/assets/shaders/color-ifs/color-ifs.wgsl`)).text();
+
+    const gpu = await WGPUContext.init(canvas!);
+ 
+    return gpu.build(() => ({ shader: code })) ;
 }

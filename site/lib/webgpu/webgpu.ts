@@ -1,13 +1,21 @@
 /// <reference types="./webgpu.d.ts" />
 
-import { BufferListener, Controls, FPSListener, Geometry, ReadStorage, Resource, Uniform, VertexStorage, WGLSLSpec, WGPUState, Storages, Storage } from "./webgpu.interfaces.ts";
+import { 
+    BufferListener, 
+    FPSListener, 
+    Geometry, 
+    ReadStorage, 
+    Resource, 
+    Uniform, 
+    VertexStorage, 
+    WGPUSpec, 
+    WGPUState, 
+    Storages, 
+    Storage, 
+    Compute 
+} from "./webgpu.interfaces.ts";
 import { ArrayType, TemplateType, Type, WgslReflect } from "./wgsl_reflect.module.js";
 
-
-export async function wgsl(name: string) {
-    const response = await fetch(name);
-    return response.text();
-}
 
 export class Utils {
     static square(x: number) {
@@ -30,18 +38,18 @@ export class Utils {
     }
 }
 
-export class WGPU {
-    canvas: HTMLCanvasElement;
-
-    constructor(canvas: HTMLCanvasElement) {
-        this.canvas = canvas;
+export class WGPUContext {
+    private state: WGPUState;
+    
+    constructor( state: WGPUState) {
+        this.state = {...state};
     }
 
-    async init() {
-        if (!this.canvas) {
+    static async init(canvas: HTMLCanvasElement) {
+        if (!canvas) {
             throw new Error("Canvas is not defined");
         }
-        const context = this.canvas.getContext("webgpu") as GPUCanvasContext;
+        const context = canvas.getContext("webgpu") as GPUCanvasContext;
         if (!context) {
             throw new Error("WebGPU not supported on this browser.");
         }
@@ -58,47 +66,17 @@ export class WGPU {
         });
 
         return new WGPUContext({
-            canvas: this.canvas,
+            canvas: canvas,
             context: context,
             adapter: adapter,
             device: device
         })
     }
-}
-
-export class WGPUContext {
-    private state: WGPUState;
-    private observer: ResizeObserver;
-    private mouse: Array<number> = [0,0];
-    private resolution: Array<number> = [0,0];
-    private aspectRatio: Array<number> = [1,1];
-
-    constructor( state: WGPUState) {
-        this.state = {...state};
-        const devicePixelRatio = window.devicePixelRatio || 1;
-        this.observer = new ResizeObserver((entries) => {
-            this.state.canvas.width = entries[0].target.clientWidth * devicePixelRatio;
-            this.state.canvas.height = entries[0].target.clientWidth * devicePixelRatio;
-            //this.state.canvas.width = entries[0].devicePixelContentBoxSize[0].inlineSize;
-            //this.state.canvas.height = entries[0].devicePixelContentBoxSize[0].blockSize;
-            this.resolution[0] = entries[0].target.clientWidth;
-            this.resolution[1] = entries[0].target.clientHeight;
-            const factor = this.resolution[0] > this.resolution[1] ? this.resolution[0] : this.resolution[1];
-            this.aspectRatio[0] = this.resolution[0] / factor;
-            this.aspectRatio[1] = this.resolution[1] / factor;
-        });
-        this.observer.observe(this.state.canvas)
-        this.state.canvas.addEventListener('mousemove', event => {
-            this.mouse[0] = event.offsetX/this.state.canvas.clientWidth;
-            this.mouse[1] = event.offsetY/this.state.canvas.clientHeight;
-        });
-    }
     
-
-    build(wgslSpec : WGLSLSpec): WGPUContext {
+    build( spec : () => WGPUSpec): WGPUContext {
                 
 
-        const createShaderModule = (spec: WGLSLSpec) => {
+        const createShaderModule = (spec: WGPUSpec) => {
             if (!spec.shader) throw new Error("Shader is not defined");
 
             return this.state.device.createShaderModule({
@@ -107,7 +85,7 @@ export class WGPUContext {
             });
         }
 
-        const createGeometry = (spec: WGLSLSpec, reflect: WgslReflect): Geometry => {
+        const createGeometry = (spec: WGPUSpec, reflect: WgslReflect): Geometry => {
 
             const buffersLayout:GPUVertexBufferLayout[] = [];
 
@@ -192,7 +170,7 @@ export class WGPUContext {
             return { size: 4, format: type.name }
         }
 
-        const createUniforms = (spec: WGLSLSpec, reflect: WgslReflect) : Uniform[] => {
+        const createUniforms = (spec: WGPUSpec, reflect: WgslReflect) : Uniform[] => {
 
             const uniforms = spec.uniforms || {};
             const uniformsBinding:Array<Uniform> = [];
@@ -259,7 +237,7 @@ export class WGPUContext {
             return uniformsBinding
         }
 
-        const createStorage = (spec: WGLSLSpec, reflect: WgslReflect) : Storages => {
+        const createStorage = (spec: WGPUSpec, reflect: WgslReflect) : Storages => {
             const stateStorage:Storage[] = new Array<Storage>();
             const readStorage:ReadStorage[] = new Array<ReadStorage>();
             const vertexStorage:VertexStorage[] = new Array<VertexStorage>();
@@ -351,7 +329,7 @@ export class WGPUContext {
             return bindGroupLayout;
         }
 
-        const createBindGroups = (spec:WGLSLSpec, resources:Resource[]) => {
+        const createBindGroups = (spec:WGPUSpec, resources:Resource[]) => {
             // there is something wrong with the bindgroups. Thex should be create based on the bindings defined in the shader
             const buffers = new Array<any>(reflect.getBindGroups()[0].length)
 
@@ -389,17 +367,31 @@ export class WGPUContext {
             });
         }
 
-        const createComputePipeline = (shaderModule: GPUShaderModule, pipelineLayout:GPUPipelineLayout, reflect: WgslReflect) => {
-            const entryPoint = reflect.entry?.compute[0]?.node?.name;
+        const createComputePipelines = (shaderModule: GPUShaderModule, pipelineLayout:GPUPipelineLayout, reflect: WgslReflect, wgslSpec: WGPUSpec): Compute[] => {
+            const result: Compute[] = [];
 
-            return entryPoint ? this.state.device.createComputePipeline({
-                label: "Compute pipeline",
-                layout: pipelineLayout,
-                compute: {
-                  module: shaderModule,
-                  entryPoint: entryPoint,
-                }
-            }) : undefined;
+            const compute = (name: string)  => wgslSpec.compute ? wgslSpec.compute.find( e => e.name === name) : undefined;
+
+            for( let i = 0; i< reflect.entry!.compute.length; i++) {
+                const entryPoint = reflect.entry?.compute[i].node.name;
+                const c = compute(entryPoint);
+                if (!c) throw new Error(`Spec for compute ${entryPoint} not found!`);
+                const pipeline = this.state.device.createComputePipeline({
+                    label: `${entryPoint} compute pipeline`,
+                    layout: pipelineLayout,
+                    compute: {
+                      module: shaderModule,
+                      entryPoint: entryPoint,
+                    }
+                });
+                result.push({
+                    pipeline: pipeline,
+                    workgroups: c.workgroups || [1,1,1],
+                    instances: c.instances || 1
+                });
+            }
+
+            return result;
         }
 
         const createRenderPipeline = (shaderModule: GPUShaderModule, pipelineLayout:GPUPipelineLayout, reflect: WgslReflect) => {            
@@ -432,6 +424,7 @@ export class WGPUContext {
             });
         }
 
+        const wgslSpec = spec();
         const reflect = new WgslReflect(wgslSpec.shader);
         //console.log("reflect",reflect)
 
@@ -449,23 +442,20 @@ export class WGPUContext {
         
         const renderPipeline = createRenderPipeline(shaderModule, pipelineLayout, reflect);
 
-        const computePipeline = createComputePipeline(shaderModule, pipelineLayout, reflect);
-        if (computePipeline && !wgslSpec.workgroupCount)
-            throw new Error("You have a compute shader but 'workgroupCount' is not defined.");
+        const computePipelines = createComputePipelines(shaderModule, pipelineLayout, reflect, wgslSpec);
             
         return new WGPUContext({
             ...this.state,
             pipelines: {
                 render: renderPipeline,
-                compute: computePipeline,
+                compute: computePipelines,
                 bindGroup: bindGroups,
-                workgroupCount: wgslSpec.workgroupCount
             },
             geometry: geometry,
             uniforms: uniforms,
             storages: storages,
             clearColor: wgslSpec.clearColor || {r:0,g:0,b:0,a:1},
-            spec: wgslSpec
+            spec: spec
         });
     }
 
@@ -487,162 +477,199 @@ export class WGPUContext {
         });
     }
 
-    draw(unis?:any, controls?: Controls ){
-        let frame = 0;
-        let start = performance.now();
-        let intid = 0;
-        let elapsed = 0;
-        let idle = 0;
-        const crtl = controls || { play: true, reset: false, frames: 0 };
+    getState() {
+        return this.state;
+    }
 
-        const fps = () => {
-            this.state.fpsListeners && 
-            this.state.fpsListeners.forEach((listener) => {  
-                listener.onFPS({ fps: (frame / elapsed).toFixed(2), time: elapsed.toFixed(1)} );
+}
+
+
+// controls for the draw loop
+export interface Controls {
+    play?: boolean;
+    reset?: boolean;
+    frames?: number;
+}
+
+export const draw = (context: WGPUContext, unis?:any, controls?: Controls ) => {
+    let frame = 0;
+    let start = performance.now();
+    let intid = 0;
+    let elapsed = 0;
+    let idle = 0;
+    let state = context.getState();
+    let spec = state.spec ? state.spec() : undefined;
+    const crtl = controls || { play: true, reset: false, frames: 0 };
+    const mouse: Array<number> = [0,0];
+    const resolution: Array<number> = [0,0];
+    const aspectRatio: Array<number> = [1,1];
+
+    const fps = () => {
+        state.fpsListeners && 
+        state.fpsListeners.forEach((listener) => {  
+            listener.onFPS({ fps: (frame / elapsed).toFixed(2), time: elapsed.toFixed(1)} );
+        });
+    }
+
+    const readBuffers = async () => {
+        if (state.bufferListeners) {
+            const buffers = state.storages?.readStorages || [];
+            if (buffers.length == 0) return;
+            const p = await Promise.all(buffers.map( buff => buff.dstBuffer.mapAsync(GPUMapMode.READ)));
+            state.bufferListeners.forEach((listener) => {
+                // TODO: buffers can be other types than float32
+                const data = buffers.map(s=> ({ name: s.name, buffer: new Float32Array(s.dstBuffer!.getMappedRange())}));
+                listener.onRead( data );
+                buffers.forEach(s=> s.dstBuffer!.unmap() );
             });
-        }
+        } 
+    }
 
-        const readBuffers = async ()=>{
-            if (this.state.bufferListeners) {
-                const buffers = this.state.storages?.readStorages || [];
-                if (buffers.length == 0) return;
-                await Promise.all(buffers.map( buff => buff.dstBuffer.mapAsync(GPUMapMode.READ)));
-                this.state.bufferListeners.forEach((listener) => {
-                    const data = buffers.map(s=> ({ name: s.name, buffer: new Float32Array(s.dstBuffer!.getMappedRange())}));
-                    listener.onRead( data );
-                    buffers.forEach(s=> s.dstBuffer!.unmap() );
-                });
-            } 
-        }
+    const setUniforms = ( unis: any) => {
 
-        const setUniforms = ( unis: any) => {
-
-            this.state.uniforms?.forEach((element,i) => {
-                const uviews = element.uniViews;
-                //console.log("unis", unis);
-                // TODO: implement recursive structures instead of one level
-                for (let key in unis) {
-                    if (!uviews[key]) continue;
-                    if (unis[key] instanceof Object){
-                        for (let subkey in unis[key]) {
-                            if (uviews[key][subkey]) {
-                                unis[key][subkey][Symbol.iterator] ?
-                                uviews[key][subkey].set([...unis[key][subkey]]) :
-                                uviews[key][subkey].set([unis[key][subkey]]);
-                            }
+        state.uniforms?.forEach((element,i) => {
+            const uviews = element.uniViews;
+            //console.log("unis", unis);
+            // TODO: implement recursive structures instead of one level
+            for (let key in unis) {
+                if (!uviews[key]) continue;
+                if (unis[key] instanceof Object){
+                    for (let subkey in unis[key]) {
+                        if (uviews[key][subkey]) {
+                            unis[key][subkey][Symbol.iterator] ?
+                            uviews[key][subkey].set([...unis[key][subkey]]) :
+                            uviews[key][subkey].set([unis[key][subkey]]);
                         }
-                    } else {
-                        unis[key][Symbol.iterator] ? 
-                            uviews[key].set([...unis[key]]) : 
-                            uviews[key].set([unis[key]]);
                     }
+                } else {
+                    unis[key][Symbol.iterator] ? 
+                        uviews[key].set([...unis[key]]) : 
+                        uviews[key].set([unis[key]]);
                 }
-                // copy the values from JavaScript to the GPU
-                this.state.device.queue.writeBuffer(
-                    element.buffer, 0, element.uniValues);
-            });
+            }
+            // copy the values from JavaScript to the GPU
+            state.device.queue.writeBuffer( element.buffer, 0, element.uniValues);
+        });
+    }
+
+    const render = async () => {
+        if (crtl.reset) {
+            frame = 0;
+            start = performance.now();
+            elapsed = 0;
+            idle = 0;
+            crtl.frames = 1;
+            state = context.build(state.spec!).getState();
         }
-    
-        const render = async () => {
-            if (crtl.reset) {
-                frame = 0;
-                start = performance.now();
-                elapsed = 0;
-                idle = 0;
-                crtl.frames = 1;
-            }
-            if (crtl.play && !intid) {
-                intid = setInterval(() => fps(), 1000);
-            }
-            if (!crtl.play && intid) {
-                clearInterval(intid);
-                intid = 0;
-            }
+        if (crtl.play && !intid) {
+            intid = setInterval(() => fps(), 1000);
+        }
+        if (!crtl.play && intid) {
+            clearInterval(intid);
+            intid = 0;
+        }
 
-            if ( crtl.play || crtl.frames! > 0 ) {
-                const bindGroup = this.state.spec?.bindings ? this.state.spec.bindings.currentGroup(frame) : 0;
+        if ( crtl.play || crtl.frames! > 0 ) {
+            const bindGroup = spec?.bindings ? spec.bindings.currentGroup(frame) : 0;
 
-                const encoder = this.state.device.createCommandEncoder();
+            const encoder = state.device.createCommandEncoder();
 
-                setUniforms({ 
-                    sys: { 
-                        frame: frame, 
-                        time: elapsed, 
-                        mouse: this.mouse, 
-                        resolution: this.resolution,
-                        aspect: this.aspectRatio 
-                    }, ...unis });
-     
-                // render pipeline
-                if (this.state.pipelines?.render) {
-                    const pass = encoder.beginRenderPass({
-                        colorAttachments: [{
-                            view: this.state.context.getCurrentTexture().createView(),
-                            loadOp: "clear",
-                            clearValue: this.state.clearColor,
-                            storeOp: "store",
-                         }]
-                    });
-                    
-                    pass.setPipeline(this.state.pipelines!.render);
-                    pass.setVertexBuffer(0, this.state.geometry!.vertexBuffer);
+            setUniforms({ 
+                sys: { 
+                    frame: frame, 
+                    time: elapsed, 
+                    mouse: mouse, 
+                    resolution: resolution,
+                    aspect: aspectRatio 
+                }, ...unis });
+ 
+            // render pipeline
+            if (state.pipelines?.render) {
+                const pass = encoder.beginRenderPass({
+                    colorAttachments: [{
+                        view: state.context.getCurrentTexture().createView(),
+                        loadOp: "clear",
+                        clearValue: state.clearColor,
+                        storeOp: "store",
+                     }]
+                });
+                
+                pass.setPipeline(state.pipelines!.render);
+                pass.setVertexBuffer(0, state.geometry!.vertexBuffer);
 
-                    // we must always have two vertex buffers when instancing from storage, because
-                    // you cant' have a writing storage and reading vertex at the same time.
-                    if (this.state.storages && this.state.storages.vertexStorages.length > 0) {
-                        pass.setVertexBuffer(1, this.state.storages.vertexStorages[bindGroup].buffer)
-                    } else if (this.state.geometry?.instanceBuffer) {
-                        pass.setVertexBuffer(1, this.state.geometry?.instanceBuffer)
-                    }
-                    
-                    elapsed = ((performance.now() - start) / 1000) - idle;
-            
-                    pass.setBindGroup(0, this.state.pipelines!.bindGroup[bindGroup]);
-                    pass.draw(this.state.geometry!.vertexCount, this.state.geometry!.instances || 1 );
-        
-                    pass.end();    
+                // we must always have two vertex buffers when instancing from storage, because
+                // you cant' have a writing storage and reading vertex at the same time.
+                if (state.storages && state.storages.vertexStorages.length > 0) {
+                    pass.setVertexBuffer(1, state.storages.vertexStorages[bindGroup].buffer)
+                } else if (state.geometry?.instanceBuffer) {
+                    pass.setVertexBuffer(1, state.geometry?.instanceBuffer)
                 }
                 
-                // compute pipeline
-                if (this.state.pipelines?.compute) {
-                    for (let i = 0; i < (this.state.spec?.computeCount || 1); i++) {
-                        const bg = this.state.spec?.bindings ? this.state.spec.bindings.currentGroup(frame + i) : 0
-                        const computePass = encoder.beginComputePass();
-                        computePass.setPipeline(this.state.pipelines!.compute);
-                        computePass.setBindGroup(0, this.state.pipelines!.bindGroup[bg]);
-            
-                        const wgc = this.state.pipelines?.workgroupCount || [1,1,1];
-                        computePass.dispatchWorkgroups(wgc[0], wgc[1], wgc[2]);
-            
-                        computePass.end();    
-                    }
-                }
-
-                // copy read buffers
-                if (this.state.storages && this.state.storages.readStorages.length > 0) {
-                    this.state.storages.readStorages.forEach((element,i) => {
-                        encoder.copyBufferToBuffer(element.srcBuffer, 0, element.dstBuffer, 0, element.size);
-                    });
-                } 
+                elapsed = ((performance.now() - start) / 1000) - idle;
+        
+                pass.setBindGroup(0, state.pipelines!.bindGroup[bindGroup]);
+                pass.draw(state.geometry!.vertexCount, state.geometry!.instances || 1 );
     
-                this.state.device.queue.submit([encoder.finish()]);
-
-                // read buffers into staging buffers
-                await readBuffers();
-
-                if (crtl.frames! > 0 && crtl.reset) {
-                    crtl.reset = false;
-                    crtl.frames = 0;
-                }
-                if (crtl.frames! !=0 &&  frame > crtl.frames! ) crtl.play = false;
-            
-            } else {
-                idle = ((performance.now()- start)/1000) - elapsed;
+                pass.end();    
             }
-            frame++; 
-            requestAnimationFrame(render);
-        }
+            
+            // compute pipelines
+            const computePass = encoder.beginComputePass();
+            const computeGroupCount = spec?.computeGroupCount || 1;
+            for( let i = 0; i < computeGroupCount; i++) {
+                for (let c = 0; c < state.pipelines!.compute.length; c++) {
+                    const compute = state.pipelines!.compute[c];
+                    computePass.setPipeline(compute.pipeline);
+                    for (let i = 0; i < compute.instances ; i++) {
+                        const bg = spec?.bindings ? spec.bindings.currentGroup(frame + i) : 0
+                        computePass.setBindGroup(0, state.pipelines!.bindGroup[bg]);
+                        computePass.dispatchWorkgroups(...compute.workgroups);
+                    }
+                }    
+            }
+            computePass.end();    
 
+            // copy read buffers
+            if (state.storages && state.storages.readStorages.length > 0) {
+                state.storages.readStorages.forEach((element,i) => {
+                    encoder.copyBufferToBuffer(element.srcBuffer, 0, element.dstBuffer, 0, element.size);
+                });
+            } 
+
+            state.device.queue.submit([encoder.finish()]);
+
+            // read buffers into staging buffers
+            await readBuffers();
+
+            if (crtl.frames! > 0 && crtl.reset) {
+                crtl.reset = false;
+                crtl.frames = 0;
+            }
+            if (crtl.frames! !=0 &&  frame > crtl.frames! ) crtl.play = false;
+        
+        } else {
+            idle = ((performance.now()- start)/1000) - elapsed;
+        }
+        frame++; 
         requestAnimationFrame(render);
     }
+
+    const observer = new ResizeObserver((entries) => {
+        state.canvas.width = entries[0].target.clientWidth * devicePixelRatio;
+        state.canvas.height = entries[0].target.clientWidth * devicePixelRatio;
+        //this.state.canvas.width = entries[0].devicePixelContentBoxSize[0].inlineSize;
+        //this.state.canvas.height = entries[0].devicePixelContentBoxSize[0].blockSize;
+        resolution[0] = entries[0].target.clientWidth;
+        resolution[1] = entries[0].target.clientHeight;
+        const factor = resolution[0] > resolution[1] ? resolution[0] : resolution[1];
+        aspectRatio[0] = resolution[0] / factor;
+        aspectRatio[1] = resolution[1] / factor;
+    });
+    observer.observe(state.canvas)
+    state.canvas.addEventListener('mousemove', event => {
+        mouse[0] = event.offsetX/state.canvas.clientWidth;
+        mouse[1] = event.offsetY/state.canvas.clientHeight;
+    });
+
+    requestAnimationFrame(render);
 }
