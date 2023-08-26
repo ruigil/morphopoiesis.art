@@ -14,7 +14,7 @@ import {
     Storage, 
     Compute 
 } from "./webgpu.interfaces.ts";
-import { ArrayType, TemplateType, Type, WgslReflect } from "./wgsl_reflect.module.js";
+import { ArrayType, TemplateType, Type, WgslReflect } from "./wgsl-reflect/index.ts";
 
 
 export class Utils {
