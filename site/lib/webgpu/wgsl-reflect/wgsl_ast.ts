@@ -181,6 +181,7 @@ export class ParseContext {
       this.storage = storage;
       this.access = access;
       this.value = value;
+      this.attributes = null;
     }
   
     get astNodeType() {
@@ -204,6 +205,7 @@ export class ParseContext {
       this.name = name;
       this.type = type;
       this.value = value;
+      this.attributes = null;
     }
   
     get astNodeType() {
@@ -237,6 +239,7 @@ export class ParseContext {
       this.storage = storage;
       this.access = access;
       this.value = value;
+      this.attributes = null;
     }
   
     get astNodeType() {
@@ -270,6 +273,7 @@ export class ParseContext {
       this.storage = storage;
       this.access = access;
       this.value = value;
+      this.attributes = null;
     }
   
     get astNodeType() {
@@ -483,6 +487,7 @@ export class ParseContext {
       super();
       this.name = name;
       this.members = members;
+      this.attributes = null; 
     }
   
     get astNodeType() {
@@ -593,6 +598,7 @@ export class ParseContext {
     constructor(name: string) {
       super();
       this.name = name;
+      this.attributes = null;
     }
   
     get astNodeType() {
@@ -708,6 +714,7 @@ export class ParseContext {
   
     constructor() {
       super();
+        this.postfix = null;
     }
   }
   
@@ -764,9 +771,9 @@ export class ParseContext {
    */
   export class CallExpr extends Expression {
     name: string;
-    args: Array<Expression> | null;
+    args: Array<Expression> ;
   
-    constructor(name: string, args: Array<Expression> | null) {
+    constructor(name: string, args: Array<Expression>) {
       super();
       this.name = name;
       this.args = args;
