@@ -1,9 +1,10 @@
 import { WGPUSpec } from "../../../lib/webgpu/webgpu.interfaces.ts";
-import { WGPUContext, Utils } from "../../../lib/webgpu/webgpu.ts";
+import { WGPUContext } from "../../../lib/webgpu/webgpu.ts";
+import { loadWGSL, triangle } from "../../../lib/webgpu/utils.ts";
 
 export const boids = async () => {
 
-    const code = await Utils.loadWGSL(`/assets/shaders/boids/boids.wgsl`);
+    const code = await loadWGSL(`/assets/shaders/boids/boids.wgsl`);
 
     const spec = ():WGPUSpec => {
         const size = 2000;
@@ -21,7 +22,7 @@ export const boids = async () => {
             code: code,
             geometry: {
                 vertex: {
-                    data: Utils.triangle(1.),
+                    data: triangle(1.),
                     attributes: ["apos"]    
                 },
                 instance: {

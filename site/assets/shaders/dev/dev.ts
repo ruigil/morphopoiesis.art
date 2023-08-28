@@ -1,12 +1,13 @@
 import { WGPUSpec } from "../../../lib/webgpu/webgpu.interfaces.ts";
-import { WGPUContext, Utils } from "../../../lib/webgpu/webgpu.ts";
+import { WGPUContext } from "../../../lib/webgpu/webgpu.ts";
+import { loadWGSL, loadTexture, loadWebcam, square } from "../../../lib/webgpu/utils.ts";
 
 export const dev = async () => {
 
-    const wgsl = await Utils.loadWGSL(`/assets/shaders/dev/dev.wgsl`);
+    const wgsl = await loadWGSL(`/assets/shaders/dev/dev.wgsl`);
 
-    const tree = await Utils.loadTexture("/assets/img/treeoflife.webp");
-    const webcam = await Utils.loadWebcam();
+    const tree = await loadTexture("/assets/img/treeoflife.webp");
+    const webcam = await loadWebcam();
 
     const spec = ():WGPUSpec => {
 
@@ -14,7 +15,7 @@ export const dev = async () => {
             code: wgsl,
             geometry: {
                 vertex: {
-                    data: Utils.square(1.),
+                    data: square(1.),
                     attributes: ["pos"],
                 }
             },

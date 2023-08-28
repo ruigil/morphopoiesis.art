@@ -1,5 +1,5 @@
 
-import { draw } from '../../lib/webgpu/webgpu.ts';
+import { draw } from '../../lib/webgpu/utils.ts';
 import { gol } from '../shaders/gol/gol.ts'
 
 document.addEventListener('DOMContentLoaded', async (event) => {

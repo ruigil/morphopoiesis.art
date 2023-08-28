@@ -1,9 +1,10 @@
 import { WGPUSpec } from "../../../lib/webgpu/webgpu.interfaces.ts";
-import { WGPUContext, Utils } from "../../../lib/webgpu/webgpu.ts";
+import { WGPUContext } from "../../../lib/webgpu/webgpu.ts";
+import { loadWGSL, square } from "../../../lib/webgpu/utils.ts";
 
 export const physarum = async () => {
 
-    const code = await Utils.loadWGSL(`/assets/shaders/physarum/physarum.wgsl`);
+    const code = await loadWGSL(`/assets/shaders/physarum/physarum.wgsl`);
 
     const spec = ():WGPUSpec => {
         const numParticles = 140000;
@@ -20,7 +21,7 @@ export const physarum = async () => {
             code: code,
             geometry: {
                 vertex: {
-                    data: Utils.square(1.),
+                    data: square(1.),
                     attributes: ["pos"],
                     instances: size * size    
                 }

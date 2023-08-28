@@ -1,4 +1,5 @@
-import { WGPUContext, draw } from "../../lib/webgpu/webgpu.ts";
+import { WGPUContext } from "../../lib/webgpu/webgpu.ts";
+import { draw } from "../../lib/webgpu/utils.ts";
 
 export async function player(gpu: WGPUContext, unis?: any) {
 

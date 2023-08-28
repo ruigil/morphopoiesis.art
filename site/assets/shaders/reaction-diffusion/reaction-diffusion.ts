@@ -1,9 +1,10 @@
 import { WGPUSpec } from "../../../lib/webgpu/webgpu.interfaces.ts";
-import { WGPUContext, Utils } from "../../../lib/webgpu/webgpu.ts";
+import { WGPUContext } from "../../../lib/webgpu/webgpu.ts";
+import { loadWGSL, square } from "../../../lib/webgpu/utils.ts";
 
 export const rd = async () => {
 
-    const code = await Utils.loadWGSL(`/assets/shaders/reaction-diffusion/reaction-diffusion.wgsl`);
+    const code = await loadWGSL(`/assets/shaders/reaction-diffusion/reaction-diffusion.wgsl`);
 
     const spec =  () : WGPUSpec => {
         const size = 512;
@@ -12,7 +13,7 @@ export const rd = async () => {
             code: code,
             geometry: {
                 vertex: {
-                    data: Utils.square(1.),
+                    data: square(1.),
                     attributes: ["pos"],
                     instances: size * size    
                 }
