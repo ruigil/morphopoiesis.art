@@ -3,53 +3,25 @@ import { WGPUContext, Utils } from "../../../lib/webgpu/webgpu.ts";
 
 export const dev = async () => {
 
-    const code = await (await fetch(`/assets/shaders/dev/dev.wgsl`)).text();
+    const wgsl = await Utils.loadWGSL(`/assets/shaders/dev/dev.wgsl`);
 
-    const spec = () => {
-        const numParticles = 140000;
-        const size = 1024;
-        const initialParticleData = new Array(numParticles * 4);
-        for (let i = 0; i < numParticles; ++i) {
-          initialParticleData[4 * i + 0] = .5 * (Math.random() - 0.5);
-          initialParticleData[4 * i + 1] = .5 * (Math.random() - 0.5);
-          initialParticleData[4 * i + 2] =  Math.random() - 0.5;
-          initialParticleData[4 * i + 3] = Math.random() - 0.5;
-        }
+    const tree = await Utils.loadTexture("/assets/img/treeoflife.webp");
+    const webcam = await Utils.loadWebcam();
+
+    const spec = ():WGPUSpec => {
 
         return {
-            shader: code,
+            code: wgsl,
             geometry: {
                 vertex: {
                     data: Utils.square(1.),
                     attributes: ["pos"],
-                    instances: size * size    
                 }
             },
-            uniforms: {
-                params: {
-                    size: [size, size],
-                    agents: numParticles,
-                    sa: 22.5 * Math.PI / 180,
-                    sd: 12.,
-                    evaporation: .995,
-                }
-            },
-            storage: [
-                { name: "agents", size: numParticles , data: initialParticleData} ,
-                { name: "trailMapA", size: size * size } ,
-                { name: "trailMapB", size: size * size } ,
-                { name: "debug", size: 1, read: true}, 
-            ],
-            compute: [
-                { name: "computeTrailmap", workgroups: [size / 8, size / 8, 1] },
-                { name: "computeAgents", workgroups: [Math.ceil(numParticles / 64), 1, 1] }
-            ],
-            computeGroupCount: 10,
-            bindings: {
-                groups: [ [0,1,2,3,4,5], [0,1,3,2,4,5] ],
-                currentGroup: (frame:number) => frame % 2,
-            }      
-        } as WGPUSpec
+            textures: [
+                { name : "webcamTexture",  data: webcam.video }
+            ]
+        } 
     }
 
 
@@ -66,6 +38,23 @@ export const dev = async () => {
             `
         }
     });
+
+
+    // Get a reference to the canvas element
+    const camvas = document.getElementById('webcam') as HTMLCanvasElement;
+    // Get a reference to the canvas context
+    const ctx = camvas.getContext('2d');
+    camvas.width = webcam?.settings.width! ;
+    camvas.height = webcam?.settings.height!;
+    // Draw the video frames onto the canvas
+    setInterval(() => {
+        //ctx?.save();
+        //ctx?.scale(-1, 1);
+        //ctx?.translate(-canvas.width, 0);
+        ctx?.drawImage(webcam.video, 0, 0);
+        // Restore the canvas state
+        //ctx?.restore();
+    }, 16);
 
     return context;
 

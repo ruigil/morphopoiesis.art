@@ -24,8 +24,8 @@ export interface Geometry {
 
 export interface Resource {
     binding: number;
-    buffer: GPUBuffer;
-    type: GPUBufferBindingType;
+    resource: GPUBufferBinding | GPUSampler | GPUTextureView | GPUExternalTexture;
+    type: GPUBufferBindingType | "sampler" | "texture" | "external_texture";
 }
 
 export interface Uniform extends Resource {
@@ -34,6 +34,13 @@ export interface Uniform extends Resource {
 }
 
 export interface Storage extends Resource {
+}
+
+export interface Sampler extends Resource {
+}
+
+export interface Texture extends Resource {
+    video?: HTMLVideoElement;
 }
 
 export interface ReadStorage  {
@@ -62,10 +69,8 @@ export interface Compute {
 export interface Pipelines {
     render?: GPURenderPipeline;
     compute: Compute[];
-    bindGroup: Array<GPUBindGroup>;
-    workgroupCount?: Array<number>;
+    bindings: (index:number) => GPUBindGroup;
 }
-
 
 export interface VAttr {
     data?: Array<number>;
@@ -74,10 +79,12 @@ export interface VAttr {
 }
 
 export interface WGPUSpec {
-    shader: string;
+    code: string;
     geometry?: { vertex: VAttr, instance?: VAttr };
     uniforms?: any;
     storage?: Array<{ name: string, size: number, data?: number[], read?:boolean, vertex?:boolean, }>;
+    samplers?: Array<{ name : string, magFilter: string, minFilter: string }>;
+    textures?: Array<{ name : string, data: ImageBitmap | HTMLVideoElement | undefined}>;
     compute?: Array<{ name: string, workgroups: [number,number,number], instances?: number }>;
     computeGroupCount?: number;
     clearColor?: {r:number,g:number,b:number,a:number}

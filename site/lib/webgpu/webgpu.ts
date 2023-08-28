@@ -12,7 +12,8 @@ import {
     WGPUState, 
     Storages, 
     Storage, 
-    Compute 
+    Compute, 
+    Texture
 } from "./webgpu.interfaces.ts";
 import { ArrayType, TemplateType, Type, WgslReflect } from "./wgsl-reflect/index.ts";
 
@@ -35,6 +36,54 @@ export class Utils {
         x, -x,
         0,  x,
         ]
+    }
+    static circle(x: number, n: number) {
+        const vertices = [];
+        for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2;
+        const a2 = ((i + 1) / n) * Math.PI * 2;
+        vertices.push(0, 0, Math.cos(a) * x, Math.sin(a) * x, Math.cos(a2) * x, Math.sin(a2) * x);
+        }
+        return vertices;
+    }
+    static cube(x: number) {
+        return [
+        -x, -x, -x, x, -x, -x, x,  x, -x, -x,  x, -x, // -z face
+        -x, -x,  x, x, -x,  x, x,  x,  x, -x,  x,  x, // z face
+        -x, -x, -x, -x,  x, -x, -x,  x,  x, -x, -x,  x, // -x face
+        x, -x, -x, x,  x, -x, x,  x,  x, x, -x,  x, // x face
+        -x, -x, -x, -x, -x,  x, x, -x,  x, x, -x, -x, // -y face
+        -x,  x, -x, -x,  x,  x, x,  x,  x, x,  x, -x, // y face
+        ];
+    }
+
+    static async loadWGSL(url: string) {
+        return await (await fetch(url)).text()
+        //return await text(url);
+    }
+
+    static async loadTexture(url: string) {
+        const response = await fetch(new URL(url, import.meta.url).toString());
+        return await createImageBitmap(await response.blob());
+    }
+
+    static async loadWebcam() {
+        // Request permission to access the user's camera
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+        const videoSettings = stream.getVideoTracks()[0].getSettings();
+        const capabilities = stream.getVideoTracks()[0].getCapabilities();
+        // Create a video element to capture the video stream
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        video.play();
+        const metadataLoaded = new Promise<void>((resolve) => {
+            video.addEventListener('loadedmetadata', () => {
+              resolve();
+            });
+        });        
+        // Wait for the metadata to be loaded
+        await metadataLoaded;
+        return { video: video, settings: videoSettings, capabilities: capabilities };
     }
 }
 
@@ -73,15 +122,16 @@ export class WGPUContext {
         })
     }
     
+
     build( spec : () => WGPUSpec): WGPUContext {
                 
 
         const createShaderModule = (spec: WGPUSpec) => {
-            if (!spec.shader) throw new Error("Shader is not defined");
+            if (!spec.code) throw new Error("Code is not defined in spec");
 
             return this.state.device.createShaderModule({
                 label: "Custom shader",
-                code: spec.shader
+                code: spec.code
             });
         }
 
@@ -155,13 +205,14 @@ export class WGPUContext {
         }
 
         const sizeFormat = (type: Type): {size: number, format: string} => {
-            if (type instanceof ArrayType) return sizeFormat(type.format)
-            if (type instanceof TemplateType) return { size: reflect.getTypeInfo(type)!.size, format: type.format.name }
+            if (!type) throw new Error("Type is not defined");
+            if (type instanceof ArrayType) return sizeFormat(type.format!)
+            if (type instanceof TemplateType) return { size: reflect.getTypeInfo(type)!.size, format: type.format!.name }
             const struct = reflect.structs.find( e => e.name == type.name);
             if (struct) {
                // the size of struct takes into account alignment but the format must take into account members.
                // it is not the case and will fail when not f32
-               return { size: reflect.getTypeInfo(type)?.size, format: 'f32'}    
+               return { size: reflect.getTypeInfo(type)!.size, format: 'f32'}    
             }
             if (type.name.startsWith('vec') && type.name.endsWith('f')) return { size: parseInt(type.name.substring(3,4)) * 4, format: 'f32' } 
             if (type.name.startsWith('vec') && type.name.endsWith('u')) return { size: parseInt(type.name.substring(3,4)) * 4, format: 'u32' } 
@@ -226,7 +277,7 @@ export class WGPUContext {
                 uniformsBinding.push({
                     uniValues: uniformArray,
                     uniViews: uniformViews,
-                    buffer: uniformBuffer,
+                    resource: { buffer: uniformBuffer },
                     binding: reflect.uniforms[i].binding,
                     type: "uniform"
                 })
@@ -254,7 +305,7 @@ export class WGPUContext {
                 // gives a byte size and format for the type present in the storage buffer
                 // we need this to allocate the right size given the type of the buffer
                 // so we can copy the data from the spec to the buffer
-                const sf = sizeFormat(node.type);
+                const sf = sizeFormat(node.type!);
                 
                 //console.log(node.name, size, sf.size, sf.format)
                 const storageBuffer = this.state.device.createBuffer({
@@ -290,7 +341,7 @@ export class WGPUContext {
                 
                 stateStorage.push({
                     binding: reflect.storage[i].binding,
-                    buffer: storageBuffer,
+                    resource: { buffer: storageBuffer },
                     type: node.access === "read_write" ? "storage" : "read-only-storage"  
                 });
 
@@ -302,22 +353,107 @@ export class WGPUContext {
             }
         }
 
+        const createSamplers = (spec: WGPUSpec, reflect: WgslReflect) => {
+
+            // TODO: add sampler spec
+            const samplers = reflect.samplers.map((element,i):Resource => ({
+                binding: element.binding,
+                resource: this.state.device.createSampler({
+                    label: element.name,
+                    magFilter: 'linear',
+                    minFilter: 'linear',
+                }),
+                type: 'sampler'
+            }));
+            return samplers;
+        }
+
+        const createTextures = (spec: WGPUSpec, reflect: WgslReflect) => {
+
+            const texture = ( image: ImageBitmap ) => {
+
+                const texture = this.state.device.createTexture({
+                    label: "",
+                    size: { width: image.width, height: image.height },
+                    format: "rgba8unorm",
+                    usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
+                });
+
+                this.state.device.queue.copyExternalImageToTexture(
+                    { source: image },
+                    { texture: texture },
+                    [ image.width, image.height ]
+                );
+
+                return texture.createView();
+            }
+
+            const textures = reflect.textures.map((element,i): Texture => {
+                const tex = spec.textures ? spec.textures.find( e => e.name === element.name) : undefined;
+                if (!tex) throw new Error(`Texture spec for ${element.name} is undefined`);
+                if (!tex.data) throw new Error(`Texture data for ${element.name} is undefined`);
+                const resource:Texture = tex.data instanceof HTMLVideoElement ? 
+                    { 
+                        binding: element.binding,
+                        resource: this.state.device.importExternalTexture({ source : tex.data }),
+                        type: 'external_texture',
+                        video: tex.data
+                    }:
+                    { 
+                        binding: element.binding,
+                        resource: texture(tex.data),
+                        type: 'texture'
+                    };
+                return resource;
+            });
+         
+            return textures;
+        }
+
         const createBindGroupLayout = (resources: Resource[]) => {
             const entries:Array<GPUBindGroupLayoutEntry> = [];
 
             resources.forEach((element,i) => {
-                let visibility = 0;
                 switch (element.type) {
-                    case "uniform": visibility = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE; break;
-                    case "storage": visibility = GPUShaderStage.COMPUTE; break;
-                    case "read-only-storage": visibility = GPUShaderStage.VERTEX | GPUShaderStage.COMPUTE; break;
+                    case "uniform": 
+                        entries.push({ 
+                            binding: element.binding,
+                            visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE, 
+                            buffer: { type: element.type }
+                        }); break;;
+                    case "storage": 
+                        entries.push({ 
+                            binding: element.binding,
+                            visibility: GPUShaderStage.COMPUTE, 
+                            buffer: { type: element.type }
+                        }); break;;
+                    case "read-only-storage": 
+                        entries.push({ 
+                            binding: element.binding,
+                            visibility: GPUShaderStage.VERTEX | GPUShaderStage.COMPUTE, 
+                            buffer: { type: element.type }
+                        }); break;;
+                    case "sampler": 
+                        entries.push({ 
+                            binding: element.binding,
+                            visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE, 
+                            sampler: { type: "filtering" }
+                        }); break;;
+                    case "texture":
+                        entries.push({ 
+                            binding: element.binding,
+                            visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE, 
+                            texture: { viewDimension: "2d" }
+                        }); break;;
+                    case "external_texture": 
+                        entries.push({ 
+                            binding: element.binding,
+                            visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE, 
+                            externalTexture: { viewDimension: "2d" }
+                        }); break;;
+                
                 }
 
-                entries.push({
-                    binding: element.binding,
-                    visibility: visibility,
-                    buffer: { type: element.type }
-                }); 
             });
             // Create the bind group layout and pipeline layout.
             // this is needed because we use two different piplines and they must share the same layout
@@ -329,37 +465,62 @@ export class WGPUContext {
             return bindGroupLayout;
         }
 
-        const createBindGroups = (spec:WGPUSpec, resources:Resource[]) => {
-            // there is something wrong with the bindgroups. Thex should be create based on the bindings defined in the shader
-            const buffers = new Array<any>(reflect.getBindGroups()[0].length)
-
+        const createBindings = (spec:WGPUSpec, resources:Resource[], bindGroupLayout: GPUBindGroupLayout, reflect:WgslReflect) => {
+            // only have a single bind group for now
+            const resbinding = new Array<any>(reflect.getBindGroups()[0].length);
+    
             resources.forEach((element,i) => {
-                buffers[element.binding] = element.buffer;
+                resbinding[element.binding] = element.resource;
             });
-
+    
+            // the definition of bindgroups in the spec doesnt have to match the order of the resources
             const bindingsCount = resources.length;
             const bindingGroupsCount = spec.bindings?.groups?.length || 1;
             const bindingGroups = new Array<GPUBindGroup>(bindingGroupsCount);
+            
+            const externals = new Array<{ idx: number, video: HTMLVideoElement}>(bindingGroupsCount);            
+            const entries = new Array<GPUBindGroupEntry[]>(bindingGroupsCount);
+            
             for (let i = 0; i < bindingGroupsCount; i++) {
-                const entries:Array<GPUBindGroupEntry> = [];
+                entries[i] = [] 
+
                 for (let j = 0; j < bindingsCount; j++) {
                     // if bindings are not defined, use the default order
-                    const buff = buffers[spec.bindings?.groups[i][j] || j];
-                    if (!buff) throw new Error("Binding defined in groups not found");
-                    entries.push({
+                    const res = resbinding[spec.bindings?.groups[i][j] || j];
+                    if (!res) throw new Error("Binding defined in groups not found");
+
+                    entries[i].push({
                         binding: resources[j].binding,
-                        resource: { buffer: buff } 
+                        resource: res 
                     })
+                    if (resources[j].type === 'external_texture') {
+                        externals[i] = { idx: j, video: (resources[j] as Texture).video! };
+                    };
                 }
+
                 bindingGroups[i] = this.state.device.createBindGroup({  
                     label: `Bind Group ${i}`,
                     layout: bindGroupLayout,
-                    entries: entries,  
+                    entries: entries[i],
                 })
             }
-            return bindingGroups;
+            
+            return (index:number) => {
+                // if the group has an external texture, we have to recreate the group every frame
+                // importing the texture from the video
+                if (externals[index]) {
+                    const { idx, video } = externals[index];
+                    entries[index][idx].resource = this.state.device.importExternalTexture({ source : video })
+                    return this.state.device.createBindGroup({
+                        label: `Bind Group ${index}`,
+                        layout: bindGroupLayout,
+                        entries: entries[index],
+                    })
+                }
+                return bindingGroups[index]
+            }            
         }
-
+    
         const createPipelineLayout = (bindGroupLayout: GPUBindGroupLayout) => {
             return this.state.device.createPipelineLayout({
                 label: "Pipeline Layout",
@@ -425,18 +586,21 @@ export class WGPUContext {
         }
 
         const wgslSpec = spec();
-        const reflect = new WgslReflect(wgslSpec.shader);
+        const reflect = new WgslReflect(wgslSpec.code);
         //console.log("reflect",reflect)
 
         const shaderModule = createShaderModule(wgslSpec);
         const geometry = createGeometry(wgslSpec, reflect);
         const uniforms = createUniforms(wgslSpec, reflect);
         const storages = createStorage(wgslSpec, reflect);
+        const samplers = createSamplers(wgslSpec, reflect);
+        const textures = createTextures(wgslSpec, reflect);
 
-        const resources = [...uniforms, ...storages.storages];
+        const resources = [...uniforms, ...storages.storages, ...samplers, ...textures];
         
         const bindGroupLayout = createBindGroupLayout(resources);
-        const bindGroups = createBindGroups(wgslSpec, resources);
+        
+        const bindings = createBindings(wgslSpec, resources, bindGroupLayout, reflect);
 
         const pipelineLayout = createPipelineLayout(bindGroupLayout);
         
@@ -449,7 +613,7 @@ export class WGPUContext {
             pipelines: {
                 render: renderPipeline,
                 compute: computePipelines,
-                bindGroup: bindGroups,
+                bindings: bindings,
             },
             geometry: geometry,
             uniforms: uniforms,
@@ -498,11 +662,29 @@ export const draw = (context: WGPUContext, unis?:any, controls?: Controls ) => {
     let elapsed = 0;
     let idle = 0;
     let state = context.getState();
-    let spec = state.spec ? state.spec() : undefined;
+    let spec = state.spec!();
     const crtl = controls || { play: true, reset: false, frames: 0 };
     const mouse: Array<number> = [0,0];
     const resolution: Array<number> = [0,0];
     const aspectRatio: Array<number> = [1,1];
+
+    const observer = new ResizeObserver((entries) => {
+        state.canvas.width = entries[0].target.clientWidth * devicePixelRatio;
+        state.canvas.height = entries[0].target.clientWidth * devicePixelRatio;
+        //this.state.canvas.width = entries[0].devicePixelContentBoxSize[0].inlineSize;
+        //this.state.canvas.height = entries[0].devicePixelContentBoxSize[0].blockSize;
+        resolution[0] = entries[0].target.clientWidth;
+        resolution[1] = entries[0].target.clientHeight;
+        const factor = resolution[0] > resolution[1] ? resolution[0] : resolution[1];
+        aspectRatio[0] = resolution[0] / factor;
+        aspectRatio[1] = resolution[1] / factor;
+    });
+
+    observer.observe(state.canvas)
+    state.canvas.addEventListener('mousemove', event => {
+        mouse[0] = event.offsetX/state.canvas.clientWidth;
+        mouse[1] = event.offsetY/state.canvas.clientHeight;
+    });
 
     const fps = () => {
         state.fpsListeners && 
@@ -548,7 +730,7 @@ export const draw = (context: WGPUContext, unis?:any, controls?: Controls ) => {
                 }
             }
             // copy the values from JavaScript to the GPU
-            state.device.queue.writeBuffer( element.buffer, 0, element.uniValues);
+            state.device.queue.writeBuffer( (element.resource as GPUBufferBinding).buffer, 0, element.uniValues);
         });
     }
 
@@ -570,7 +752,7 @@ export const draw = (context: WGPUContext, unis?:any, controls?: Controls ) => {
         }
 
         if ( crtl.play || crtl.frames! > 0 ) {
-            const bindGroup = spec?.bindings ? spec.bindings.currentGroup(frame) : 0;
+            const bindGroup = spec.bindings ? spec.bindings.currentGroup(frame) : 0;
 
             const encoder = state.device.createCommandEncoder();
 
@@ -584,7 +766,7 @@ export const draw = (context: WGPUContext, unis?:any, controls?: Controls ) => {
                 }, ...unis });
  
             // render pipeline
-            if (state.pipelines?.render) {
+            if (state.pipelines!.render) {
                 const pass = encoder.beginRenderPass({
                     colorAttachments: [{
                         view: state.context.getCurrentTexture().createView(),
@@ -598,16 +780,15 @@ export const draw = (context: WGPUContext, unis?:any, controls?: Controls ) => {
                 pass.setVertexBuffer(0, state.geometry!.vertexBuffer);
 
                 // we must always have two vertex buffers when instancing from storage, because
-                // you cant' have a writing storage and reading vertex at the same time.
+                // you cant' have a writing and reading storage vertex at the same time.
                 if (state.storages && state.storages.vertexStorages.length > 0) {
                     pass.setVertexBuffer(1, state.storages.vertexStorages[bindGroup].buffer)
-                } else if (state.geometry?.instanceBuffer) {
-                    pass.setVertexBuffer(1, state.geometry?.instanceBuffer)
+                } else if (state.geometry!.instanceBuffer) {
+                    pass.setVertexBuffer(1, state.geometry!.instanceBuffer)
                 }
                 
-                elapsed = ((performance.now() - start) / 1000) - idle;
         
-                pass.setBindGroup(0, state.pipelines!.bindGroup[bindGroup]);
+                pass.setBindGroup(0, state.pipelines!.bindings(bindGroup));
                 pass.draw(state.geometry!.vertexCount, state.geometry!.instances || 1 );
     
                 pass.end();    
@@ -615,14 +796,14 @@ export const draw = (context: WGPUContext, unis?:any, controls?: Controls ) => {
             
             // compute pipelines
             const computePass = encoder.beginComputePass();
-            const computeGroupCount = spec?.computeGroupCount || 1;
+            const computeGroupCount = spec.computeGroupCount || 1;
             for( let i = 0; i < computeGroupCount; i++) {
                 for (let c = 0; c < state.pipelines!.compute.length; c++) {
                     const compute = state.pipelines!.compute[c];
                     computePass.setPipeline(compute.pipeline);
                     for (let i = 0; i < compute.instances ; i++) {
-                        const bg = spec?.bindings ? spec.bindings.currentGroup(frame + i) : 0
-                        computePass.setBindGroup(0, state.pipelines!.bindGroup[bg]);
+                        const bg = spec.bindings ? spec.bindings.currentGroup(frame + i) : 0
+                        computePass.setBindGroup(0, state.pipelines!.bindings(bg));
                         computePass.dispatchWorkgroups(...compute.workgroups);
                     }
                 }    
@@ -637,6 +818,8 @@ export const draw = (context: WGPUContext, unis?:any, controls?: Controls ) => {
             } 
 
             state.device.queue.submit([encoder.finish()]);
+
+            elapsed = ((performance.now() - start) / 1000) - idle;
 
             // read buffers into staging buffers
             await readBuffers();
@@ -654,22 +837,6 @@ export const draw = (context: WGPUContext, unis?:any, controls?: Controls ) => {
         requestAnimationFrame(render);
     }
 
-    const observer = new ResizeObserver((entries) => {
-        state.canvas.width = entries[0].target.clientWidth * devicePixelRatio;
-        state.canvas.height = entries[0].target.clientWidth * devicePixelRatio;
-        //this.state.canvas.width = entries[0].devicePixelContentBoxSize[0].inlineSize;
-        //this.state.canvas.height = entries[0].devicePixelContentBoxSize[0].blockSize;
-        resolution[0] = entries[0].target.clientWidth;
-        resolution[1] = entries[0].target.clientHeight;
-        const factor = resolution[0] > resolution[1] ? resolution[0] : resolution[1];
-        aspectRatio[0] = resolution[0] / factor;
-        aspectRatio[1] = resolution[1] / factor;
-    });
-    observer.observe(state.canvas)
-    state.canvas.addEventListener('mousemove', event => {
-        mouse[0] = event.offsetX/state.canvas.clientWidth;
-        mouse[1] = event.offsetY/state.canvas.clientHeight;
-    });
 
     requestAnimationFrame(render);
 }

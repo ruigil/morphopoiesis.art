@@ -19,13 +19,23 @@ export default  async (pd: PageData) => {
         <small id="fps">0 fps</small>          
       </div>
     </sl-card>
-    <script type="module" src='/assets/shaders/dev/dev.js' defer></script>
+    <script type="module" defer>
+        import { player } from '/assets/js/player.js';
+        import { dev } from '/assets/shaders/dev/dev.js';
+        
+        document.addEventListener('DOMContentLoaded', async (event)  => {
+            player( await dev() );
+        });
+    </script>
     `
     const debugPanel = `
     <sl-card class="card-overview w-full">
     <div class="flex items-center gap-4">
         <sl-tag variant="primary">debug</sl-tag><div id="value">hello word</div>
     </div>
+    </sl-card>
+    <sl-card class="card-overview mt-4">
+    <canvas id="webcam" class="border" ></canvas>
     </sl-card>
     
     `
