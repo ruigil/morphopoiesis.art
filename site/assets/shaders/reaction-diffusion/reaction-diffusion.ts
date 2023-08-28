@@ -3,13 +3,13 @@ import { WGPUContext, Utils } from "../../../lib/webgpu/webgpu.ts";
 
 export const rd = async () => {
 
-    const code = await (await fetch(`/assets/shaders/reaction-diffusion/reaction-diffusion.wgsl`)).text();
+    const code = await Utils.loadWGSL(`/assets/shaders/reaction-diffusion/reaction-diffusion.wgsl`);
 
     const spec =  () : WGPUSpec => {
         const size = 512;
         const current = Array(size * size * 2).fill(0).map((v,i) => i % 2 == 0 ? 1 : (Math.random() > 0.01 ? 0 : 1) );
         return {
-            shader: code,
+            code: code,
             geometry: {
                 vertex: {
                     data: Utils.square(1.),
@@ -33,7 +33,7 @@ export const rd = async () => {
                 groups: [ [0,4,1,2,3], [0,4,2,1,3] ],
                 currentGroup: (frame:number) => frame % 2,
             }      
-        } as WGPUSpec
+        }
     }
 
     const canvas = document.querySelector("#canvas") as HTMLCanvasElement;

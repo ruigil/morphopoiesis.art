@@ -3,13 +3,13 @@ import { WGPUContext, Utils } from "../../../lib/webgpu/webgpu.ts";
 
 export const gol = async () => {
 
-    const code = await (await fetch(`/assets/shaders/gol/gol.wgsl`)).text();
+    const code = await Utils.loadWGSL(`/assets/shaders/gol/gol.wgsl`);
 
     const spec = (): WGPUSpec => {
         const size = 128;
         const current = Array(size*size).fill(0).map(() => Math.random() > 0.5 ? 1 : 0);
         return {
-            shader: code,
+            code: code,
             geometry: {
                 vertex: {
                     data: Utils.square(1.),

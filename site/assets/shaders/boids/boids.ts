@@ -3,7 +3,7 @@ import { WGPUContext, Utils } from "../../../lib/webgpu/webgpu.ts";
 
 export const boids = async () => {
 
-    const code = await (await fetch(`/assets/shaders/boids/boids.wgsl`)).text();
+    const code = await Utils.loadWGSL(`/assets/shaders/boids/boids.wgsl`);
 
     const spec = ():WGPUSpec => {
         const size = 2000;
@@ -18,7 +18,7 @@ export const boids = async () => {
         }
 
         return {
-            shader: code,
+            code: code,
             geometry: {
                 vertex: {
                     data: Utils.triangle(1.),
