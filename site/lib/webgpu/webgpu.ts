@@ -1,8 +1,6 @@
 /// <reference types="./webgpu.d.ts" />
-
 import { 
-    BufferListener, 
-    FPSListener, 
+    BufferListener,
     Geometry, 
     ReadStorage, 
     Resource, 
@@ -619,16 +617,8 @@ export class WGPUContext {
             uniforms: uniforms,
             storages: storages,
             clearColor: wgslSpec.clearColor || {r:0,g:0,b:0,a:1},
-            spec: spec
-        });
-    }
-
-    addFPSListener(listener: FPSListener) {
-            
-        const ls = this.state.fpsListeners ? [...this.state.fpsListeners, listener] : [listener];
-        return new WGPUContext({
-            ...this.state,
-            fpsListeners: ls
+            wgslSpec: wgslSpec,
+            spec: spec,
         });
     }
 
@@ -641,10 +631,118 @@ export class WGPUContext {
         });
     }
 
-    getState() {
-        return this.state;
+    async frame(frame: number, unis?: any) {
+        const { bufferListeners, storages, device, uniforms, pipelines, geometry, context, clearColor, wgslSpec } = this.state;
+
+        const readBuffers = async () => {
+            if (bufferListeners) {
+                const buffers = storages?.readStorages || [];
+                if (buffers.length == 0) return;
+                const p = await Promise.all(buffers.map( buff => buff.dstBuffer.mapAsync(GPUMapMode.READ)));
+                bufferListeners.forEach((listener) => {
+                    // TODO: buffers can be other types than float32
+                    const data = buffers.map(s=> ({ name: s.name, buffer: new Float32Array(s.dstBuffer!.getMappedRange())}));
+                    listener.onRead( data );
+                    buffers.forEach(s=> s.dstBuffer!.unmap() );
+                });
+            } 
+        }
+
+        const setUniforms = ( unis: any) => {
+            uniforms?.forEach((element,i) => {
+                const uviews = element.uniViews;
+                //console.log("unis", unis);
+                // TODO: implement recursive structures instead of one level
+                for (let key in unis) {
+                    if (!uviews[key]) continue;
+                    if (unis[key] instanceof Object){
+                        for (let subkey in unis[key]) {
+                            if (uviews[key][subkey]) {
+                                unis[key][subkey][Symbol.iterator] ?
+                                uviews[key][subkey].set([...unis[key][subkey]]) :
+                                uviews[key][subkey].set([unis[key][subkey]]);
+                            }
+                        }
+                    } else {
+                        unis[key][Symbol.iterator] ? 
+                            uviews[key].set([...unis[key]]) : 
+                            uviews[key].set([unis[key]]);
+                    }
+                }
+                // copy the values from JavaScript to the GPU
+                device.queue.writeBuffer( (element.resource as GPUBufferBinding).buffer, 0, element.uniValues);
+            });
+        }
+        
+        setUniforms(unis);
+
+        const bindGroup = wgslSpec!.bindings ? wgslSpec!.bindings.currentGroup(frame) : 0;
+        const encoder = device.createCommandEncoder();
+            // render pipeline
+        if (pipelines!.render) {
+            const pass = encoder.beginRenderPass({
+                colorAttachments: [{
+                    view: context.getCurrentTexture().createView(),
+                    loadOp: "clear",
+                    clearValue: clearColor,
+                    storeOp: "store",
+                 }]
+            });
+            
+            pass.setPipeline(pipelines!.render);
+            pass.setVertexBuffer(0, geometry!.vertexBuffer);
+
+            // we must always have two vertex buffers when instancing from storage, because
+            // you cant' have a writing and reading storage vertex at the same time.
+            if (storages && storages.vertexStorages.length > 0) {
+                pass.setVertexBuffer(1, storages.vertexStorages[bindGroup].buffer)
+            } else if (geometry!.instanceBuffer) {
+                pass.setVertexBuffer(1, geometry!.instanceBuffer)
+            }
+            
+    
+            pass.setBindGroup(0, pipelines!.bindings(bindGroup));
+            pass.draw(geometry!.vertexCount, geometry!.instances || 1 );
+
+            pass.end();    
+        }
+        
+        // compute pipelines
+        const computePass = encoder.beginComputePass();
+        const computeGroupCount = wgslSpec!.computeGroupCount || 1;
+        for( let i = 0; i < computeGroupCount; i++) {
+            for (let c = 0; c < pipelines!.compute.length; c++) {
+                const compute = pipelines!.compute[c];
+                computePass.setPipeline(compute.pipeline);
+                for (let i = 0; i < compute.instances ; i++) {
+                    const bg = wgslSpec!.bindings ? wgslSpec!.bindings.currentGroup(frame + i) : 0
+                    computePass.setBindGroup(0, pipelines!.bindings(bg));
+                    computePass.dispatchWorkgroups(...compute.workgroups);
+                }
+            }    
+        }
+        computePass.end();    
+
+        // copy read buffers
+        if (storages && storages.readStorages.length > 0) {
+            storages.readStorages.forEach((element,i) => {
+                encoder.copyBufferToBuffer(element.srcBuffer, 0, element.dstBuffer, 0, element.size);
+            });
+        } 
+
+        device.queue.submit([encoder.finish()]);
+
+        // read buffers into staging buffers
+        await readBuffers();
     }
 
+    getCanvas() {
+        return this.state.canvas;
+    }
+
+    reset() {
+        return this.build(this.state.spec!)
+    }
 }
 
 
@@ -655,22 +753,26 @@ export interface Controls {
     frames?: number;
 }
 
-export const draw = (context: WGPUContext, unis?:any, controls?: Controls ) => {
+export interface FPSListener {
+    onFPS: (fps: { fps: string, time: string}) => void;
+}
+
+export const draw = (gpuContext: WGPUContext, unis?:any, controls?: Controls, fpsListener?: FPSListener ) => {
     let frame = 0;
     let start = performance.now();
     let intid = 0;
     let elapsed = 0;
     let idle = 0;
-    let state = context.getState();
-    let spec = state.spec!();
+    let canvas = gpuContext.getCanvas();
+    let context = gpuContext;
     const crtl = controls || { play: true, reset: false, frames: 0 };
     const mouse: Array<number> = [0,0];
     const resolution: Array<number> = [0,0];
     const aspectRatio: Array<number> = [1,1];
 
     const observer = new ResizeObserver((entries) => {
-        state.canvas.width = entries[0].target.clientWidth * devicePixelRatio;
-        state.canvas.height = entries[0].target.clientWidth * devicePixelRatio;
+        canvas.width = entries[0].target.clientWidth * devicePixelRatio;
+        canvas.height = entries[0].target.clientWidth * devicePixelRatio;
         //this.state.canvas.width = entries[0].devicePixelContentBoxSize[0].inlineSize;
         //this.state.canvas.height = entries[0].devicePixelContentBoxSize[0].blockSize;
         resolution[0] = entries[0].target.clientWidth;
@@ -680,58 +782,14 @@ export const draw = (context: WGPUContext, unis?:any, controls?: Controls ) => {
         aspectRatio[1] = resolution[1] / factor;
     });
 
-    observer.observe(state.canvas)
-    state.canvas.addEventListener('mousemove', event => {
-        mouse[0] = event.offsetX/state.canvas.clientWidth;
-        mouse[1] = event.offsetY/state.canvas.clientHeight;
+    observer.observe(canvas)
+    canvas.addEventListener('mousemove', event => {
+        mouse[0] = event.offsetX/canvas.clientWidth;
+        mouse[1] = event.offsetY/canvas.clientHeight;
     });
 
     const fps = () => {
-        state.fpsListeners && 
-        state.fpsListeners.forEach((listener) => {  
-            listener.onFPS({ fps: (frame / elapsed).toFixed(2), time: elapsed.toFixed(1)} );
-        });
-    }
-
-    const readBuffers = async () => {
-        if (state.bufferListeners) {
-            const buffers = state.storages?.readStorages || [];
-            if (buffers.length == 0) return;
-            const p = await Promise.all(buffers.map( buff => buff.dstBuffer.mapAsync(GPUMapMode.READ)));
-            state.bufferListeners.forEach((listener) => {
-                // TODO: buffers can be other types than float32
-                const data = buffers.map(s=> ({ name: s.name, buffer: new Float32Array(s.dstBuffer!.getMappedRange())}));
-                listener.onRead( data );
-                buffers.forEach(s=> s.dstBuffer!.unmap() );
-            });
-        } 
-    }
-
-    const setUniforms = ( unis: any) => {
-
-        state.uniforms?.forEach((element,i) => {
-            const uviews = element.uniViews;
-            //console.log("unis", unis);
-            // TODO: implement recursive structures instead of one level
-            for (let key in unis) {
-                if (!uviews[key]) continue;
-                if (unis[key] instanceof Object){
-                    for (let subkey in unis[key]) {
-                        if (uviews[key][subkey]) {
-                            unis[key][subkey][Symbol.iterator] ?
-                            uviews[key][subkey].set([...unis[key][subkey]]) :
-                            uviews[key][subkey].set([unis[key][subkey]]);
-                        }
-                    }
-                } else {
-                    unis[key][Symbol.iterator] ? 
-                        uviews[key].set([...unis[key]]) : 
-                        uviews[key].set([unis[key]]);
-                }
-            }
-            // copy the values from JavaScript to the GPU
-            state.device.queue.writeBuffer( (element.resource as GPUBufferBinding).buffer, 0, element.uniValues);
-        });
+        fpsListener && fpsListener.onFPS({ fps: (frame / elapsed).toFixed(2), time: elapsed.toFixed(1)} );
     }
 
     const render = async () => {
@@ -741,7 +799,7 @@ export const draw = (context: WGPUContext, unis?:any, controls?: Controls ) => {
             elapsed = 0;
             idle = 0;
             crtl.frames = 1;
-            state = context.build(state.spec!).getState();
+            context = context.reset();
         }
         if (crtl.play && !intid) {
             intid = setInterval(() => fps(), 1000);
@@ -752,11 +810,8 @@ export const draw = (context: WGPUContext, unis?:any, controls?: Controls ) => {
         }
 
         if ( crtl.play || crtl.frames! > 0 ) {
-            const bindGroup = spec.bindings ? spec.bindings.currentGroup(frame) : 0;
-
-            const encoder = state.device.createCommandEncoder();
-
-            setUniforms({ 
+ 
+            await context.frame(frame, { 
                 sys: { 
                     frame: frame, 
                     time: elapsed, 
@@ -764,65 +819,8 @@ export const draw = (context: WGPUContext, unis?:any, controls?: Controls ) => {
                     resolution: resolution,
                     aspect: aspectRatio 
                 }, ...unis });
- 
-            // render pipeline
-            if (state.pipelines!.render) {
-                const pass = encoder.beginRenderPass({
-                    colorAttachments: [{
-                        view: state.context.getCurrentTexture().createView(),
-                        loadOp: "clear",
-                        clearValue: state.clearColor,
-                        storeOp: "store",
-                     }]
-                });
-                
-                pass.setPipeline(state.pipelines!.render);
-                pass.setVertexBuffer(0, state.geometry!.vertexBuffer);
-
-                // we must always have two vertex buffers when instancing from storage, because
-                // you cant' have a writing and reading storage vertex at the same time.
-                if (state.storages && state.storages.vertexStorages.length > 0) {
-                    pass.setVertexBuffer(1, state.storages.vertexStorages[bindGroup].buffer)
-                } else if (state.geometry!.instanceBuffer) {
-                    pass.setVertexBuffer(1, state.geometry!.instanceBuffer)
-                }
-                
-        
-                pass.setBindGroup(0, state.pipelines!.bindings(bindGroup));
-                pass.draw(state.geometry!.vertexCount, state.geometry!.instances || 1 );
-    
-                pass.end();    
-            }
-            
-            // compute pipelines
-            const computePass = encoder.beginComputePass();
-            const computeGroupCount = spec.computeGroupCount || 1;
-            for( let i = 0; i < computeGroupCount; i++) {
-                for (let c = 0; c < state.pipelines!.compute.length; c++) {
-                    const compute = state.pipelines!.compute[c];
-                    computePass.setPipeline(compute.pipeline);
-                    for (let i = 0; i < compute.instances ; i++) {
-                        const bg = spec.bindings ? spec.bindings.currentGroup(frame + i) : 0
-                        computePass.setBindGroup(0, state.pipelines!.bindings(bg));
-                        computePass.dispatchWorkgroups(...compute.workgroups);
-                    }
-                }    
-            }
-            computePass.end();    
-
-            // copy read buffers
-            if (state.storages && state.storages.readStorages.length > 0) {
-                state.storages.readStorages.forEach((element,i) => {
-                    encoder.copyBufferToBuffer(element.srcBuffer, 0, element.dstBuffer, 0, element.size);
-                });
-            } 
-
-            state.device.queue.submit([encoder.finish()]);
 
             elapsed = ((performance.now() - start) / 1000) - idle;
-
-            // read buffers into staging buffers
-            await readBuffers();
 
             if (crtl.frames! > 0 && crtl.reset) {
                 crtl.reset = false;
@@ -836,7 +834,6 @@ export const draw = (context: WGPUContext, unis?:any, controls?: Controls ) => {
         frame++; 
         requestAnimationFrame(render);
     }
-
 
     requestAnimationFrame(render);
 }

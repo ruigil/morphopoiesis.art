@@ -31,8 +31,6 @@ export async function player(gpu: WGPUContext, unis?: any) {
     }
   });
 
-  const context = gpu.addFPSListener({ onFPS: (fps) => { fpsSmall.textContent = fps.fps + " fps" } })
-  
-  draw(context, unis,controls)
+  draw(gpu, unis,controls, { onFPS: (fps) => { fpsSmall.textContent = fps.fps + " fps" } })
   
 }

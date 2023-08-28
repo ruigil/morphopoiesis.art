@@ -9,8 +9,8 @@ export interface WGPUState {
     storages?: Storages;
     clearColor?: {r:number,g:number,b:number,a:number};
     spec?: () => WGPUSpec;
+    wgslSpec?: WGPUSpec
 
-    fpsListeners?: Array<FPSListener>;
     bufferListeners?: Array<BufferListener>;
 }
 
@@ -89,10 +89,6 @@ export interface WGPUSpec {
     computeGroupCount?: number;
     clearColor?: {r:number,g:number,b:number,a:number}
     bindings?: { groups: Array<Array<number>>, currentGroup: (frame:number) => number };
-}
-
-export interface FPSListener {
-    onFPS: (fps: { fps: string, time: string}) => void;
 }
 
 export interface BufferListener {
