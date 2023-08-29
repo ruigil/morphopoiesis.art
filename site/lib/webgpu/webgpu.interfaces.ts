@@ -88,7 +88,7 @@ export interface WGPUSpec {
     compute?: Array<{ name: string, workgroups: [number,number,number], instances?: number }>;
     computeGroupCount?: number;
     clearColor?: {r:number,g:number,b:number,a:number}
-    bindings?: { groups: Array<Array<number>>, currentGroup: (frame:number) => number };
+    bindings?: Array<Array<number>>;
 }
 
 export interface BufferListener {

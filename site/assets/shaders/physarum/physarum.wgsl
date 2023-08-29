@@ -104,7 +104,8 @@ fn computeAgents(@builtin(global_invocation_id) id : vec3<u32>) {
 
       // if trail is bigger on the front go straight
       var turn = vec2<f32>(0.0);
-      let scale = 1. / params.sd;
+      // turn scale is inversely proportional to the sensor distance
+      let scale = saturate(10./ (params.sd  + ((sys.mouse.y) * 50.)));
 
       // if trail is bigger on the right turn right
       if (fr.x > fl.x && fr.x > ff.x) {
@@ -125,7 +126,7 @@ fn computeAgents(@builtin(global_invocation_id) id : vec3<u32>) {
       }
 
       // update velocity and position      
-      let vel = normalize(dir + turn) / (params.size * 2.);
+      let vel = normalize(dir + turn) / (params.size * .5);
       agents[i].vel = vel;
       pos += vel;
       

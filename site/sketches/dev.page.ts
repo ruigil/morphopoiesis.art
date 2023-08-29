@@ -19,13 +19,7 @@ export default  async (pd: PageData) => {
         <small id="fps">0 fps</small>          
       </div>
     </sl-card>
-    <script type="module" defer>
-        import { player } from '/assets/js/player.js';
-        import { dev } from '/assets/shaders/dev/dev.js';
-        
-        document.addEventListener('DOMContentLoaded', async (event)  => {
-            player( await dev() );
-        });
+    <script type="module" src="/assets/shaders/dev/dev.js" defer>
     </script>
     `
     const debugPanel = `

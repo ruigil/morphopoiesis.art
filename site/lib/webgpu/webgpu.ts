@@ -405,7 +405,7 @@ export class WGPUContext {
     
             // the definition of bindgroups in the spec doesnt have to match the order of the resources
             const bindingsCount = resources.length;
-            const bindingGroupsCount = spec.bindings?.groups?.length || 1;
+            const bindingGroupsCount = spec.bindings?.length || 1;
             const bindingGroups = new Array<GPUBindGroup>(bindingGroupsCount);
             
             const externals = new Array<{ idx: number, video: HTMLVideoElement}>(bindingGroupsCount);            
@@ -416,7 +416,8 @@ export class WGPUContext {
 
                 for (let j = 0; j < bindingsCount; j++) {
                     // if bindings are not defined, use the default order
-                    const res = resbinding[spec.bindings?.groups[i][j] || j];
+                    const index = spec.bindings ? spec.bindings[i][j] : j;
+                    const res = resbinding[index];
                     if (!res) throw new Error("Binding defined in groups not found");
 
                     entries[i].push({
@@ -608,9 +609,11 @@ export class WGPUContext {
         
         setUniforms(unis);
 
-        const bindGroup = wgslSpec!.bindings ? wgslSpec!.bindings.currentGroup(frame) : 0;
+        const bindGroup = (i:number) => wgslSpec!.bindings ? (i % wgslSpec!.bindings.length) : 0;
+
         const encoder = device.createCommandEncoder();
-            // render pipeline
+
+        // render pipeline
         if (pipelines!.render) {
             const pass = encoder.beginRenderPass({
                 colorAttachments: [{
@@ -627,18 +630,17 @@ export class WGPUContext {
             // we must always have two vertex buffers when instancing from storage, because
             // you cant' have a writing and reading storage vertex at the same time.
             if (storages && storages.vertexStorages.length > 0) {
-                pass.setVertexBuffer(1, storages.vertexStorages[bindGroup].buffer)
+                pass.setVertexBuffer(1, storages.vertexStorages[bindGroup(frame)].buffer)
             } else if (geometry!.instanceBuffer) {
                 pass.setVertexBuffer(1, geometry!.instanceBuffer)
             }
             
-    
-            pass.setBindGroup(0, pipelines!.bindings(bindGroup));
+            pass.setBindGroup(0, pipelines!.bindings(bindGroup(frame)));
             pass.draw(geometry!.vertexCount, geometry!.instances || 1 );
 
             pass.end();    
         }
-        
+
         // compute pipelines
         const computePass = encoder.beginComputePass();
         const computeGroupCount = wgslSpec!.computeGroupCount || 1;
@@ -647,14 +649,15 @@ export class WGPUContext {
                 const compute = pipelines!.compute[c];
                 computePass.setPipeline(compute.pipeline);
                 for (let i = 0; i < compute.instances ; i++) {
-                    const bg = wgslSpec!.bindings ? wgslSpec!.bindings.currentGroup(frame + i) : 0
+                    const bg = bindGroup(frame + i)
                     computePass.setBindGroup(0, pipelines!.bindings(bg));
                     computePass.dispatchWorkgroups(...compute.workgroups);
                 }
             }    
         }
-        computePass.end();    
+        computePass.end(); 
 
+        
         // copy read buffers
         if (storages && storages.readStorages.length > 0) {
             storages.readStorages.forEach((element,i) => {

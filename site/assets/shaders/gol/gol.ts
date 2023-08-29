@@ -33,10 +33,7 @@ export const gol = async () => {
                 { name: "computeMain", workgroups:  [size / 8, size / 8, 1] },
             ],
     
-            bindings: {
-                groups: [ [0,4,1,2], [0,4,2,1] ],
-                currentGroup: (frame:number) => frame % 2,
-            }      
+            bindings: [ [0,4,1,2], [0,4,2,1] ]
         }
     }
 

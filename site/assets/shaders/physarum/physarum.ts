@@ -13,7 +13,7 @@ export const physarum = async () => {
         for (let i = 0; i < numParticles; ++i) {
           initialParticleData[4 * i + 0] = .5 * (Math.random() - 0.5);
           initialParticleData[4 * i + 1] = .5 * (Math.random() - 0.5);
-          initialParticleData[4 * i + 2] =  Math.random() - 0.5;
+          initialParticleData[4 * i + 2] = Math.random() - 0.5;
           initialParticleData[4 * i + 3] = Math.random() - 0.5;
         }
 
@@ -31,7 +31,7 @@ export const physarum = async () => {
                     size: [size, size],
                     agents: numParticles,
                     sa: 22.5 * Math.PI / 180,
-                    sd: 12.,
+                    sd: 50.,
                     evaporation: .995,
                 }
             },
@@ -44,11 +44,8 @@ export const physarum = async () => {
                 { name: "computeTrailmap", workgroups: [size / 8, size / 8, 1] },
                 { name: "computeAgents", workgroups: [Math.ceil(numParticles / 64), 1, 1] }
             ],
-            computeGroupCount: 10,
-            bindings: {
-                groups: [ [0,1,2,3,4,5], [0,1,3,2,4,5] ],
-                currentGroup: (frame:number) => frame % 2,
-            }      
+            computeGroupCount: 4,
+            bindings: [ [0,1,2,3,4,5], [0,1,3,2,4,5] ]
         }
     }
 

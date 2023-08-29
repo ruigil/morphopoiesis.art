@@ -30,10 +30,7 @@ export const rd = async () => {
             compute: [
                 { name: "computeMain", workgroups:  [size / 8, size / 8, 1], instances: 32 },
             ],
-            bindings: {
-                groups: [ [0,4,1,2,3], [0,4,2,1,3] ],
-                currentGroup: (frame:number) => frame % 2,
-            }      
+            bindings: [ [0,4,1,2,3], [0,4,2,1,3] ]
         }
     }
 

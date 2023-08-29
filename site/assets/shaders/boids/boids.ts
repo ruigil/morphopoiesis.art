@@ -46,10 +46,7 @@ export const boids = async () => {
             compute: [
                 { name: "computeMain", workgroups:  [Math.ceil(size / 64), 1, 1] },
             ],
-            bindings: {
-                groups: [ [0,4,1,2,3], [0,4,2,1,3] ],
-                currentGroup: (frame:number) => frame % 2,
-            }      
+            bindings: [ [0,4,1,2,3], [0,4,2,1,3] ]
         }
     }
 
