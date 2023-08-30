@@ -538,12 +538,21 @@ export class WGPUContext {
         const renderPipeline = createRenderPipeline(shaderModule, pipelineLayout, reflect);
 
         const computePipelines = createComputePipelines(shaderModule, pipelineLayout, reflect, wgslSpec);
-            
+        
+        // we must have a computeGrouCount that is a multiple of the bindings groups
+        // we must always end in the same binding group we started if we want to show the current state in the next iteration
+        const computeGC = (spec: WGPUSpec) => {
+            const gc = wgslSpec?.bindings ? wgslSpec.bindings.length : 1;
+            const cgc = wgslSpec?.computeGroupCount ?  wgslSpec.computeGroupCount : 1;
+            return cgc > 1 ? cgc + (gc - ((cgc-2) % gc) - 1) : 1;
+        }
+
         return new WGPUContext({
             ...this.state,
             pipelines: {
                 render: renderPipeline,
                 compute: computePipelines,
+                computeGroupCount: computeGC(wgslSpec),
                 bindings: bindings,
             },
             geometry: geometry,
@@ -641,22 +650,19 @@ export class WGPUContext {
             pass.end();    
         }
 
-        // compute pipelines
         const computePass = encoder.beginComputePass();
-        const computeGroupCount = wgslSpec!.computeGroupCount || 1;
-        for( let i = 0; i < computeGroupCount; i++) {
+        for( let i = 0; i < pipelines!.computeGroupCount; i++) {
+            const bg = bindGroup(frame + i)
             for (let c = 0; c < pipelines!.compute.length; c++) {
                 const compute = pipelines!.compute[c];
                 computePass.setPipeline(compute.pipeline);
                 for (let i = 0; i < compute.instances ; i++) {
-                    const bg = bindGroup(frame + i)
                     computePass.setBindGroup(0, pipelines!.bindings(bg));
                     computePass.dispatchWorkgroups(...compute.workgroups);
                 }
             }    
         }
         computePass.end(); 
-
         
         // copy read buffers
         if (storages && storages.readStorages.length > 0) {

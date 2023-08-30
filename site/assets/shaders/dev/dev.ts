@@ -10,14 +10,19 @@ export const dev = async () => {
     //const tree = await loadTexture("/assets/img/treeoflife.webp");
     //const webcam = await loadWebcam();
     const spec = ():WGPUSpec => {
-        const numParticles = 1;
-        const size = 32;
+        const numParticles = 140000;
+        const size = 1024;
         const initialParticleData = new Array(numParticles * 4);
         for (let i = 0; i < numParticles; ++i) {
-          initialParticleData[4 * i + 0] = .5 * (Math.random() - 0.5);
-          initialParticleData[4 * i + 1] = .5 * (Math.random() - 0.5);
-          initialParticleData[4 * i + 2] =  0;
-          initialParticleData[4 * i + 3] =  1.;
+          initialParticleData[4 * i + 0] = 2. * (Math.random() - 0.5);
+          initialParticleData[4 * i + 1] = 2. * (Math.random() - 0.5);
+          initialParticleData[4 * i + 2] =  Math.random();
+          initialParticleData[4 * i + 3] =  Math.random();
+        }
+        const initialTrailMap = new Array(size * size);
+        const line = (i:number, y:number) => { return Math.floor(i / size) == y ? 1 : 0 }
+        for (let i = 0; i < size * size; ++i) {
+            initialTrailMap[i ] =  Math.random() < 0.00001;
         }
 
         return {
@@ -32,22 +37,20 @@ export const dev = async () => {
             uniforms: {
                 params: {
                     size: [size, size],
-                    agents: numParticles,
-                    sa: 22.5 * Math.PI / 180,
-                    sd: 12.,
-                    evaporation: .995,
+                    drops: numParticles,
+                    fcolor: [0,255,255],
+                    bcolor: [0,0,0]
                 }
             },
             storage: [
-                { name: "agents", size: numParticles , data: initialParticleData} ,
-                { name: "trailMapA", size: size * size } ,
-                { name: "trailMapB", size: size * size } ,
+                { name: "drops", size: numParticles , data: initialParticleData} ,
+                { name: "iceA", size: size * size, data: initialTrailMap} ,
+                { name: "iceB", size: size * size, data: initialTrailMap } ,
             ],
             compute: [
-                { name: "computeTrailmap", workgroups: [size / 8, size / 8, 1] },
-                { name: "computeAgents", workgroups: [Math.ceil(numParticles / 64), 1, 1] }
+                { name: "computeDrops", workgroups: [Math.ceil(numParticles / 64), 1, 1] }
             ],
-            computeGroupCount: 1,
+            computeGroupCount: 5,
             bindings: [ [0,1,2,3,4,5], [0,1,3,2,4,5] ]
         }
     }
@@ -95,11 +98,7 @@ document.addEventListener('DOMContentLoaded', async (event)  => {
     canvas.width = 512;
     canvas.height = 512;
 
-    let frame = 0;
-    setInterval(async () => {
-        console.log("frame",frame)
-        await context.frame(frame++,{});
-    }, 1600);
 
+    player(await dev(), {}, 0);
 
 });

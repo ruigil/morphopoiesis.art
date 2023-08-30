@@ -44,7 +44,7 @@ export const physarum = async () => {
                 { name: "computeTrailmap", workgroups: [size / 8, size / 8, 1] },
                 { name: "computeAgents", workgroups: [Math.ceil(numParticles / 64), 1, 1] }
             ],
-            computeGroupCount: 4,
+            computeGroupCount: 3,
             bindings: [ [0,1,2,3,4,5], [0,1,3,2,4,5] ]
         }
     }

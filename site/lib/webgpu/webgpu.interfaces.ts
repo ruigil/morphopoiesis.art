@@ -69,6 +69,7 @@ export interface Compute {
 export interface Pipelines {
     render?: GPURenderPipeline;
     compute: Compute[];
+    computeGroupCount: number;
     bindings: (index:number) => GPUBindGroup;
 }
 

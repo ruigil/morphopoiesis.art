@@ -80,13 +80,14 @@ export const loadWebcam = async () => {
     return { video: video, settings: videoSettings, capabilities: capabilities };
 }
 
-export const draw = (gpuContext: WGPUContext, unis?:any, controls?: Controls, fpsListener?: FPSListener ) => {
+export const draw = (gpuContext: WGPUContext, unis?:any, controls?: Controls, fpsListener?: FPSListener, delta?: number) => {
     let frame = 0;
     let intid = 0;
     let elapsed = 0;
     let idle = 0;
     let canvas = gpuContext.getCanvas();
     let context = gpuContext;
+    const timeStep = delta || 0;
     const crtl = controls || { play: true, reset: false };
     let start = performance.now();
 
@@ -152,7 +153,9 @@ export const draw = (gpuContext: WGPUContext, unis?:any, controls?: Controls, fp
         } else {
             idle = ((performance.now()- start)/1000) - elapsed;
         }
-        requestAnimationFrame(render);
+        //console.log("timestep",timeStep )
+        if (timeStep != 0) setTimeout(()=>requestAnimationFrame(render),timeStep);
+        else requestAnimationFrame(render);
     }
 
     requestAnimationFrame(render);

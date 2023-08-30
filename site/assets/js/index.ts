@@ -1,6 +1,6 @@
 
 import { draw } from '../../lib/webgpu/utils.ts';
-import { gol } from '../shaders/gol/gol.ts'
+import { dla } from '../shaders/dla/dla.ts'
 
 document.addEventListener('DOMContentLoaded', async (event) => {
 
@@ -52,8 +52,8 @@ document.addEventListener('DOMContentLoaded', async (event) => {
 
     observer.observe(body!, { attributes: true });
 
-    const context = await gol();
-    draw(context, { uni: { fcolor: color.fcolor, bcolor: color.bcolor }});
+    const context = await dla();
+    draw(context, { params: { fcolor: color.fcolor, bcolor: color.bcolor }});
   }
 
   landing();

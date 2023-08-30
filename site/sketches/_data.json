@@ -1,6 +1,15 @@
 {
     "shaders": [
       {
+        "id" : "dla",
+        "wgsl": "/assets/shaders/dla/dla.wgsl",
+        "js": "/assets/shaders/dla/dla.js",
+        "title": "DLA",
+        "description": "Diffuse Limited Aggregation, to create an Ice structure. You can play with your mouse to melt the ice.",
+        "image": "/assets/img/dla",
+        "tags": ["dla","particles","fields","mouse"]
+      },
+      {
         "id" : "physarum",
         "wgsl": "/assets/shaders/physarum/physarum.wgsl",
         "js": "/assets/shaders/physarum/physarum.js",

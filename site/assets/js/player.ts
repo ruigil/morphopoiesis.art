@@ -1,7 +1,7 @@
 import { WGPUContext } from "../../lib/webgpu/webgpu.ts";
 import { draw } from "../../lib/webgpu/utils.ts";
 
-export async function player(gpu: WGPUContext, unis?: any) {
+export async function player(gpu: WGPUContext, unis?: any, delta?: number) {
 
   const play = document.querySelector("#play") as HTMLButtonElement;
   const reset = document.querySelector("#reset") as HTMLButtonElement;
@@ -9,7 +9,7 @@ export async function player(gpu: WGPUContext, unis?: any) {
   const fpsSmall = document.querySelector("#fps") as HTMLDivElement;
   const fullscreen = document.querySelector("#fullscreen") as HTMLButtonElement;
 
-  const controls = { play: true, reset: false, frames: 0 }
+  const controls = { play: true, reset: false, delta: delta }
 
   play.addEventListener('click', event => {
     controls.play = !controls.play;
@@ -31,7 +31,6 @@ export async function player(gpu: WGPUContext, unis?: any) {
       document.exitFullscreen();
     }
   });
-
   draw(gpu, unis,controls, { onFPS: (fps) => { fpsSmall.textContent = fps.fps + " fps" } })
   
 }
