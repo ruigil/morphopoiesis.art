@@ -35,6 +35,7 @@ struct VertexOutput {
 @group(0) @binding(2) var<storage, read> iceA : array<f32>;
 @group(0) @binding(3) var<storage, read_write> iceB : array<f32>;
 @group(0) @binding(4) var<storage, read_write> drops : array<Agent>;
+@group(0) @binding(5) var<storage, read_write> debug : array<vec4<f32>>;
 
 @vertex
 fn vertMain( input: VertexInput) -> VertexOutput {
@@ -56,8 +57,15 @@ fn vertMain( input: VertexInput) -> VertexOutput {
 
 @fragment
 fn fragMain(input : VertexOutput) -> @location(0) vec4<f32> {
-  return vec4f( mix(params.bcolor/255.,params.fcolor/255., input.state), 1.);
+  return vec4f(vec3(input.state),1.);
+  //return vec4f( mix(params.bcolor/255.,params.fcolor/255., input.state), 1.);
 }
+
+@compute @workgroup_size(8,8)
+fn computeIce(@builtin(global_invocation_id) cell : vec3<u32>) {
+    iceB[cell.y * u32(params.size.x) + cell.x] = iceA[cell.y * u32(params.size.x) + cell.x];
+}
+
 
 @compute @workgroup_size(64)
 fn computeDrops(@builtin(global_invocation_id) id : vec3<u32>) {
@@ -75,9 +83,10 @@ fn computeDrops(@builtin(global_invocation_id) id : vec3<u32>) {
       // let's make the drops turn a random bit
       let rnd = rnd33(vec3u(i, u32(sys.time), u32(sys.time * 100.)));
       var turn = vec2<f32>(cos( rnd.x * 6.28), sin( rnd.y * 6.28));
+      //var turn = vec2<f32>(0.);
 
       // update velocity and position
-      let vel = normalize(dir + turn) / (params.size *.5);
+      let vel = normalize(dir + turn) * 2. / params.size ;
       drops[i].vel = vel;
       pos += vel;
       
@@ -87,12 +96,16 @@ fn computeDrops(@builtin(global_invocation_id) id : vec3<u32>) {
       if (pos.y < -1.0) { pos.y += 2.0; }
       if (pos.y > 1.0) { pos.y -= 2.0; }
 
+      // current drop position in the ice structure
+      let current = vec2<u32>( floor( ((drop.pos + 1.) * .5) * (params.size)));      
+      
+
       let m = mouseAspectRatio();
       // calculate a melting radius with the mouse to apply to the ice
       let melt = 1. - smoothstep( 0., 0.11,  length( (m * 2. - 1.) - vec2<f32>(drop.pos)) ) ;
 
-      // current drop position in the ice structure
-      let current = vec2<u32>( floor( ((drop.pos + 1.) * .5) * (params.size)));      
+
+      //debug[0] = vec4<f32>(pos, vel);
       
       // if we are in the melting radius we melt the ice and move the drop
       if (melt > 0.) {
@@ -115,12 +128,13 @@ fn computeDrops(@builtin(global_invocation_id) id : vec3<u32>) {
         // if the drop has a frozen neighbour, it freezes too
           iceB[ current.y * u32(params.size.x) + current.x ] = 1.;
         } else {
-        // otherwise it moves 
+          // otherwise it moves 
           drops[i].pos = pos;
         }
       }
     }
 }
+
 
 
 fn mouseAspectRatio() -> vec2<f32> {

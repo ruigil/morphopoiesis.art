@@ -1,20 +1,23 @@
 import { WGPUSpec } from "../../../lib/webgpu/webgpu.interfaces.ts";
 import { WGPUContext } from "../../../lib/webgpu/webgpu.ts";
 import { loadWGSL, square } from "../../../lib/webgpu/utils.ts";
+import { copySync } from "https://deno.land/std@0.195.0/fs/copy.ts";
 
 export const physarum = async () => {
 
     const code = await loadWGSL(`/assets/shaders/physarum/physarum.wgsl`);
 
     const spec = ():WGPUSpec => {
-        const numParticles = 140000;
+        const numParticles = 131072;
         const size = 1024;
         const initialParticleData = new Array(numParticles * 4);
         for (let i = 0; i < numParticles; ++i) {
-          initialParticleData[4 * i + 0] = .5 * (Math.random() - 0.5);
-          initialParticleData[4 * i + 1] = .5 * (Math.random() - 0.5);
-          initialParticleData[4 * i + 2] = Math.random() - 0.5;
-          initialParticleData[4 * i + 3] = Math.random() - 0.5;
+          const angle = Math.random() * Math.PI * 2;
+          const radius = Math.random() ;  
+          initialParticleData[4 * i + 0] = radius * Math.cos(angle);
+          initialParticleData[4 * i + 1] = radius * Math.sin(angle);
+          initialParticleData[4 * i + 2] = (Math.random() - 0.5);
+          initialParticleData[4 * i + 3] = (Math.random() - 0.5);
         }
 
         return {
@@ -30,8 +33,8 @@ export const physarum = async () => {
                 params: {
                     size: [size, size],
                     agents: numParticles,
-                    sa: 22.5 * Math.PI / 180,
-                    sd: 50.,
+                    sa: 22.5 * (Math.PI / 180),
+                    sd: 30.,
                     evaporation: .995,
                 }
             },

@@ -71,15 +71,14 @@ fn computeTrailmap(@builtin(global_invocation_id) cell : vec3<u32>) {
   let bh =  1. - smoothstep( 0., .2, (length((sys.mouse * params.size) - vec2<f32>(cell.xy)) / params.size.x * 2.) ) ;
 
   // we apply a gaussian blur to simulate diffusion of the trailmap values
-  let value = conv3x3(K_GAUSSIAN_BLUR, vec2u(cell.xy), vec2u(params.size.xy)) ;  
-  trailMapB[ cell.x + cell.y * u32(params.size.x) ].x = saturate(value * params.evaporation - bh);
+  let value = conv3x3(K_GAUSSIAN_BLUR, vec2u(cell.xy), vec2u(params.size.xy)) ; 
+  let previous = trailMapA[ cell.x + cell.y * u32(params.size.x) ].y; // previous pixel occupancy by particle
+  trailMapB[ cell.x + cell.y * u32(params.size.x) ] = vec2(saturate(value * params.evaporation - bh), previous);
 }
 
 fn sense(pos: vec2<f32>, angle: f32, sa: f32) -> vec2<f32> {
-  // the mouse x influences the sensor distance
-  let smd = ((sys.mouse.y) * 50.);
   // calculate the sensor position an return the trail map value at that position
-  let sensePos = (vec2<f32>(cos(angle + sa), sin(angle + sa)) * (params.sd + smd)) / params.size;
+  let sensePos = (vec2<f32>(cos(angle + sa), sin(angle + sa)) * params.sd ) / params.size;
   let index = vec2<u32>( floor( ((pos + sensePos + 1.) * .5) * (params.size))) % vec2<u32>(params.size);
   return trailMapA[ index.y * u32(params.size.x) + index.x ];
 }
@@ -89,70 +88,65 @@ fn computeAgents(@builtin(global_invocation_id) id : vec3<u32>) {
 
     let i = id.x;
 
-    if (i < u32(params.agents)) {
-      let agent = agents[i];
-      var dir = normalize(agent.vel);
-      var pos = agent.pos;
+    let agent = agents[i];
+    var dir = normalize(agent.vel);
+    var pos = agent.pos;
 
-      let angle = atan2(dir.y, dir.x);
-      
-      // the mouse x control influences the sensor angle
-      let sma = ((sys.mouse.x) * 22.5 * 3.1415 / 180.);
-      let ff = sense(pos, angle, 0.);
-      let fl = sense(pos, angle ,  params.sa + sma);
-      let fr = sense(pos, angle , -params.sa - sma) ;
+    let angle = atan2(dir.y, dir.x);
+    
+    // the mouse x control influences the sensor angle
+    let sma = ((sys.mouse.x) * 22.5 * (6.2830 / 360.));
+    let ff = sense(pos, angle, 0.);
+    let fl = sense(pos, angle ,  params.sa + sma);
+    let fr = sense(pos, angle , -params.sa - sma) ;
 
-      // if trail is bigger on the front go straight
-      var turn = vec2<f32>(0.0);
-      // turn scale is inversely proportional to the sensor distance
-      let scale = saturate(10./ (params.sd  + ((sys.mouse.y) * 50.)));
+    // if trail is bigger on the front go straight
+    var turn = vec2<f32>(0.0);
 
-      // if trail is bigger on the right turn right
-      if (fr.x > fl.x && fr.x > ff.x) {
-        turn = vec2<f32>(cos(angle - params.sa), sin(angle - params.sa)) * scale;
-      }
-      
-      // if trail is bigger on the left turn left
-      if (fl.x > fr.x && fl.x > ff.x) {
-        turn = vec2<f32>(cos(angle + params.sa), sin(angle + params.sa)) * scale;
-      }
-      
-      // trail is bigger on both sides, choose randomly
-      if (fl.x > ff.x && fr.x > ff.x) { 
-        let r = rnd33(vec3u(vec2u(pos.xy * params.size.xy), u32(sys.time * 1000.) ));
-        // random choice betwen left and right
-        let ra = select( params.sa, -params.sa, r.x > .5);
-        turn = vec2<f32>(cos(angle + ra), sin(angle + ra)) * scale;
-      }
+    // if trail is bigger on the right turn right
+    if (fr.x > fl.x && fr.x > ff.x) {
+      turn = vec2<f32>(cos(angle - params.sa), sin(angle - params.sa));
+    }
+    
+    // if trail is bigger on the left turn left
+    if (fl.x > fr.x && fl.x > ff.x) {
+      turn = vec2<f32>(cos(angle + params.sa), sin(angle + params.sa));
+    }
+    
+    // trail is bigger on both sides, choose randomly
+    if (fl.x > ff.x && fr.x > ff.x) { 
+      let r = rnd33(vec3u(vec2u((pos.xy+1) * params.size.xy), u32(sys.time * 1000.) ));
+      // random choice betwen left and right
+      let ra = select( params.sa, -params.sa, r.x > .5);
+      turn = vec2<f32>(cos(angle + ra), sin(angle + ra));
+    }
 
-      // update velocity and position      
-      let vel = normalize(dir + turn) / (params.size * .5);
+    // update velocity and position      
+    let vel = normalize(dir + turn) / (params.size * .5);
+    agents[i].vel = vel;
+    pos += vel;
+    
+    //wrap around boundary condition
+    if (pos.x < -1.0) { pos.x += 2.0; }
+    if (pos.x > 1.0) { pos.x -= 2.0; }
+    if (pos.y < -1.0) { pos.y += 2.0; }
+    if (pos.y > 1.0) { pos.y -= -2.0; }
+
+    let next = vec2<u32>( floor( ((pos + 1.) * .5) * (params.size)));
+
+    let nextPos = trailMapA[ next.y * u32(params.size.x) + next.x ];
+    // if the next position is free move to it, only one particle per pixel.
+    if (nextPos.y == 0.) {
+      let current = vec2<u32>( floor( ((agents[i].pos + 1.) * .5) * (params.size)));
+      agents[i].pos = pos;
+      trailMapB[ current.y * u32(params.size.x) + current.x ] = vec2<f32>(1., 0.);
+      trailMapB[ next.y * u32(params.size.x) + next.x ] = vec2<f32>(1., 1.);
+    } else { // or else just stay put and choose a new direction randomly
+      let r = rnd33(vec3u(vec2u((pos.xy+1) * params.size.xy), u32(sys.time * 1000.) ));
+      let ra = select( params.sa, -params.sa, r.z > .5);
+      turn = vec2<f32>(cos(angle + ra), sin(angle + ra));
+      let vel = normalize(dir + turn) / (params.size * .5) ;
       agents[i].vel = vel;
-      pos += vel;
-      
-      //wrap around boundary condition
-      if (pos.x < -1.0) { pos.x += 2.0; }
-      if (pos.x > 1.0) { pos.x -= 2.0; }
-      if (pos.y < -1.0) { pos.y += 2.0; }
-      if (pos.y > 1.0) { pos.y -= 2.0; }
-
-      let next = vec2<u32>( floor( ((pos + 1.) * .5) * (params.size)));
-
-      let nextPos = trailMapA[ next.y * u32(params.size.x) + next.x ];
-      // if the next position is free move to it, only one particle per pixel.
-      if (nextPos.y == 0.) {
-        let current = vec2<u32>( floor( ((agents[i].pos + 1.) * .5) * (params.size)));
-        agents[i].pos = pos;
-        trailMapB[ current.y * u32(params.size.x) + current.x ] = vec2<f32>(1., 0.);
-        trailMapB[ next.y * u32(params.size.x) + next.x ] = vec2<f32>(1., 1.);
-      } else { // or else just stay put and choose a new direction randomly
-        let r = rnd33(vec3u(vec2u(pos.xy * params.size.xy), u32(sys.time * 1000.) ));
-        let ra = select( params.sa, -params.sa, r.x > .5);
-        turn = vec2<f32>(cos(angle + ra), sin(angle + ra)) * scale;
-        let vel = normalize(dir + turn) / (params.size * 2.);
-        agents[i].vel = vel;
-      }
-
     }
 
 }

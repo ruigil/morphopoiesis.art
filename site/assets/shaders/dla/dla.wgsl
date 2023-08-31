@@ -59,6 +59,11 @@ fn fragMain(input : VertexOutput) -> @location(0) vec4<f32> {
   return vec4f( mix(params.bcolor/255.,params.fcolor/255., input.state), 1.);
 }
 
+@compute @workgroup_size(8,8)
+fn computeIce(@builtin(global_invocation_id) cell : vec3<u32>) {
+    iceB[cell.y * u32(params.size.x) + cell.x] = iceA[cell.y * u32(params.size.x) + cell.x];
+}
+
 @compute @workgroup_size(64)
 fn computeDrops(@builtin(global_invocation_id) id : vec3<u32>) {
 
@@ -89,7 +94,7 @@ fn computeDrops(@builtin(global_invocation_id) id : vec3<u32>) {
 
       let m = mouseAspectRatio();
       // calculate a melting radius with the mouse to apply to the ice
-      let melt = 1. - smoothstep( 0., 0.11,  length( (m * 2. - 1.) - vec2<f32>(drop.pos)) ) ;
+      let melt = 1. - smoothstep( 0., 0.2,  length( (m * 2. - 1.) - vec2<f32>(drop.pos)) ) ;
 
       // current drop position in the ice structure
       let current = vec2<u32>( floor( ((drop.pos + 1.) * .5) * (params.size)));      

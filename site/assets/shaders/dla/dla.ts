@@ -43,6 +43,7 @@ export const dla = async () => {
                 { name: "iceB", size: size * size, data: ice } ,
             ],
             compute: [
+                { name: "computeIce", workgroups: [Math.ceil(size / 8), Math.ceil(size / 8), 1] },
                 { name: "computeDrops", workgroups: [Math.ceil(numParticles / 64), 1, 1] }
             ],
             computeGroupCount: 5,
