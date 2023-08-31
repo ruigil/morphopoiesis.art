@@ -9,7 +9,7 @@ export async function player(gpu: WGPUContext, unis?: any, delta?: number) {
   const fpsSmall = document.querySelector("#fps") as HTMLDivElement;
   const fullscreen = document.querySelector("#fullscreen") as HTMLButtonElement;
 
-  const controls = { play: true, reset: false, delta: delta }
+  const controls = { play: true, reset: false, delta: delta || 0}
 
   play.addEventListener('click', event => {
     controls.play = !controls.play;

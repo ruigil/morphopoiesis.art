@@ -4,6 +4,7 @@ import { WGPUContext } from './webgpu.ts';
 export interface Controls {
     play?: boolean;
     reset?: boolean;
+    delta?: number;
 }
 
 // listener for the fps
@@ -80,15 +81,14 @@ export const loadWebcam = async () => {
     return { video: video, settings: videoSettings, capabilities: capabilities };
 }
 
-export const draw = (gpuContext: WGPUContext, unis?:any, controls?: Controls, fpsListener?: FPSListener, delta?: number) => {
+export const draw = (gpuContext: WGPUContext, unis?:any, controls?: Controls, fpsListener?: FPSListener) => {
     let frame = 0;
     let intid = 0;
     let elapsed = 0;
     let idle = 0;
     let canvas = gpuContext.getCanvas();
     let context = gpuContext;
-    const timeStep = delta || 0;
-    const crtl = controls || { play: true, reset: false };
+    const crtl = controls || { play: true, reset: false, delta: 0 };
     let start = performance.now();
 
     const mouse: Array<number> = [0,0];
@@ -154,7 +154,7 @@ export const draw = (gpuContext: WGPUContext, unis?:any, controls?: Controls, fp
             idle = ((performance.now()- start)/1000) - elapsed;
         }
         //console.log("timestep",timeStep )
-        if (timeStep != 0) setTimeout(()=>requestAnimationFrame(render),timeStep);
+        if (crtl.delta != 0) setTimeout(()=>requestAnimationFrame(render),crtl.delta);
         else requestAnimationFrame(render);
     }
 
