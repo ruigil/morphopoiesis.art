@@ -3,9 +3,9 @@
 
 struct Sys {
     time: f32,
-    resolution: vec2f,
-    mouse: vec2f,
-    aspect: vec2f
+    resolution: vec2<f32>,
+    mouse: vec2<f32>,
+    aspect: vec2<f32>
 };
 
 struct SimParams {

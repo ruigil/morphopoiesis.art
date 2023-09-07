@@ -9,16 +9,13 @@ export const dla = async () => {
     const spec = ():WGPUSpec => {
         const numParticles = 170000;
         const size = 1024;
-        const initialParticleData = new Array(numParticles * 4);
-        for (let i = 0; i < numParticles; ++i) {
-          initialParticleData[4 * i + 0] = 2. * (Math.random() - 0.5);
-          initialParticleData[4 * i + 1] = 2. * (Math.random() - 0.5);
-          initialParticleData[4 * i + 2] =  Math.random();
-          initialParticleData[4 * i + 3] =  Math.random();
-        }
-        const ice = new Array(size * size);
+
+        const particles = Array(numParticles).fill({}).map(() => ({
+            pos: [2 * Math.random() - 1, 2 * Math.random() - 1],
+            vel: [2 * Math.random() - 1, 2 * Math.random() - 1],
+        }))
         // initialize the ice with a few nucleation points
-        for (let i = 0; i < size * size; ++i) { ice[i ] =  Math.random() < 0.00001; }
+        const ice = Array(size * size).fill(0).map(() => Math.random() < 0.00001 ? 1 : 0);
 
         return {
             code: code,
@@ -37,8 +34,8 @@ export const dla = async () => {
                     bcolor: [0,0,0]
                 }
             },
-            storage: [
-                { name: "drops", size: numParticles , data: initialParticleData} ,
+            storages: [
+                { name: "drops", size: numParticles , data: particles} ,
                 { name: "iceA", size: size * size, data: ice} ,
                 { name: "iceB", size: size * size, data: ice } ,
             ],
@@ -52,7 +49,6 @@ export const dla = async () => {
     }
 
     const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
-    const value = document.querySelector("#value") as HTMLCanvasElement;
 
     const gpu = await WGPUContext.init(canvas!);
 

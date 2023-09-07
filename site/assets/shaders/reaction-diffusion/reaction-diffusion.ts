@@ -8,7 +8,8 @@ export const rd = async () => {
 
     const spec =  () : WGPUSpec => {
         const size = 512;
-        const current = Array(size * size * 2).fill(0).map((v,i) => i % 2 == 0 ? 1 : (Math.random() > 0.01 ? 0 : 1) );
+        const current = Array(size * size).fill([0,0]).map((v,i) => [ 1 , (Math.random() > 0.01 ? 0 : 1) ] );
+
         return {
             code: code,
             geometry: {
@@ -23,13 +24,14 @@ export const rd = async () => {
                     size: [size, size]
                 }
             },
-            storage: [
+            storages: [
                 { name: "current", size: size * size, data: current } ,
                 { name: "next", size: size * size}, 
             ],
             compute: [
-                { name: "computeMain", workgroups:  [size / 8, size / 8, 1], instances: 32 },
+                { name: "computeMain", workgroups:  [size / 8, size / 8, 1] },
             ],
+            computeGroupCount: 32,
             bindings: [ [0,4,1,2,3], [0,4,2,1,3] ]
         }
     }

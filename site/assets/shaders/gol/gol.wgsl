@@ -3,15 +3,15 @@
 
 struct Sys {
     time: f32,
-    resolution: vec2f,
-    mouse: vec2f,
-    aspect: vec2f
+    resolution: vec2<f32>,
+    mouse: vec2<f32>,
+    aspect: vec2<f32>
 };
 
 struct Uni {
-    size: vec2f,
-    fcolor: vec3f,
-    bcolor: vec3f
+    size: vec2<f32>,
+    fcolor: vec3<f32>,
+    bcolor: vec3<f32>
 }
 
 @group(0) @binding(0) var<uniform> uni: Uni;

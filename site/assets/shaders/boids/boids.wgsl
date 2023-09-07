@@ -3,15 +3,15 @@
 
 struct Sys {
     time: f32,
-    resolution: vec2f,
-    mouse: vec2f,
-    aspect: vec2f
+    resolution: vec2<f32>,
+    mouse: vec2<f32>,
+    aspect: vec2<f32>
 };
 
 struct Particle {
   pos : vec2<f32>,
   vel : vec2<f32>,
-  pha : vec2<f32>
+  pha : f32
 }
 
 struct SimParams {
@@ -77,14 +77,14 @@ fn computeMain(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
   var cSep = vec2(0.0);
   var cVel = vec2(0.0);
   var cPos = vec2(0.0);
-  var cPha = vec2(0.0);
+  var cPha = 0.0;
   var cSepCount = 0u;
   var cVelCount = 0u;
   var cPosCount = 0u;
   var cPhaCount = 0u;
   var pos : vec2<f32>;
   var vel : vec2<f32>;
-  var pha : vec2<f32>;
+  var pha : f32;
 
   let pd = params.distances * params.scale;
   for (var i = 0u; i < arrayLength(&particlesA); i++) {
@@ -92,7 +92,7 @@ fn computeMain(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
     pos = particlesA[i].pos.xy;
     vel = particlesA[i].vel.xy;
-    pha = particlesA[i].pha.xy;
+    pha = particlesA[i].pha;
 
     let d = distance(pos, vPos);
     // rule separtation - for every nearby boid, add a repulsion force
@@ -152,7 +152,7 @@ fn computeMain(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
   // scale simulation speed
   vPos = vPos + (vVel * params.deltaT);
   // if the phase is to small, ignore the sync, to create a level of uncertainty
-  vPha = vPha + select( cPha, vec2(0.), abs(cPha.x) < 0.0003);
+  vPha = vPha + select( cPha, 0., abs(cPha) < 0.0003);
   
   // Wrap around boundary
   if (vPos.x < -1.0) { vPos.x += 2.0; }

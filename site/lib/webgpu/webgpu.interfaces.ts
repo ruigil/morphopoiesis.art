@@ -29,8 +29,8 @@ export interface Resource {
 }
 
 export interface Uniform extends Resource {
-    uniValues: ArrayBuffer;
-    uniViews: any;
+    name: string
+    view: BufferView;
 }
 
 export interface Storage extends Resource {
@@ -47,7 +47,7 @@ export interface ReadStorage  {
     srcBuffer: GPUBuffer;
     dstBuffer: GPUBuffer;
     size: number;
-    name: string;
+    view: BufferView;
 }
 
 export interface VertexStorage {
@@ -83,7 +83,7 @@ export interface WGPUSpec {
     code: string;
     geometry?: { vertex: VAttr, instance?: VAttr };
     uniforms?: any;
-    storage?: Array<{ name: string, size: number, data?: number[], read?:boolean, vertex?:boolean, }>;
+    storages?: Array<{ name: string, size: number, data?: Array<any>, read?:boolean, vertex?:boolean, }>;
     samplers?: Array<{ name : string, magFilter: string, minFilter: string }>;
     textures?: Array<{ name : string, data: ImageBitmap | HTMLVideoElement | undefined}>;
     compute?: Array<{ name: string, workgroups: [number,number,number], instances?: number }>;
@@ -92,6 +92,14 @@ export interface WGPUSpec {
     bindings?: Array<Array<number>>;
 }
 
+export interface BufferView {
+    name: string;
+    buffer: ArrayBuffer;
+    set: (data:any) => void;
+    get: () => any;
+    update: (buffer: ArrayBuffer) => void;
+}
+
 export interface BufferListener {
-    onRead: (buffer: Array<{ name: string, buffer: ArrayBuffer }>) => void;
+    onRead: (buffer: Array<BufferView>) => void;
 }

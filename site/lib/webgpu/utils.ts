@@ -1,4 +1,5 @@
 import { WGPUContext } from './webgpu.ts';
+import { BufferInfo, MemberInfo, VariableInfo, WgslReflect, TemplateType, Type } from './wgsl-reflect/index.ts';
 
 // controls for the draw loop
 export interface Controls {
@@ -136,6 +137,7 @@ export const draw = (gpuContext: WGPUContext, unis?:any, controls?: Controls, fp
         }
 
         if ( crtl.play || crtl.reset ) {
+            if (crtl.reset) crtl.reset = false; 
     
             await context.frame(frame, { 
                 sys: { 
@@ -148,7 +150,6 @@ export const draw = (gpuContext: WGPUContext, unis?:any, controls?: Controls, fp
 
             elapsed = ((performance.now() - start) / 1000) - idle;
 
-            if (crtl.reset) crtl.reset = false; 
             frame++;        
         } else {
             idle = ((performance.now()- start)/1000) - elapsed;
@@ -160,3 +161,4 @@ export const draw = (gpuContext: WGPUContext, unis?:any, controls?: Controls, fp
 
     requestAnimationFrame(render);
 }
+

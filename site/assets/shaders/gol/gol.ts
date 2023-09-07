@@ -25,7 +25,7 @@ export const gol = async () => {
                     bcolor: [255,255,255]
                 }
             },
-            storage: [
+            storages: [
                 { name: "current", size: current.length, data: current } ,
                 { name: "next", size: size * size } 
             ],

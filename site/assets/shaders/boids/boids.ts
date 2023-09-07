@@ -8,15 +8,11 @@ export const boids = async () => {
 
     const spec = ():WGPUSpec => {
         const size = 2000;
-        const initialParticleData = new Array(size * 6);
-        for (let i = 0; i < size; ++i) {
-          initialParticleData[6 * i + 0] = 2 * (Math.random() - 0.5);
-          initialParticleData[6 * i + 1] = 2 * (Math.random() - 0.5);
-          initialParticleData[6 * i + 2] = 2 * (Math.random() - 0.5) * 0.01;
-          initialParticleData[6 * i + 3] = 2 * (Math.random() - 0.5) * 0.01;
-          initialParticleData[6 * i + 4] = 2 * Math.random() - 1.0;
-          initialParticleData[6 * i + 5] = 0;
-        }
+        const boids = Array(size).fill({}).map( (e,i) => ({
+            pos: [2 * Math.random() - 1, 2 * Math.random() - 1],
+            vel: [2 * Math.random() - 1, 2 * Math.random() - 1],
+            pha: 2 * Math.PI * Math.random() 
+        }));
 
         return {
             code: code,
@@ -39,8 +35,8 @@ export const boids = async () => {
                     distances: [2., 4., 6., 1.] // boid size is 1.
                 }
             },
-            storage: [
-                { name: "particlesA", size: size , data: initialParticleData, vertex: true} ,
+            storages: [
+                { name: "particlesA", size: size , data: boids, vertex: true} ,
                 { name: "particlesB", size: size , vertex: true} 
             ],
             compute: [

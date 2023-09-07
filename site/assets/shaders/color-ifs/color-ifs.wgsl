@@ -4,8 +4,8 @@
 struct Sys {
     time: f32,
     frame: u32,
-    mouse: vec2f,
-    resolution: vec2f
+    mouse: vec2<f32>,
+    resolution: vec2<f32>
 }
 
 @group(0) @binding(0) var<uniform> sys: Sys;

@@ -11,18 +11,15 @@ import {
     Storages, 
     Storage, 
     Compute, 
-    Texture
+    Texture,
+    BufferView
 } from "./webgpu.interfaces.ts";
-import { ArrayType, TemplateType, Type, WgslReflect } from "./wgsl-reflect/index.ts";
-import { square } from "./utils.ts";
+import { MemberInfo, TemplateType, Type, WgslReflect } from "./wgsl-reflect/index.ts";
+import { square} from "./utils.ts";
 
 
 export class WGPUContext {
     private state: WGPUState;
-    
-    constructor( state: WGPUState) {
-        this.state = {...state};
-    }
 
     static async init(canvas: HTMLCanvasElement) {
         if (!canvas) {
@@ -52,9 +49,152 @@ export class WGPUContext {
         })
     }
     
-
-    build( spec : () => WGPUSpec): WGPUContext {
+    constructor( state: WGPUState ) {
+        this.state = {...state};
+    }
+    
+    build( spec : () => WGPUSpec ): WGPUContext {
                 
+        const wgslDefs = (reflect: WgslReflect) => {
+        
+            const typedArrayName = (type: Type | null, isArray:boolean, isStruct:boolean): string => {
+                //console.log(type, isArray, isStruct)
+                    //@ts-ignore
+                return isArray ? ( isStruct ? type.format.name : (type.format.name.startsWith('vec') ? type.format.format.name : type.format.name) ) : type instanceof TemplateType ? type.format.name : type.name
+            }
+        
+            const members = (ms :MemberInfo[] | null) : any =>  {
+                if (!ms) return undefined;
+                return ms.map( m => ({
+                    arrayCount: m.arrayCount,
+                    arrayStride: m.arrayStride,
+                    isArray: m.isArray,
+                    isStruct: m.isStruct,
+                    name: m.name,
+                    offset: m.offset,
+                    size: m.size,
+                    members: members(m.members),
+                    type: typedArrayName(m.type,m.isArray,m.isStruct),
+                })).reduce( (acc:Record<string,any>, e:any) => { acc[e.name] = e; return acc; },{})
+            };
+            
+        
+            const defs = reflect.storage.map( s => reflect.getStorageBufferInfo(s)!)
+                .concat(reflect.uniforms.map( u => reflect.getUniformBufferInfo(u)!))
+                .map( b => ({
+                    ...b,
+                    members: members(b.members),
+                    type:  typedArrayName(b.type,b.isArray,b.isStruct),
+                }))
+                .reduce( (acc:Record<string,any>, e:any) => { acc[e.name] = e; return acc; },{} )
+            
+            return defs;
+        }
+              
+        const makeBufferView = (defs:any, size: number = 1): BufferView => {
+        
+            const buffer = defs.isArray ? new ArrayBuffer(defs.arrayStride * size) : new ArrayBuffer(defs.size);
+        
+            const ArrayType = (type:string) => {
+                switch (type) {
+                    case "f32": return Float32Array;
+                    case "u32": return Uint32Array;
+                }
+                return Uint8Array;
+            }
+        
+            const makeView = (isArray:boolean, isStruct: boolean, members:MemberInfo, offset: number, arrayStride:number, arraySize: number, byteSize: number, type: string) => {
+        
+                //console.log("ARGS:", isArray, isStruct, members, offset,  arrayStride, arraySize, size, type)
+                //console.log("buffer",buffer)
+                if (isArray) {
+                    return (new Array(arraySize)).fill(0).map( (e, i):any => makeView(
+                        false, 
+                        isStruct, 
+                        members, 
+                        (i * arrayStride) + offset, // must accumulate offset for arrays in structs
+                        arrayStride, 
+                        arraySize, 
+                        arrayStride, // arrayStride corresponds to the byteSize of the array elements 
+                        type
+                    ));
+                }
+                 else if (isStruct) {
+                    const result:any = {}
+                    for (const [key, value] of Object.entries(members)) {
+                        //console.log("key",key)
+                        result[key] = makeView(
+                            value.isArray, 
+                            value.isStruct, 
+                            value.members, 
+                            value.offset + offset,  
+                            value.arrayStride, 
+                            value.arrayCount, 
+                            value.size, 
+                            value.type
+                        );
+                    }    
+                    return result;
+                } else {
+                    const AT = ArrayType(type);
+                    return new AT(buffer, offset, byteSize / AT.BYTES_PER_ELEMENT);
+                }
+            }
+            // make a view of the buffer, with the definitions passed in
+            const view = makeView(
+                defs.isArray,
+                defs.isStruct,
+                defs.members,
+                0, // starting offset
+                defs.arrayStride, 
+                defs.arrayCount !=0 ? defs.arrayCount : size, // must specify size for dynamic arrays
+                defs.size, // byteSize
+                defs.type
+            );
+        
+            //console.log("defs",defs)
+            //console.log("view",view)
+        
+            const getViewValue = (isArray:boolean, isStruct: boolean, members: MemberInfo, view:any, size: number) => {
+                //console.log("getViewValue", isArray, isStruct, members, view, size)
+                if (isArray) {
+                    return (new Array(size)).fill(0).map( (e, i):any => getViewValue(false, isStruct, members, view[i], size));
+                } else if (isStruct) {
+                    const result:any = {}
+                    for (const [key, value] of Object.entries(members)) {
+                        result[key] = getViewValue(value.isArray, value.isStruct, value.members, view[key], value.arrayCount);
+                    }    
+                    return result;
+                } else {
+                    return view.length > 1 ? Array.from(view) : view[0];
+                }
+            }
+        
+            const setViewValue = (isArray:boolean, isStruct: boolean, members: MemberInfo, view:any, size: number, data:any):any => {
+                //console.log("setViewValue", isArray, isStruct, members, view, size, data)
+                if (isArray) {
+                    (new Array(size)).fill(0).map( (e, i):any => { if (data && data[i]) setViewValue(false, isStruct, members, view[i], size, data[i] ) } );
+                } else if (isStruct) {
+                    for (const [key, value] of Object.entries(members)) {
+                        if (data[key]) setViewValue(value.isArray, value.isStruct, value.members, view[key], value.arrayCount, data[key]);
+                    }  
+                } else {
+                    if (data) view.length > 1 ? view.set(data) : view.set([data]);
+                }
+            }
+        
+            const updateBuffer = (src: ArrayBuffer) => {
+                new Uint8Array(buffer).set(new Uint8Array(src));
+            }
+        
+            return {
+                name: defs.name,
+                buffer: buffer,
+                set: (data:any) => setViewValue(defs.isArray, defs.isStruct, defs.members, view, size, data),
+                get: () => getViewValue(defs.isArray, defs.isStruct, defs.members, view, size),
+                update: (buffer: ArrayBuffer) => updateBuffer(buffer)
+            };
+        }
 
         const createShaderModule = (spec: WGPUSpec) => {
             if (!spec.code) throw new Error("Code is not defined in spec");
@@ -134,88 +274,42 @@ export class WGPUContext {
             }
         }
 
-        const sizeFormat = (type: Type): {size: number, format: string} => {
-            if (!type) throw new Error("Type is not defined");
-            if (type instanceof ArrayType) return sizeFormat(type.format!)
-            if (type instanceof TemplateType) return { size: reflect.getTypeInfo(type)!.size, format: type.format!.name }
-            const struct = reflect.structs.find( e => e.name == type.name);
-            if (struct) {
-               // the size of struct takes into account alignment but the format must take into account members.
-               // it is not the case and will fail when not f32
-               return { size: reflect.getTypeInfo(type)!.size, format: 'f32'}    
-            }
-            if (type.name.startsWith('vec') && type.name.endsWith('f')) return { size: parseInt(type.name.substring(3,4)) * 4, format: 'f32' } 
-            if (type.name.startsWith('vec') && type.name.endsWith('u')) return { size: parseInt(type.name.substring(3,4)) * 4, format: 'u32' } 
-            if (type.name.startsWith('vec') && type.name.endsWith('i')) return { size: parseInt(type.name.substring(3,4)) * 4, format: 'i32' } 
-
-            return { size: 4, format: type.name }
-        }
-
         const createUniforms = (spec: WGPUSpec, reflect: WgslReflect) : Uniform[] => {
 
             const uniforms = spec.uniforms || {};
-            const uniformsBinding:Array<Uniform> = [];
+            const uniRessource:Array<Uniform> = [];
+
+            const defs = wgslDefs(reflect);
+
             // iteration over the uniforms
             for (let i = 0; i < reflect.uniforms.length; i++) {
-                const info = reflect.getUniformBufferInfo(reflect.uniforms[i]) as any;
-                if (!info) throw new Error("Uniform not found");
+                const name = reflect.uniforms[i].name;
 
-                //console.log("info",info);
-                const uniformArray = new ArrayBuffer(info!.size);
-                const uniformViews:any = {};
-
-                if (info.members) {
-                    uniformViews[info.name] = {};
-                    const uni = uniforms[info.name] || {};
-                    for (let i=0; i< info!.members.length; i++) {
-                        const member = info.members[i];
-                        //console.log(member)
-                        const size = member.size / 4;
-                        const value = uni[member.name] || Array(size).fill(0);
-                        const sf = sizeFormat(member.type);
-                        //console.log("member", member.name, "type", type, "size", size, "value", value)
-                        //console.log("iterator", value[Symbol.iterator])
-                        const offset = member.offset;
-                        uniformViews[info.name][member.name] = 
-                            sf.format === 'f32' ? new Float32Array(uniformArray, offset, size) : 
-                            sf.format === 'u32' ? new Uint32Array(uniformArray, offset, size) : 
-                            new Int32Array(uniformArray, offset, size);
-
-                        value[Symbol.iterator] ? 
-                            uniformViews[info.name][member.name].set(value) : 
-                            uniformViews[info.name][member.name].set([value]);
-                    }
-                } else {
-                    const size = info!.size / 4;
-                    const value = uniforms[info.name] || Array(size).fill(0);
-                    const sf = sizeFormat(info.type);
-                    const offset = 0;
-                    uniformViews[info.name] = 
-                        sf.format === 'f32' ? new Float32Array(uniformArray, offset, size) : 
-                        sf.format === 'u32' ? new Uint32Array(uniformArray, offset, size) : 
-                        new Int32Array(uniformArray, offset, size);
-                    uniformViews[info.name].set(value);
+                const uniformDef = defs[name];
+                const uniformView = makeBufferView(uniformDef);
+                //console.log("uniform",name)
+                if (uniforms[name]) {
+                    uniformView.set(uniforms[name]);
                 }
-                
-                
+                //console.log("get",uniformView.get())
+
                 const uniformBuffer = this.state.device.createBuffer({
                     label: "uniforms",
-                    size: uniformArray.byteLength,
+                    size: uniformView.buffer.byteLength,
                     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
                 });
-                this.state.device.queue.writeBuffer(uniformBuffer, 0, uniformArray);
-                uniformsBinding.push({
-                    uniValues: uniformArray,
-                    uniViews: uniformViews,
+                this.state.device.queue.writeBuffer(uniformBuffer, 0, uniformView.buffer);
+
+                uniRessource.push({
+                    name: uniformDef.name,
+                    view: uniformView,
                     resource: { buffer: uniformBuffer },
-                    binding: reflect.uniforms[i].binding,
+                    binding: uniformDef.binding,
                     type: "uniform"
                 })
             }
 
-            //console.log("uniforms",uniformsBinding);
-
-            return uniformsBinding
+            return uniRessource
         }
 
         const createStorage = (spec: WGPUSpec, reflect: WgslReflect) : Storages => {
@@ -224,55 +318,53 @@ export class WGPUContext {
             const vertexStorage:VertexStorage[] = new Array<VertexStorage>();
 
             const storage = (name:string)=> {
-                return spec.storage ? spec.storage.find((element) => element.name === name) : undefined;
+                return spec.storages ? spec.storages.find((element) => element.name === name) : undefined;
             }
 
-            for(let i = 0; i < reflect.storage.length; i++) {
-                const node = reflect.storage[i].node;
-                const sto = storage(node.name);
-                if (!sto) throw new Error(`Storage spec for ${node.name} not found`);
-                const size = sto.size;
-                // gives a byte size and format for the type present in the storage buffer
-                // we need this to allocate the right size given the type of the buffer
-                // so we can copy the data from the spec to the buffer
-                const sf = sizeFormat(node.type!);
-                
-                //console.log(node.name, size, sf.size, sf.format)
-                const storageBuffer = this.state.device.createBuffer({
-                    label: `${sto.name} storage buffer`,
-                    size: size * sf.size, // number of bytes to allocate
-                    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | (sto.read ? GPUBufferUsage.COPY_SRC : 0) | ((sto.vertex ? GPUBufferUsage.VERTEX : 0)),
-                });
+            const defs = wgslDefs(reflect);
 
+            for(let i = 0; i < reflect.storage.length; i++) {
+                const name = reflect.storage[i].node.name;
+                const access = reflect.storage[i].node.access; 
+                const storageSpec = storage(name);
+                if (!storageSpec) throw new Error(`Storage spec for ${name} not found`);
+                const storageDef = defs[name];
+                const storageView = makeBufferView(storageDef,storageSpec.size);
+                const storageBuffer = this.state.device.createBuffer({
+                    label: `${name} storage buffer`,
+                    size: storageView.buffer.byteLength, // number of bytes to allocate
+                    usage:  GPUBufferUsage.STORAGE | 
+                            GPUBufferUsage.COPY_DST | 
+                            (storageSpec.read ? GPUBufferUsage.COPY_SRC : 0) | 
+                            (storageSpec.vertex ? GPUBufferUsage.VERTEX : 0),
+                });
                 // if the buffer is marked as read, then we allocate a staging buffer to read the data
-                if (sto.read) {
-                    const readBuffer = this.state.device.createBuffer({
-                        label: `${sto.name} read buffer`,
-                        size: size * sf.size,
-                        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
-                    });
+                if (storageSpec.read) {
                     readStorage.push({
                         srcBuffer: storageBuffer,
-                        dstBuffer: readBuffer,
-                        size: size * sf.size,
-                        name: sto.name,
+                        dstBuffer: this.state.device.createBuffer({
+                            label: `${storageSpec.name} read buffer`,
+                            size: storageView.buffer.byteLength,
+                            usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
+                        }),
+                        size: storageView.buffer.byteLength,
+                        view: storageView
                     });
                 }
                 // if the storage buffer is marked as vertex, then we add it to the vertex storages
-                if (sto.vertex) {
+                if (storageSpec.vertex) {
                     vertexStorage.push({ buffer: storageBuffer });
                 }
-                
-                const s = size * (sf.size/4); // divided by 4 because we are using 32 bits
-                const data = sto.data ? sto.data : new Array(s).fill(0);
-                const stArray = sf.format === 'f32' ? new Float32Array(s) : sf.format === 'u32' ? new Uint32Array(s) : new Int32Array(s);                
-                stArray.set(data);
-                this.state.device.queue.writeBuffer(storageBuffer, 0, stArray);
+
+                if (storageSpec.data) {
+                    storageView.set(storageSpec.data);
+                }
+                this.state.device.queue.writeBuffer(storageBuffer, 0, storageView.buffer);
                 
                 stateStorage.push({
                     binding: reflect.storage[i].binding,
                     resource: { buffer: storageBuffer },
-                    type: node.access === "read_write" ? "storage" : "read-only-storage"  
+                    type: access === "read_write" ? "storage" : "read-only-storage"  
                 });
 
             }
@@ -518,6 +610,7 @@ export class WGPUContext {
 
         const wgslSpec = spec();
         const reflect = new WgslReflect(wgslSpec.code);
+
         //console.log("reflect",reflect)
 
         const shaderModule = createShaderModule(wgslSpec);
@@ -564,7 +657,7 @@ export class WGPUContext {
         });
     }
 
-    addBufferListener(listener: BufferListener) {
+    addBufferListener( listener: BufferListener ) {
             
         const bls = this.state.bufferListeners ? [...this.state.bufferListeners, listener] : [listener];
         return new WGPUContext({
@@ -580,10 +673,12 @@ export class WGPUContext {
             if (bufferListeners) {
                 const buffers = storages?.readStorages || [];
                 if (buffers.length == 0) return;
-                const p = await Promise.all(buffers.map( buff => buff.dstBuffer.mapAsync(GPUMapMode.READ)));
+                await Promise.all(buffers.map( buff => buff.dstBuffer.mapAsync(GPUMapMode.READ)));
                 bufferListeners.forEach((listener) => {
-                    // TODO: buffers can be other types than float32
-                    const data = buffers.map(s=> ({ name: s.name, buffer: new Float32Array(s.dstBuffer!.getMappedRange())}));
+                    const data = buffers.map(s=> {
+                        s.view.update(s.dstBuffer!.getMappedRange());
+                        return s.view;
+                    });
                     listener.onRead( data );
                     buffers.forEach(s=> s.dstBuffer!.unmap() );
                 });
@@ -591,34 +686,20 @@ export class WGPUContext {
         }
 
         const setUniforms = ( unis: any) => {
-            uniforms?.forEach((element,i) => {
-                const uviews = element.uniViews;
-                //console.log("unis", unis);
-                // TODO: implement recursive structures instead of one level
-                for (let key in unis) {
-                    if (!uviews[key]) continue;
-                    if (unis[key] instanceof Object){
-                        for (let subkey in unis[key]) {
-                            if (uviews[key][subkey]) {
-                                unis[key][subkey][Symbol.iterator] ?
-                                uviews[key][subkey].set([...unis[key][subkey]]) :
-                                uviews[key][subkey].set([unis[key][subkey]]);
-                            }
-                        }
-                    } else {
-                        unis[key][Symbol.iterator] ? 
-                            uviews[key].set([...unis[key]]) : 
-                            uviews[key].set([unis[key]]);
-                    }
+            uniforms?.forEach((uniform) => {
+                if (unis[uniform.name]) {
+                    //console.log("set",uniform.name, unis[uniform.name])
+                    uniform.view.set(unis[uniform.name]);
+                    //console.log(uniform.view.get())
                 }
                 // copy the values from JavaScript to the GPU
-                device.queue.writeBuffer( (element.resource as GPUBufferBinding).buffer, 0, element.uniValues);
+                device.queue.writeBuffer( (uniform.resource as GPUBufferBinding).buffer, 0, uniform.view.buffer);
             });
         }
-        
-        setUniforms(unis);
 
         const bindGroup = (i:number) => wgslSpec!.bindings ? (i % wgslSpec!.bindings.length) : 0;
+        
+        setUniforms(unis);
 
         const encoder = device.createCommandEncoder();
 
@@ -650,6 +731,7 @@ export class WGPUContext {
             pass.end();    
         }
 
+        // compute pipelines
         const computePass = encoder.beginComputePass();
         for( let i = 0; i < pipelines!.computeGroupCount; i++) {
             const bg = bindGroup(frame + i)
@@ -671,6 +753,7 @@ export class WGPUContext {
             });
         } 
 
+        // submit commands
         device.queue.submit([encoder.finish()]);
 
         // read buffers into staging buffers
