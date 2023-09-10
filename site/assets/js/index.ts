@@ -55,8 +55,8 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     const spec = await dla();
 
     const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
-    const gpu = await PoiesisContext.init(canvas!);
-    gpu.build(spec).loop({ params: { fcolor: color.fcolor, bcolor: color.bcolor }});
+    const context = await PoiesisContext.init(canvas!);
+    context.build(spec).loop({ params: { fcolor: color.fcolor, bcolor: color.bcolor }});
   
   }
 

@@ -11,8 +11,7 @@ export const player = async (spec: () => PoiesisSpec, unis?: any, delta?: number
 
   const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
  
-  const gpu = await PoiesisContext.init(canvas!);
-  const context = gpu.build(spec);
+  const context = await PoiesisContext.init(canvas!);
   
   const controls = { play: true, reset: false, delta: delta || 0}
 
@@ -37,6 +36,6 @@ export const player = async (spec: () => PoiesisSpec, unis?: any, delta?: number
     }
   });
 
-  context.loop(unis, controls, { onFPS: (fps) => { fpsSmall.textContent = fps.fps + " fps" } })
+  context.build(spec).loop(unis, controls, { onFPS: (fps) => { fpsSmall.textContent = fps.fps + " fps" } })
   
 }
