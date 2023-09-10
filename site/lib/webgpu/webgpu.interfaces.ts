@@ -1,4 +1,4 @@
-export interface WGPUState {
+export interface WebGPUState {
     canvas: HTMLCanvasElement;
     context: GPUCanvasContext;
     adapter: GPUAdapter;
@@ -6,7 +6,7 @@ export interface WGPUState {
     geometry?: Geometry;
     uniforms?: Array<Uniform>;
     pipelines?: Pipelines;
-    storages?: Storages;
+    storages?: StorageTypes;
     clearColor?: {r:number,g:number,b:number,a:number};
     spec?: () => WebGPUSpec;
     wgslSpec?: WebGPUSpec
@@ -52,7 +52,7 @@ export interface VertexStorage {
     buffer: GPUBuffer;
 }
 
-export interface Storages {
+export interface StorageTypes {
     storages: Array<Storage>;
     readStorages: Array<ReadStorage>;
     vertexStorages: Array<VertexStorage>;
@@ -64,30 +64,15 @@ export interface Compute {
     instances: number;
 }
 
+export interface ComputeGroupPipeline {
+    computeGroup: Compute[];
+    computeGroupCount: number;
+}
+
 export interface Pipelines {
     render?: GPURenderPipeline;
-    compute: Compute[];
-    computeGroupCount: number;
+    compute?: ComputeGroupPipeline;
     bindings: (index:number) => GPUBindGroup;
-}
-
-export interface VAttr {
-    data?: Array<number>;
-    attributes: Array<string>;
-    instances?: number;
-}
-
-export interface WebGPUSpec {
-    code: string;
-    geometry?: { vertex: VAttr, instance?: VAttr };
-    uniforms?: any;
-    storages?: Array<{ name: string, size: number, data?: Array<any>, read?:boolean, vertex?:boolean, }>;
-    samplers?: Array<{ name : string, magFilter: string, minFilter: string }>;
-    textures?: Array<{ name : string, data: ImageBitmap | HTMLVideoElement | undefined}>;
-    compute?: Array<{ name: string, workgroups: [number,number,number], instances?: number }>;
-    computeGroupCount?: number;
-    clearColor?: {r:number,g:number,b:number,a:number}
-    bindings?: Array<Array<number>>;
 }
 
 export interface BufferView {
@@ -100,4 +85,36 @@ export interface BufferView {
 
 export interface BufferListener {
     onRead: (buffer: Array<BufferView>) => void;
+}
+
+export interface VAttr {
+    data?: Array<number>;
+    attributes: Array<string>;
+    instances?: number;
+}
+
+export interface WebGPUSpec {
+    code: string;
+    uniforms?: any;
+    geometry?: { vertex: VAttr, instance?: VAttr };
+    storages?: Array<{ name: string, size: number, data?: Array<any>, read?:boolean, vertex?:boolean, }>;
+    samplers?: Array<{ name : string, magFilter: string, minFilter: string }>;
+    textures?: Array<{ name : string, data: ImageBitmap | HTMLVideoElement | undefined}>;
+    computes?: Array<{ name: string, workgroups: [number,number,number], instances?: number }>;
+    computeGroupCount?: number;
+    clearColor?: { r:number, g:number, b:number, a:number}
+    bindings?: Array<Array<number>>;
+}
+
+
+// controls for the draw loop
+export interface Controls {
+    play?: boolean;
+    reset?: boolean;
+    delta?: number;
+}
+
+// listener for the fps
+export interface FPSListener {
+    onFPS: (fps: { fps: string, time: string}) => void;
 }

@@ -1,17 +1,6 @@
 import { WebGPUContext } from './webgpu.ts';
 import { BufferInfo, MemberInfo, VariableInfo, WgslReflect, TemplateType, Type } from './wgsl-reflect/index.ts';
 
-// controls for the draw loop
-export interface Controls {
-    play?: boolean;
-    reset?: boolean;
-    delta?: number;
-}
-
-// listener for the fps
-export interface FPSListener {
-    onFPS: (fps: { fps: string, time: string}) => void;
-}
 
 export const square = (x: number) => {
     return [
@@ -82,6 +71,7 @@ export const loadWebcam = async () => {
     return { video: video, settings: videoSettings, capabilities: capabilities };
 }
 
+/*
 export const draw = (gpuContext: WebGPUContext, unis?:any, controls?: Controls, fpsListener?: FPSListener) => {
     let frame = 0;
     let intid = 0;
@@ -110,7 +100,7 @@ export const draw = (gpuContext: WebGPUContext, unis?:any, controls?: Controls, 
     });
 
     observer.observe(canvas)
-    canvas.addEventListener('mousemove', event => {
+    canvas.addEventListener('mousemove', (event:MouseEvent) => {
         mouse[0] = event.offsetX/canvas.clientWidth;
         mouse[1] = event.offsetY/canvas.clientHeight;
     });
@@ -164,3 +154,4 @@ export const draw = (gpuContext: WebGPUContext, unis?:any, controls?: Controls, 
     requestAnimationFrame(render);
 }
 
+*/

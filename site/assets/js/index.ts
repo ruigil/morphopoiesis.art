@@ -1,5 +1,4 @@
 
-import { draw } from '../../lib/webgpu/utils.ts';
 import { WebGPUContext } from "../../lib/webgpu/webgpu.ts";
 import { dla } from '../shaders/dla/dla.ts'
 
@@ -39,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
           //console.log('Style changed:', mutation.target.classList.length);
           //const styles = getComputedStyle(body!);
-          let dark = mutation.target.classList.contains('sl-theme-dark');
+          let dark = (mutation.target as HTMLBodyElement).classList.contains('sl-theme-dark');
           if (dark) {
             color.bcolor.splice(0,3, ...[16,24,42] );
             color.fcolor.splice(0,3, ...[255,255,255]);
@@ -53,13 +52,12 @@ document.addEventListener('DOMContentLoaded', async (event) => {
 
     observer.observe(body!, { attributes: true });
 
+    const spec = await dla();
+
     const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
     const gpu = await WebGPUContext.init(canvas!);
-    const spec = await dla();
+    gpu.build(spec).loop({ params: { fcolor: color.fcolor, bcolor: color.bcolor }});
   
-    const context = gpu.build(spec);
-  
-    draw(context, { params: { fcolor: color.fcolor, bcolor: color.bcolor }});
   }
 
   landing();

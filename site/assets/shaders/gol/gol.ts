@@ -29,7 +29,7 @@ export const gol = async () => {
                 { name: "current", size: current.length, data: current } ,
                 { name: "next", size: size * size } 
             ],
-            compute: [
+            computes: [
                 { name: "computeMain", workgroups:  [size / 8, size / 8, 1] },
             ],
     

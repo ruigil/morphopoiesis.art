@@ -1,6 +1,6 @@
 import { WebGPUSpec, BufferView } from "../../../lib/webgpu/webgpu.interfaces.ts";
 import { WebGPUContext } from "../../../lib/webgpu/webgpu.ts";
-import { loadWGSL, draw, square} from "../../../lib/webgpu/utils.ts";
+import { loadWGSL, square} from "../../../lib/webgpu/utils.ts";
 
 export const dev = async () => {
 
@@ -32,7 +32,7 @@ export const dev = async () => {
                 { name: "fluidB", size: size * size } ,
                 { name: "debug", size: 1, read: true } ,
             ],
-            compute: [
+            computes: [
                 { name: "computeFD", workgroups: [size / 8, size / 8, 1] },
                 { name: "computeFreeDivergence", workgroups: [size / 8, size / 8, 1], instances: 40}
             ],
@@ -105,8 +105,8 @@ const devPage = async () => {
         document.exitFullscreen();
       }
     });
-    draw(context, {},controls, { onFPS: (fps:any) => { fpsSmall.textContent = fps.fps + " fps" } })
-  
+
+    context.loop({},controls, { onFPS: (fps:any) => { fpsSmall.textContent = fps.fps + " fps" } })
 }
 
 document.addEventListener('DOMContentLoaded', async (event)  => {

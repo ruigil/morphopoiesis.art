@@ -7,19 +7,22 @@ import {
     Uniform, 
     VertexStorage, 
     WebGPUSpec, 
-    WGPUState, 
-    Storages, 
+    WebGPUState, 
+    StorageTypes, 
     Storage, 
     Compute, 
     Texture,
-    BufferView
+    BufferView,
+    ComputeGroupPipeline,
+    Controls,
+    FPSListener
 } from "./webgpu.interfaces.ts";
 import { ArrayType, MemberInfo, TemplateType, Type, WgslReflect } from "./wgsl-reflect/index.ts";
 import { square} from "./utils.ts";
 
 
 export class WebGPUContext {
-    private state: WGPUState;
+    private state: WebGPUState;
 
     static async init(canvas: HTMLCanvasElement) {
         if (!canvas) {
@@ -49,7 +52,7 @@ export class WebGPUContext {
         })
     }
     
-    constructor( state: WGPUState ) {
+    private constructor( state: WebGPUState ) {
         this.state = {...state};
     }
     
@@ -78,7 +81,8 @@ export class WebGPUContext {
                 })).reduce( (acc:Record<string,any>, e:any) => { acc[e.name] = e; return acc; },{})
             };
             
-        
+            // transformation of the reflect data into a more usable format for buffers
+            // This will be used to create the buffer views
             const defs = reflect.storage.map( s => ({ access: s.node.access, ...reflect.getStorageBufferInfo(s)! }) )
                 .map( s => ({...s, category: "storage"})) 
                 .concat(reflect.uniforms.map( u => reflect.getUniformBufferInfo(u)!)
@@ -173,7 +177,7 @@ export class WebGPUContext {
                         if (data[key]) setViewValue(value.isArray, value.isStruct, value.members, view[key], value.arrayCount, data[key]);
                     }  
                 } else {
-                    if (data) view.length > 1 ? view.set(data) : view.set([data]);
+                    data && view.length > 1 ? view.set(data) : view.set([data]);
                 }
             }
         
@@ -301,7 +305,7 @@ export class WebGPUContext {
             return uniRessource
         }
 
-        const createStorage = (spec: WebGPUSpec, defs: Record<string,any>) : Storages => {
+        const createStorage = (spec: WebGPUSpec, defs: Record<string,any>) : StorageTypes => {
             const stateStorage:Storage[] = new Array<Storage>();
             const readStorage:ReadStorage[] = new Array<ReadStorage>();
             const vertexStorage:VertexStorage[] = new Array<VertexStorage>();
@@ -536,15 +540,24 @@ export class WebGPUContext {
             });
         }
 
-        const createComputePipelines = (shaderModule: GPUShaderModule, pipelineLayout:GPUPipelineLayout, reflect: WgslReflect, wgslSpec: WebGPUSpec): Compute[] => {
-            const result: Compute[] = [];
+        const createComputePipelines = (shaderModule: GPUShaderModule, pipelineLayout:GPUPipelineLayout, reflect: WgslReflect, wgslSpec: WebGPUSpec): ComputeGroupPipeline => {
+            const pipelines: Compute[] = [];
 
-            const compute = (name: string)  => wgslSpec.compute ? wgslSpec.compute.find( e => e.name === name) : undefined;
+            // we must have a computeGrouCount that is a multiple of the bindings groups
+            // we must always end in the same binding group we started if we want to show the current state in the next iteration
+            const computeGC = (spec: WebGPUSpec) => {
+                const gc = spec.bindings ? spec.bindings.length : 1;
+                const cgc = spec.computeGroupCount ?  spec.computeGroupCount : 1;
+                return cgc > 1 ? cgc + (gc - ((cgc-2) % gc) - 1) : 1;
+            }
+
+            const compute = (name: string)  => wgslSpec.computes ? wgslSpec.computes.find( e => e.name === name) : undefined;
 
             for( let i = 0; i< reflect.entry!.compute.length; i++) {
                 const entryPoint = reflect.entry?.compute[i].node.name;
                 const c = compute(entryPoint);
                 if (!c) throw new Error(`Spec for compute ${entryPoint} not found!`);
+
                 const pipeline = this.state.device.createComputePipeline({
                     label: `${entryPoint} compute pipeline`,
                     layout: pipelineLayout,
@@ -553,14 +566,18 @@ export class WebGPUContext {
                       entryPoint: entryPoint,
                     }
                 });
-                result.push({
+
+                pipelines.push({
                     pipeline: pipeline,
                     workgroups: c.workgroups || [1,1,1],
                     instances: c.instances || 1
                 });
             }
 
-            return result;
+            return {
+                computeGroup: pipelines,
+                computeGroupCount: computeGC(wgslSpec)
+            };
         }
 
         const createRenderPipeline = (shaderModule: GPUShaderModule, pipelineLayout:GPUPipelineLayout, reflect: WgslReflect) => {            
@@ -613,25 +630,17 @@ export class WebGPUContext {
         const renderPipeline = createRenderPipeline(shaderModule, pipelineLayout, reflect);
         const computePipelines = createComputePipelines(shaderModule, pipelineLayout, reflect, wgslSpec);
         
-        // we must have a computeGrouCount that is a multiple of the bindings groups
-        // we must always end in the same binding group we started if we want to show the current state in the next iteration
-        const computeGC = (spec: WebGPUSpec) => {
-            const gc = spec.bindings ? spec.bindings.length : 1;
-            const cgc = spec.computeGroupCount ?  spec.computeGroupCount : 1;
-            return cgc > 1 ? cgc + (gc - ((cgc-2) % gc) - 1) : 1;
-        }
 
         return new WebGPUContext({
             ...this.state,
-            pipelines: {
-                render: renderPipeline,
-                compute: computePipelines,
-                computeGroupCount: computeGC(wgslSpec),
-                bindings: bindings,
-            },
             geometry: geometry,
             uniforms: uniforms,
             storages: storages,
+            pipelines: {
+                render: renderPipeline,
+                compute: computePipelines,
+                bindings: bindings,
+            },
             clearColor: wgslSpec.clearColor || {r:0,g:0,b:0,a:1},
             wgslSpec: wgslSpec,
             spec: spec,
@@ -645,6 +654,10 @@ export class WebGPUContext {
             ...this.state,
             bufferListeners: bls
         });
+    }
+
+    reset() {
+        this.state =  this.build(this.state.spec!).state;
     }
 
     frame(frame: number, unis?: any) {
@@ -676,37 +689,43 @@ export class WebGPUContext {
                      }]
                 });
                 
-                pass.setPipeline(pipelines!.render);
-                pass.setVertexBuffer(0, geometry!.vertexBuffer);
+                pass.setPipeline(pipelines.render);
+                if (geometry?.vertexBuffer) pass.setVertexBuffer(0, geometry.vertexBuffer);
     
                 // we must always have two vertex buffers when instancing from storage, because
                 // you cant' have a writing and reading storage vertex at the same time.
                 if (storages && storages.vertexStorages.length > 0) {
                     pass.setVertexBuffer(1, storages.vertexStorages[bindGroup(frame)].buffer)
-                } else if (geometry!.instanceBuffer) {
-                    pass.setVertexBuffer(1, geometry!.instanceBuffer)
+                } else if (geometry?.instanceBuffer) {
+                     pass.setVertexBuffer(1, geometry.instanceBuffer)
                 }
                 
-                pass.setBindGroup(0, pipelines!.bindings(bindGroup(frame)));
-                pass.draw(geometry!.vertexCount, geometry!.instances || 1 );
+                pass.setBindGroup(0, pipelines.bindings(bindGroup(frame)));
+                if (geometry) pass.draw(geometry.vertexCount, geometry.instances || 1 );
     
                 pass.end();    
             }
     
             // compute pipelines
-            const computePass = encoder.beginComputePass();
-            for( let i = 0; i < pipelines!.computeGroupCount; i++) {
-                const bg = bindGroup(frame + i)
-                for (let c = 0; c < pipelines!.compute.length; c++) {
-                    const compute = pipelines!.compute[c];
-                    computePass.setPipeline(compute.pipeline);
-                    for (let i = 0; i < compute.instances ; i++) {
-                        computePass.setBindGroup(0, pipelines!.bindings(bg));
-                        computePass.dispatchWorkgroups(...compute.workgroups);
-                    }
-                }    
+            if (pipelines?.compute) {
+                const computePass = encoder.beginComputePass();
+
+                for( let cg = 0; cg < pipelines.compute.computeGroupCount; cg++) {
+                    const bg = bindGroup(frame + cg)
+
+                    for (let c = 0; c < pipelines.compute.computeGroup.length; c++) {
+                        const compute = pipelines.compute.computeGroup[c];
+                        computePass.setPipeline(compute.pipeline);
+
+                        for (let i = 0; i < compute.instances ; i++) {
+                            computePass.setBindGroup(0, pipelines.bindings(bg));
+                            computePass.dispatchWorkgroups(...compute.workgroups);
+                        }
+                    }    
+                }
+
+                computePass.end();    
             }
-            computePass.end(); 
             
             // copy read buffers
             if (storages && storages.readStorages.length > 0) {
@@ -746,11 +765,86 @@ export class WebGPUContext {
         readBuffers();
     }
 
-    getCanvas() {
-        return this.state.canvas;
-    }
 
-    reset() {
-        return this.build(this.state.spec!)
+    loop(unis?:any, controls?: Controls, fpsListener?: FPSListener) {
+        let frame = 0;
+        let intid = 0;
+        let elapsed = 0;
+        let idle = 0;
+        let start = performance.now();
+    
+        const canvas = this.state.canvas;
+        const crtl = controls || { play: true, reset: false, delta: 0 };
+    
+        const mouse: Array<number> = [0,0];
+        const resolution: Array<number> = [0,0];
+        const aspectRatio: Array<number> = [1,1];
+    
+        const observer = new ResizeObserver((entries) => {
+            canvas.width = entries[0].target.clientWidth * devicePixelRatio;
+            canvas.height = entries[0].target.clientWidth * devicePixelRatio;
+            //this.state.canvas.width = entries[0].devicePixelContentBoxSize[0].inlineSize;
+            //this.state.canvas.height = entries[0].devicePixelContentBoxSize[0].blockSize;
+            resolution[0] = entries[0].target.clientWidth;
+            resolution[1] = entries[0].target.clientHeight;
+            const factor = resolution[0] > resolution[1] ? resolution[0] : resolution[1];
+            aspectRatio[0] = resolution[0] / factor;
+            aspectRatio[1] = resolution[1] / factor;
+        });
+    
+        observer.observe(canvas)
+        canvas.addEventListener('mousemove', (event:MouseEvent) => {
+            mouse[0] = event.offsetX/canvas.clientWidth;
+            mouse[1] = event.offsetY/canvas.clientHeight;
+        });
+    
+        const fps = () => {
+            fpsListener && fpsListener.onFPS({ fps: (frame / elapsed).toFixed(2), time: elapsed.toFixed(1)} );
+        }
+    
+        const render = async () => {
+            if (crtl.reset) {
+                frame = 0;
+                elapsed = 0;
+                idle = 0;
+                this.reset();
+                start = performance.now();
+            }
+    
+            if (crtl.play && !intid) {
+                intid = setInterval(() => fps(), 1000);
+            }
+    
+            if (!crtl.play && intid) {
+                clearInterval(intid);
+                intid = 0;
+            }
+    
+            if ( crtl.play || crtl.reset ) {
+                if (crtl.reset) crtl.reset = false; 
+        
+                this.frame(frame, { 
+                    sys: { 
+                        frame: frame, 
+                        time: elapsed, 
+                        mouse: mouse, 
+                        resolution: resolution,
+                        aspect: aspectRatio 
+                    }, ...unis });
+    
+                elapsed = ((performance.now() - start) / 1000) - idle;
+    
+                frame++;        
+    
+            } else {
+                idle = ((performance.now()- start)/1000) - elapsed;
+            }
+    
+            if (crtl.delta != 0) setTimeout(()=>requestAnimationFrame(render), crtl.delta);
+            else requestAnimationFrame(render);
+        }
+    
+        requestAnimationFrame(render);
     }
+    
 }

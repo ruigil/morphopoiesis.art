@@ -41,7 +41,7 @@ export const physarum = async () => {
                 { name: "trailMapA", size: size * size } ,
                 { name: "trailMapB", size: size * size } ,
             ],
-            compute: [
+            computes: [
                 { name: "computeTrailmap", workgroups: [size / 8, size / 8, 1] },
                 { name: "computeAgents", workgroups: [Math.ceil(numAgents / 64), 1, 1] }
             ],

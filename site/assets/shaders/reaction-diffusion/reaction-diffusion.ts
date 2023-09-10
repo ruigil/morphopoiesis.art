@@ -27,7 +27,7 @@ export const rd = async () => {
                 { name: "current", size: size * size, data: current } ,
                 { name: "next", size: size * size}, 
             ],
-            compute: [
+            computes: [
                 { name: "computeMain", workgroups:  [size / 8, size / 8, 1] },
             ],
             computeGroupCount: 32,

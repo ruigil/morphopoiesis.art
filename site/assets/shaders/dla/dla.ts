@@ -38,7 +38,7 @@ export const dla = async () => {
                 { name: "iceA", size: size * size, data: ice} ,
                 { name: "iceB", size: size * size, data: ice } ,
             ],
-            compute: [
+            computes: [
                 { name: "computeIce", workgroups: [Math.ceil(size / 8), Math.ceil(size / 8), 1] },
                 { name: "computeDrops", workgroups: [Math.ceil(numParticles / 64), 1, 1] }
             ],
