@@ -1,4 +1,4 @@
-export interface WebGPUState {
+export interface PoiesisState {
     canvas: HTMLCanvasElement;
     context: GPUCanvasContext;
     adapter: GPUAdapter;
@@ -8,8 +8,8 @@ export interface WebGPUState {
     pipelines?: Pipelines;
     storages?: StorageTypes;
     clearColor?: {r:number,g:number,b:number,a:number};
-    spec?: () => WebGPUSpec;
-    wgslSpec?: WebGPUSpec
+    spec?: () => PoiesisSpec;
+    wgslSpec?: PoiesisSpec
     bufferListeners?: Array<BufferListener>;
 }
 
@@ -93,7 +93,7 @@ export interface VAttr {
     instances?: number;
 }
 
-export interface WebGPUSpec {
+export interface PoiesisSpec {
     code: string;
     uniforms?: any;
     geometry?: { vertex: VAttr, instance?: VAttr };

@@ -1,12 +1,12 @@
-import { WebGPUSpec, BufferView } from "../../../lib/webgpu/webgpu.interfaces.ts";
-import { WebGPUContext } from "../../../lib/webgpu/webgpu.ts";
-import { loadWGSL, square} from "../../../lib/webgpu/utils.ts";
+import { PoiesisSpec, BufferView } from "../../../lib/poiesis/poiesis.interfaces.ts";
+import { PoiesisContext } from "../../../lib/poiesis/poiesis.ts";
+import { loadWGSL, square} from "../../../lib/poiesis/utils.ts";
 
 export const dev = async () => {
 
     const code = await loadWGSL(`/assets/shaders/dev/dev.wgsl`);
 
-    const spec = ():WebGPUSpec => {
+    const spec = ():PoiesisSpec => {
         const size = 32;
         
         return {
@@ -75,7 +75,7 @@ const devPage = async () => {
     const value = document.querySelector("#value") as HTMLDivElement;
     const spec = await dev();
 
-    const gpu = await WebGPUContext.init(canvas!);
+    const gpu = await PoiesisContext.init(canvas!);
     const context = gpu.build(spec)    
     .addBufferListener({ 
         onRead: (view:Array<BufferView>) => { 

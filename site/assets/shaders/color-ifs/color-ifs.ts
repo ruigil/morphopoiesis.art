@@ -1,9 +1,9 @@
-import { WebGPUSpec } from "../../../lib/webgpu/webgpu.interfaces.ts";
-import { loadWGSL } from "../../../lib/webgpu/utils.ts";
+import { PoiesisSpec } from "../../../lib/poiesis/poiesis.interfaces.ts";
+import { loadWGSL } from "../../../lib/poiesis/utils.ts";
 
 export const colorIFS = async () => {
  
     const code = await loadWGSL(`/assets/shaders/color-ifs/color-ifs.wgsl`);
  
-    return (): WebGPUSpec => ({ code: code });
+    return (): PoiesisSpec => ({ code: code });
 }

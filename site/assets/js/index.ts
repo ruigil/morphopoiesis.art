@@ -1,5 +1,5 @@
 
-import { WebGPUContext } from "../../lib/webgpu/webgpu.ts";
+import { PoiesisContext } from "../../lib/poiesis/poiesis.ts";
 import { dla } from '../shaders/dla/dla.ts'
 
 document.addEventListener('DOMContentLoaded', async (event) => {
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     const spec = await dla();
 
     const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
-    const gpu = await WebGPUContext.init(canvas!);
+    const gpu = await PoiesisContext.init(canvas!);
     gpu.build(spec).loop({ params: { fcolor: color.fcolor, bcolor: color.bcolor }});
   
   }

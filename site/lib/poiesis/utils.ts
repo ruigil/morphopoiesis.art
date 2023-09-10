@@ -1,6 +1,3 @@
-import { WebGPUContext } from './webgpu.ts';
-import { BufferInfo, MemberInfo, VariableInfo, WgslReflect, TemplateType, Type } from './wgsl-reflect/index.ts';
-
 
 export const square = (x: number) => {
     return [

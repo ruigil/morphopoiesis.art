@@ -6,8 +6,8 @@ import {
     Resource, 
     Uniform, 
     VertexStorage, 
-    WebGPUSpec, 
-    WebGPUState, 
+    PoiesisSpec, 
+    PoiesisState, 
     StorageTypes, 
     Storage, 
     Compute, 
@@ -16,13 +16,13 @@ import {
     ComputeGroupPipeline,
     Controls,
     FPSListener
-} from "./webgpu.interfaces.ts";
+} from "./poiesis.interfaces.ts";
 import { ArrayType, MemberInfo, TemplateType, Type, WgslReflect } from "./wgsl-reflect/index.ts";
 import { square} from "./utils.ts";
 
 
-export class WebGPUContext {
-    private state: WebGPUState;
+export class PoiesisContext {
+    private state: PoiesisState;
 
     static async init(canvas: HTMLCanvasElement) {
         if (!canvas) {
@@ -44,7 +44,7 @@ export class WebGPUContext {
             format: navigator.gpu.getPreferredCanvasFormat(),
         });
 
-        return new WebGPUContext({
+        return new PoiesisContext({
             canvas: canvas,
             context: context,
             adapter: adapter,
@@ -52,11 +52,11 @@ export class WebGPUContext {
         })
     }
     
-    private constructor( state: WebGPUState ) {
+    private constructor( state: PoiesisState ) {
         this.state = {...state};
     }
     
-    build( spec : () => WebGPUSpec ): WebGPUContext {
+    build( spec : () => PoiesisSpec ): PoiesisContext {
 
         const wgslDefs = (reflect: WgslReflect) => {
         
@@ -194,7 +194,7 @@ export class WebGPUContext {
             };
         }
 
-        const createShaderModule = (spec: WebGPUSpec) => {
+        const createShaderModule = (spec: PoiesisSpec) => {
             if (!spec.code) throw new Error("Code is not defined in spec");
 
             return this.state.device.createShaderModule({
@@ -203,7 +203,7 @@ export class WebGPUContext {
             });
         }
 
-        const createGeometry = (spec: WebGPUSpec, reflect: WgslReflect): Geometry => {
+        const createGeometry = (spec: PoiesisSpec, reflect: WgslReflect): Geometry => {
 
             const buffersLayout:GPUVertexBufferLayout[] = [];
 
@@ -272,7 +272,7 @@ export class WebGPUContext {
             }
         }
 
-        const createUniforms = (spec: WebGPUSpec, defs: Record<string,any>) : Uniform[] => {
+        const createUniforms = (spec: PoiesisSpec, defs: Record<string,any>) : Uniform[] => {
 
             const uniforms = spec.uniforms || {};
             const uniRessource:Array<Uniform> = [];
@@ -305,7 +305,7 @@ export class WebGPUContext {
             return uniRessource
         }
 
-        const createStorage = (spec: WebGPUSpec, defs: Record<string,any>) : StorageTypes => {
+        const createStorage = (spec: PoiesisSpec, defs: Record<string,any>) : StorageTypes => {
             const stateStorage:Storage[] = new Array<Storage>();
             const readStorage:ReadStorage[] = new Array<ReadStorage>();
             const vertexStorage:VertexStorage[] = new Array<VertexStorage>();
@@ -364,7 +364,7 @@ export class WebGPUContext {
             }
         }
 
-        const createSamplers = (spec: WebGPUSpec, reflect: WgslReflect) => {
+        const createSamplers = (spec: PoiesisSpec, reflect: WgslReflect) => {
 
             // TODO: add sampler spec
             const samplers = reflect.samplers.map((element,i):Resource => ({
@@ -379,7 +379,7 @@ export class WebGPUContext {
             return samplers;
         }
 
-        const createTextures = (spec: WebGPUSpec, reflect: WgslReflect) => {
+        const createTextures = (spec: PoiesisSpec, reflect: WgslReflect) => {
 
             const texture = ( image: ImageBitmap ) => {
 
@@ -476,7 +476,7 @@ export class WebGPUContext {
             return bindGroupLayout;
         }
 
-        const createBindings = (spec:WebGPUSpec, resources:Resource[], bindGroupLayout: GPUBindGroupLayout, reflect:WgslReflect) => {
+        const createBindings = (spec:PoiesisSpec, resources:Resource[], bindGroupLayout: GPUBindGroupLayout, reflect:WgslReflect) => {
             // only have a single bind group for now
             const resbinding = new Array(reflect.getBindGroups()[0].length);
     
@@ -540,12 +540,12 @@ export class WebGPUContext {
             });
         }
 
-        const createComputePipelines = (shaderModule: GPUShaderModule, pipelineLayout:GPUPipelineLayout, reflect: WgslReflect, wgslSpec: WebGPUSpec): ComputeGroupPipeline => {
+        const createComputePipelines = (shaderModule: GPUShaderModule, pipelineLayout:GPUPipelineLayout, reflect: WgslReflect, wgslSpec: PoiesisSpec): ComputeGroupPipeline => {
             const pipelines: Compute[] = [];
 
             // we must have a computeGrouCount that is a multiple of the bindings groups
             // we must always end in the same binding group we started if we want to show the current state in the next iteration
-            const computeGC = (spec: WebGPUSpec) => {
+            const computeGC = (spec: PoiesisSpec) => {
                 const gc = spec.bindings ? spec.bindings.length : 1;
                 const cgc = spec.computeGroupCount ?  spec.computeGroupCount : 1;
                 return cgc > 1 ? cgc + (gc - ((cgc-2) % gc) - 1) : 1;
@@ -630,8 +630,8 @@ export class WebGPUContext {
         const renderPipeline = createRenderPipeline(shaderModule, pipelineLayout, reflect);
         const computePipelines = createComputePipelines(shaderModule, pipelineLayout, reflect, wgslSpec);
         
-
-        return new WebGPUContext({
+        
+        return new PoiesisContext({
             ...this.state,
             geometry: geometry,
             uniforms: uniforms,
@@ -650,7 +650,7 @@ export class WebGPUContext {
     addBufferListener( listener: BufferListener ) {        
         const bls = this.state.bufferListeners ? [...this.state.bufferListeners, listener] : [listener];
         
-        return new WebGPUContext({
+        return new PoiesisContext({
             ...this.state,
             bufferListeners: bls
         });

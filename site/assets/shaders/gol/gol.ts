@@ -1,11 +1,11 @@
-import { WebGPUSpec } from "../../../lib/webgpu/webgpu.interfaces.ts";
-import { loadWGSL, square } from "../../../lib/webgpu/utils.ts";
+import { PoiesisSpec } from "../../../lib/poiesis/poiesis.interfaces.ts";
+import { loadWGSL, square } from "../../../lib/poiesis/utils.ts";
 
 export const gol = async () => {
 
     const code = await loadWGSL(`/assets/shaders/gol/gol.wgsl`);
 
-    const spec = (): WebGPUSpec => {
+    const spec = (): PoiesisSpec => {
         const size = 128;
         const current = Array(size*size).fill(0).map(() => Math.random() > 0.5 ? 1 : 0);
 

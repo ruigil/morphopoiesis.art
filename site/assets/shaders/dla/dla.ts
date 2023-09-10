@@ -1,11 +1,11 @@
-import { WebGPUSpec } from "../../../lib/webgpu/webgpu.interfaces.ts";
-import { loadWGSL, square } from "../../../lib/webgpu/utils.ts";
+import { PoiesisSpec } from "../../../lib/poiesis/poiesis.interfaces.ts";
+import { loadWGSL, square } from "../../../lib/poiesis/utils.ts";
 
 export const dla = async () => {
 
     const code = await loadWGSL(`/assets/shaders/dla/dla.wgsl`);
 
-    const spec = ():WebGPUSpec => {
+    const spec = ():PoiesisSpec => {
         const numParticles = 170000;
         const size = 1024;
 
