@@ -1,5 +1,6 @@
 
 import { draw } from '../../lib/webgpu/utils.ts';
+import { WebGPUContext } from "../../lib/webgpu/webgpu.ts";
 import { dla } from '../shaders/dla/dla.ts'
 
 document.addEventListener('DOMContentLoaded', async (event) => {
@@ -52,7 +53,12 @@ document.addEventListener('DOMContentLoaded', async (event) => {
 
     observer.observe(body!, { attributes: true });
 
-    const context = await dla();
+    const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
+    const gpu = await WebGPUContext.init(canvas!);
+    const spec = await dla();
+  
+    const context = gpu.build(spec);
+  
     draw(context, { params: { fcolor: color.fcolor, bcolor: color.bcolor }});
   }
 

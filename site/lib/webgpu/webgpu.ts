@@ -6,7 +6,7 @@ import {
     Resource, 
     Uniform, 
     VertexStorage, 
-    WGPUSpec, 
+    WebGPUSpec, 
     WGPUState, 
     Storages, 
     Storage, 
@@ -14,11 +14,11 @@ import {
     Texture,
     BufferView
 } from "./webgpu.interfaces.ts";
-import { MemberInfo, TemplateType, Type, WgslReflect } from "./wgsl-reflect/index.ts";
+import { ArrayType, MemberInfo, TemplateType, Type, WgslReflect } from "./wgsl-reflect/index.ts";
 import { square} from "./utils.ts";
 
 
-export class WGPUContext {
+export class WebGPUContext {
     private state: WGPUState;
 
     static async init(canvas: HTMLCanvasElement) {
@@ -41,7 +41,7 @@ export class WGPUContext {
             format: navigator.gpu.getPreferredCanvasFormat(),
         });
 
-        return new WGPUContext({
+        return new WebGPUContext({
             canvas: canvas,
             context: context,
             adapter: adapter,
@@ -53,14 +53,14 @@ export class WGPUContext {
         this.state = {...state};
     }
     
-    build( spec : () => WGPUSpec ): WGPUContext {
-                
+    build( spec : () => WebGPUSpec ): WebGPUContext {
+
         const wgslDefs = (reflect: WgslReflect) => {
         
-            const typedArrayName = (type: Type | null, isArray:boolean, isStruct:boolean): string => {
-                //console.log(type, isArray, isStruct)
-                    //@ts-ignore
-                return isArray ? ( isStruct ? type.format.name : (type.format.name.startsWith('vec') ? type.format.format.name : type.format.name) ) : type instanceof TemplateType ? type.format.name : type.name
+            const typedArrayName = (type: Type | null): string => {
+                if (type instanceof ArrayType) return typedArrayName(type.format);
+                if (type instanceof TemplateType) return typedArrayName(type.format);
+                return type!.name;
             }
         
             const members = (ms :MemberInfo[] | null) : any =>  {
@@ -74,17 +74,19 @@ export class WGPUContext {
                     offset: m.offset,
                     size: m.size,
                     members: members(m.members),
-                    type: typedArrayName(m.type,m.isArray,m.isStruct),
+                    type: typedArrayName(m.type),
                 })).reduce( (acc:Record<string,any>, e:any) => { acc[e.name] = e; return acc; },{})
             };
             
         
-            const defs = reflect.storage.map( s => reflect.getStorageBufferInfo(s)!)
-                .concat(reflect.uniforms.map( u => reflect.getUniformBufferInfo(u)!))
+            const defs = reflect.storage.map( s => ({ access: s.node.access, ...reflect.getStorageBufferInfo(s)! }) )
+                .map( s => ({...s, category: "storage"})) 
+                .concat(reflect.uniforms.map( u => reflect.getUniformBufferInfo(u)!)
+                .map( u => ({...u, category: "uniform", access: "read_write"})))
                 .map( b => ({
                     ...b,
                     members: members(b.members),
-                    type:  typedArrayName(b.type,b.isArray,b.isStruct),
+                    type:  typedArrayName(b.type),
                 }))
                 .reduce( (acc:Record<string,any>, e:any) => { acc[e.name] = e; return acc; },{} )
             
@@ -105,8 +107,6 @@ export class WGPUContext {
         
             const makeView = (isArray:boolean, isStruct: boolean, members:MemberInfo, offset: number, arrayStride:number, arraySize: number, byteSize: number, type: string) => {
         
-                //console.log("ARGS:", isArray, isStruct, members, offset,  arrayStride, arraySize, size, type)
-                //console.log("buffer",buffer)
                 if (isArray) {
                     return (new Array(arraySize)).fill(0).map( (e, i):any => makeView(
                         false, 
@@ -122,7 +122,6 @@ export class WGPUContext {
                  else if (isStruct) {
                     const result:any = {}
                     for (const [key, value] of Object.entries(members)) {
-                        //console.log("key",key)
                         result[key] = makeView(
                             value.isArray, 
                             value.isStruct, 
@@ -151,12 +150,8 @@ export class WGPUContext {
                 defs.size, // byteSize
                 defs.type
             );
-        
-            //console.log("defs",defs)
-            //console.log("view",view)
-        
+                
             const getViewValue = (isArray:boolean, isStruct: boolean, members: MemberInfo, view:any, size: number) => {
-                //console.log("getViewValue", isArray, isStruct, members, view, size)
                 if (isArray) {
                     return (new Array(size)).fill(0).map( (e, i):any => getViewValue(false, isStruct, members, view[i], size));
                 } else if (isStruct) {
@@ -171,7 +166,6 @@ export class WGPUContext {
             }
         
             const setViewValue = (isArray:boolean, isStruct: boolean, members: MemberInfo, view:any, size: number, data:any):any => {
-                //console.log("setViewValue", isArray, isStruct, members, view, size, data)
                 if (isArray) {
                     (new Array(size)).fill(0).map( (e, i):any => { if (data && data[i]) setViewValue(false, isStruct, members, view[i], size, data[i] ) } );
                 } else if (isStruct) {
@@ -196,7 +190,7 @@ export class WGPUContext {
             };
         }
 
-        const createShaderModule = (spec: WGPUSpec) => {
+        const createShaderModule = (spec: WebGPUSpec) => {
             if (!spec.code) throw new Error("Code is not defined in spec");
 
             return this.state.device.createShaderModule({
@@ -205,7 +199,7 @@ export class WGPUContext {
             });
         }
 
-        const createGeometry = (spec: WGPUSpec, reflect: WgslReflect): Geometry => {
+        const createGeometry = (spec: WebGPUSpec, reflect: WgslReflect): Geometry => {
 
             const buffersLayout:GPUVertexBufferLayout[] = [];
 
@@ -274,45 +268,40 @@ export class WGPUContext {
             }
         }
 
-        const createUniforms = (spec: WGPUSpec, reflect: WgslReflect) : Uniform[] => {
+        const createUniforms = (spec: WebGPUSpec, defs: Record<string,any>) : Uniform[] => {
 
             const uniforms = spec.uniforms || {};
             const uniRessource:Array<Uniform> = [];
 
-            const defs = wgslDefs(reflect);
+            for (const [key, value] of Object.entries(defs)) {
+                if (value.category === "uniform") {
+                    const uniformDef = value;
+                    const uniformView = makeBufferView(uniformDef);
+                    if (uniforms[key]) {
+                        uniformView.set(uniforms[key]);
+                    }
 
-            // iteration over the uniforms
-            for (let i = 0; i < reflect.uniforms.length; i++) {
-                const name = reflect.uniforms[i].name;
-
-                const uniformDef = defs[name];
-                const uniformView = makeBufferView(uniformDef);
-                //console.log("uniform",name)
-                if (uniforms[name]) {
-                    uniformView.set(uniforms[name]);
+                    const uniformBuffer = this.state.device.createBuffer({
+                        label: "uniforms",
+                        size: uniformView.buffer.byteLength,
+                        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+                    });
+                    this.state.device.queue.writeBuffer(uniformBuffer, 0, uniformView.buffer);
+    
+                    uniRessource.push({
+                        name: uniformDef.name,
+                        view: uniformView,
+                        resource: { buffer: uniformBuffer },
+                        binding: uniformDef.binding,
+                        type: "uniform"
+                    })
                 }
-                //console.log("get",uniformView.get())
-
-                const uniformBuffer = this.state.device.createBuffer({
-                    label: "uniforms",
-                    size: uniformView.buffer.byteLength,
-                    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-                });
-                this.state.device.queue.writeBuffer(uniformBuffer, 0, uniformView.buffer);
-
-                uniRessource.push({
-                    name: uniformDef.name,
-                    view: uniformView,
-                    resource: { buffer: uniformBuffer },
-                    binding: uniformDef.binding,
-                    type: "uniform"
-                })
-            }
+            };
 
             return uniRessource
         }
 
-        const createStorage = (spec: WGPUSpec, reflect: WgslReflect) : Storages => {
+        const createStorage = (spec: WebGPUSpec, defs: Record<string,any>) : Storages => {
             const stateStorage:Storage[] = new Array<Storage>();
             const readStorage:ReadStorage[] = new Array<ReadStorage>();
             const vertexStorage:VertexStorage[] = new Array<VertexStorage>();
@@ -321,53 +310,49 @@ export class WGPUContext {
                 return spec.storages ? spec.storages.find((element) => element.name === name) : undefined;
             }
 
-            const defs = wgslDefs(reflect);
+            for (const [key,value] of Object.entries(defs)) {
+                if (value.category === "storage") {
+                    const storageDef = value;
+                    const storageSpec = storage(key);
+                    if (!storageSpec) throw new Error(`Storage spec for ${key} not found`);
+                    const storageView = makeBufferView(storageDef,storageSpec.size);
+                    const storageBuffer = this.state.device.createBuffer({
+                        label: `${storageDef.name} storage buffer`,
+                        size: storageView.buffer.byteLength, // number of bytes to allocate
+                        usage:  GPUBufferUsage.STORAGE | 
+                                GPUBufferUsage.COPY_DST | 
+                                (storageSpec.read ? GPUBufferUsage.COPY_SRC : 0) | 
+                                (storageSpec.vertex ? GPUBufferUsage.VERTEX : 0),
+                    });
+                    // if the buffer is marked as read, then we allocate a staging buffer to read the data
+                    if (storageSpec.read) {
+                        readStorage.push({
+                            srcBuffer: storageBuffer,
+                            dstBuffer: this.state.device.createBuffer({
+                                label: `${storageSpec.name} read buffer`,
+                                size: storageView.buffer.byteLength,
+                                usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
+                            }),
+                            view: storageView
+                        });
+                    }
+                    // if the storage buffer is marked as vertex, then we add it to the vertex storages
+                    if (storageSpec.vertex) {
+                        vertexStorage.push({ buffer: storageBuffer });
+                    }
 
-            for(let i = 0; i < reflect.storage.length; i++) {
-                const name = reflect.storage[i].node.name;
-                const access = reflect.storage[i].node.access; 
-                const storageSpec = storage(name);
-                if (!storageSpec) throw new Error(`Storage spec for ${name} not found`);
-                const storageDef = defs[name];
-                const storageView = makeBufferView(storageDef,storageSpec.size);
-                const storageBuffer = this.state.device.createBuffer({
-                    label: `${name} storage buffer`,
-                    size: storageView.buffer.byteLength, // number of bytes to allocate
-                    usage:  GPUBufferUsage.STORAGE | 
-                            GPUBufferUsage.COPY_DST | 
-                            (storageSpec.read ? GPUBufferUsage.COPY_SRC : 0) | 
-                            (storageSpec.vertex ? GPUBufferUsage.VERTEX : 0),
-                });
-                // if the buffer is marked as read, then we allocate a staging buffer to read the data
-                if (storageSpec.read) {
-                    readStorage.push({
-                        srcBuffer: storageBuffer,
-                        dstBuffer: this.state.device.createBuffer({
-                            label: `${storageSpec.name} read buffer`,
-                            size: storageView.buffer.byteLength,
-                            usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
-                        }),
-                        size: storageView.buffer.byteLength,
-                        view: storageView
+                    if (storageSpec.data) {
+                        storageView.set(storageSpec.data);
+                    }
+                    this.state.device.queue.writeBuffer(storageBuffer, 0, storageView.buffer);
+                    stateStorage.push({
+                        binding: storageDef.binding,
+                        resource: { buffer: storageBuffer },
+                        type: storageDef.access === "read_write" ? "storage" : "read-only-storage"  
                     });
                 }
-                // if the storage buffer is marked as vertex, then we add it to the vertex storages
-                if (storageSpec.vertex) {
-                    vertexStorage.push({ buffer: storageBuffer });
-                }
-
-                if (storageSpec.data) {
-                    storageView.set(storageSpec.data);
-                }
-                this.state.device.queue.writeBuffer(storageBuffer, 0, storageView.buffer);
-                
-                stateStorage.push({
-                    binding: reflect.storage[i].binding,
-                    resource: { buffer: storageBuffer },
-                    type: access === "read_write" ? "storage" : "read-only-storage"  
-                });
-
             }
+
             return {
                 storages: stateStorage,
                 readStorages: readStorage,
@@ -375,7 +360,7 @@ export class WGPUContext {
             }
         }
 
-        const createSamplers = (spec: WGPUSpec, reflect: WgslReflect) => {
+        const createSamplers = (spec: WebGPUSpec, reflect: WgslReflect) => {
 
             // TODO: add sampler spec
             const samplers = reflect.samplers.map((element,i):Resource => ({
@@ -390,7 +375,7 @@ export class WGPUContext {
             return samplers;
         }
 
-        const createTextures = (spec: WGPUSpec, reflect: WgslReflect) => {
+        const createTextures = (spec: WebGPUSpec, reflect: WgslReflect) => {
 
             const texture = ( image: ImageBitmap ) => {
 
@@ -487,11 +472,11 @@ export class WGPUContext {
             return bindGroupLayout;
         }
 
-        const createBindings = (spec:WGPUSpec, resources:Resource[], bindGroupLayout: GPUBindGroupLayout, reflect:WgslReflect) => {
+        const createBindings = (spec:WebGPUSpec, resources:Resource[], bindGroupLayout: GPUBindGroupLayout, reflect:WgslReflect) => {
             // only have a single bind group for now
-            const resbinding = new Array<any>(reflect.getBindGroups()[0].length);
+            const resbinding = new Array(reflect.getBindGroups()[0].length);
     
-            resources.forEach((element,i) => {
+            resources.forEach((element: Resource) => {
                 resbinding[element.binding] = element.resource;
             });
     
@@ -510,7 +495,7 @@ export class WGPUContext {
                     // if bindings are not defined, use the default order
                     const index = spec.bindings ? spec.bindings[i][j] : j;
                     const res = resbinding[index];
-                    if (!res) throw new Error("Binding defined in groups not found");
+                    if (!res) throw new Error(`Binding ${index} defined in groups not found`);
 
                     entries[i].push({
                         binding: resources[j].binding,
@@ -551,7 +536,7 @@ export class WGPUContext {
             });
         }
 
-        const createComputePipelines = (shaderModule: GPUShaderModule, pipelineLayout:GPUPipelineLayout, reflect: WgslReflect, wgslSpec: WGPUSpec): Compute[] => {
+        const createComputePipelines = (shaderModule: GPUShaderModule, pipelineLayout:GPUPipelineLayout, reflect: WgslReflect, wgslSpec: WebGPUSpec): Compute[] => {
             const result: Compute[] = [];
 
             const compute = (name: string)  => wgslSpec.compute ? wgslSpec.compute.find( e => e.name === name) : undefined;
@@ -610,37 +595,33 @@ export class WGPUContext {
 
         const wgslSpec = spec();
         const reflect = new WgslReflect(wgslSpec.code);
-
-        //console.log("reflect",reflect)
+        const defs = wgslDefs(reflect);
 
         const shaderModule = createShaderModule(wgslSpec);
         const geometry = createGeometry(wgslSpec, reflect);
-        const uniforms = createUniforms(wgslSpec, reflect);
-        const storages = createStorage(wgslSpec, reflect);
+        const uniforms = createUniforms(wgslSpec, defs);
+        const storages = createStorage(wgslSpec, defs);
         const samplers = createSamplers(wgslSpec, reflect);
         const textures = createTextures(wgslSpec, reflect);
 
         const resources = [...uniforms, ...storages.storages, ...samplers, ...textures];
         
         const bindGroupLayout = createBindGroupLayout(resources);
-        
-        const bindings = createBindings(wgslSpec, resources, bindGroupLayout, reflect);
-
         const pipelineLayout = createPipelineLayout(bindGroupLayout);
+        const bindings = createBindings(wgslSpec, resources, bindGroupLayout, reflect);
         
         const renderPipeline = createRenderPipeline(shaderModule, pipelineLayout, reflect);
-
         const computePipelines = createComputePipelines(shaderModule, pipelineLayout, reflect, wgslSpec);
         
         // we must have a computeGrouCount that is a multiple of the bindings groups
         // we must always end in the same binding group we started if we want to show the current state in the next iteration
-        const computeGC = (spec: WGPUSpec) => {
-            const gc = wgslSpec?.bindings ? wgslSpec.bindings.length : 1;
-            const cgc = wgslSpec?.computeGroupCount ?  wgslSpec.computeGroupCount : 1;
+        const computeGC = (spec: WebGPUSpec) => {
+            const gc = spec.bindings ? spec.bindings.length : 1;
+            const cgc = spec.computeGroupCount ?  spec.computeGroupCount : 1;
             return cgc > 1 ? cgc + (gc - ((cgc-2) % gc) - 1) : 1;
         }
 
-        return new WGPUContext({
+        return new WebGPUContext({
             ...this.state,
             pipelines: {
                 render: renderPipeline,
@@ -657,107 +638,112 @@ export class WGPUContext {
         });
     }
 
-    addBufferListener( listener: BufferListener ) {
-            
+    addBufferListener( listener: BufferListener ) {        
         const bls = this.state.bufferListeners ? [...this.state.bufferListeners, listener] : [listener];
-        return new WGPUContext({
+        
+        return new WebGPUContext({
             ...this.state,
             bufferListeners: bls
         });
     }
 
-    async frame(frame: number, unis?: any) {
+    frame(frame: number, unis?: any) {
         const { bufferListeners, storages, device, uniforms, pipelines, geometry, context, clearColor, wgslSpec } = this.state;
 
-        const readBuffers = async () => {
-            if (bufferListeners) {
-                const buffers = storages?.readStorages || [];
-                if (buffers.length == 0) return;
-                await Promise.all(buffers.map( buff => buff.dstBuffer.mapAsync(GPUMapMode.READ)));
-                bufferListeners.forEach((listener) => {
-                    const data = buffers.map(s=> {
-                        s.view.update(s.dstBuffer!.getMappedRange());
-                        return s.view;
-                    });
-                    listener.onRead( data );
-                    buffers.forEach(s=> s.dstBuffer!.unmap() );
-                });
-            } 
-        }
+        const bindGroup = (i:number) => wgslSpec!.bindings ? (i % wgslSpec!.bindings.length) : 0;
 
         const setUniforms = ( unis: any) => {
             uniforms?.forEach((uniform) => {
                 if (unis[uniform.name]) {
-                    //console.log("set",uniform.name, unis[uniform.name])
                     uniform.view.set(unis[uniform.name]);
-                    //console.log(uniform.view.get())
+                    // copy the values from JavaScript to the GPU
+                    device.queue.writeBuffer( (uniform.resource as GPUBufferBinding).buffer, 0, uniform.view.buffer);
                 }
-                // copy the values from JavaScript to the GPU
-                device.queue.writeBuffer( (uniform.resource as GPUBufferBinding).buffer, 0, uniform.view.buffer);
             });
         }
+         
+        const submitCommands = () => {
+            const encoder = device.createCommandEncoder();
 
-        const bindGroup = (i:number) => wgslSpec!.bindings ? (i % wgslSpec!.bindings.length) : 0;
-        
+            // render pipeline
+            if (pipelines?.render) {
+                const pass = encoder.beginRenderPass({
+                    colorAttachments: [{
+                        view: context.getCurrentTexture().createView(),
+                        loadOp: "clear",
+                        clearValue: clearColor,
+                        storeOp: "store",
+                     }]
+                });
+                
+                pass.setPipeline(pipelines!.render);
+                pass.setVertexBuffer(0, geometry!.vertexBuffer);
+    
+                // we must always have two vertex buffers when instancing from storage, because
+                // you cant' have a writing and reading storage vertex at the same time.
+                if (storages && storages.vertexStorages.length > 0) {
+                    pass.setVertexBuffer(1, storages.vertexStorages[bindGroup(frame)].buffer)
+                } else if (geometry!.instanceBuffer) {
+                    pass.setVertexBuffer(1, geometry!.instanceBuffer)
+                }
+                
+                pass.setBindGroup(0, pipelines!.bindings(bindGroup(frame)));
+                pass.draw(geometry!.vertexCount, geometry!.instances || 1 );
+    
+                pass.end();    
+            }
+    
+            // compute pipelines
+            const computePass = encoder.beginComputePass();
+            for( let i = 0; i < pipelines!.computeGroupCount; i++) {
+                const bg = bindGroup(frame + i)
+                for (let c = 0; c < pipelines!.compute.length; c++) {
+                    const compute = pipelines!.compute[c];
+                    computePass.setPipeline(compute.pipeline);
+                    for (let i = 0; i < compute.instances ; i++) {
+                        computePass.setBindGroup(0, pipelines!.bindings(bg));
+                        computePass.dispatchWorkgroups(...compute.workgroups);
+                    }
+                }    
+            }
+            computePass.end(); 
+            
+            // copy read buffers
+            if (storages && storages.readStorages.length > 0) {
+                storages.readStorages.forEach((storage) => {
+                    encoder.copyBufferToBuffer(storage.srcBuffer, 0, storage.dstBuffer, 0, storage.view.buffer.byteLength);
+                });
+            } 
+    
+            // submit commands
+            device.queue.submit([encoder.finish()]);    
+        }
+
+        const readBuffers = () => {
+            if (bufferListeners) {
+                const buffers = storages?.readStorages || [];
+                if (buffers.length == 0) return;
+                Promise.all(buffers.map( buff => buff.dstBuffer.mapAsync(GPUMapMode.READ))).then( () => {
+                    bufferListeners.forEach((listener) => {
+                        const data = buffers.map(s=> {
+                            s.view.update(s.dstBuffer!.getMappedRange());
+                            return s.view;
+                        });
+                        listener.onRead( data );
+                        buffers.forEach(s=> s.dstBuffer.unmap() );
+                    });    
+                });
+            } 
+        }
+ 
+        // update uniforms
         setUniforms(unis);
 
-        const encoder = device.createCommandEncoder();
-
-        // render pipeline
-        if (pipelines!.render) {
-            const pass = encoder.beginRenderPass({
-                colorAttachments: [{
-                    view: context.getCurrentTexture().createView(),
-                    loadOp: "clear",
-                    clearValue: clearColor,
-                    storeOp: "store",
-                 }]
-            });
-            
-            pass.setPipeline(pipelines!.render);
-            pass.setVertexBuffer(0, geometry!.vertexBuffer);
-
-            // we must always have two vertex buffers when instancing from storage, because
-            // you cant' have a writing and reading storage vertex at the same time.
-            if (storages && storages.vertexStorages.length > 0) {
-                pass.setVertexBuffer(1, storages.vertexStorages[bindGroup(frame)].buffer)
-            } else if (geometry!.instanceBuffer) {
-                pass.setVertexBuffer(1, geometry!.instanceBuffer)
-            }
-            
-            pass.setBindGroup(0, pipelines!.bindings(bindGroup(frame)));
-            pass.draw(geometry!.vertexCount, geometry!.instances || 1 );
-
-            pass.end();    
-        }
-
-        // compute pipelines
-        const computePass = encoder.beginComputePass();
-        for( let i = 0; i < pipelines!.computeGroupCount; i++) {
-            const bg = bindGroup(frame + i)
-            for (let c = 0; c < pipelines!.compute.length; c++) {
-                const compute = pipelines!.compute[c];
-                computePass.setPipeline(compute.pipeline);
-                for (let i = 0; i < compute.instances ; i++) {
-                    computePass.setBindGroup(0, pipelines!.bindings(bg));
-                    computePass.dispatchWorkgroups(...compute.workgroups);
-                }
-            }    
-        }
-        computePass.end(); 
-        
-        // copy read buffers
-        if (storages && storages.readStorages.length > 0) {
-            storages.readStorages.forEach((element,i) => {
-                encoder.copyBufferToBuffer(element.srcBuffer, 0, element.dstBuffer, 0, element.size);
-            });
-        } 
-
         // submit commands
-        device.queue.submit([encoder.finish()]);
+        submitCommands();
 
         // read buffers into staging buffers
-        await readBuffers();
+        readBuffers();
     }
 
     getCanvas() {

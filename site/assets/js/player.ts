@@ -1,13 +1,19 @@
-import { WGPUContext } from "../../lib/webgpu/webgpu.ts";
+import { WebGPUSpec } from "../../lib/webgpu/webgpu.interfaces.ts";
+import { WebGPUContext } from "../../lib/webgpu/webgpu.ts";
 import { draw } from "../../lib/webgpu/utils.ts";
 
-export async function player(gpu: WGPUContext, unis?: any, delta?: number) {
+export const player = async (spec: () => WebGPUSpec, unis?: any, delta?: number) => {
 
   const play = document.querySelector("#play") as HTMLButtonElement;
   const reset = document.querySelector("#reset") as HTMLButtonElement;
   const full = document.querySelector("#full") as HTMLButtonElement;
   const fpsSmall = document.querySelector("#fps") as HTMLDivElement;
   const fullscreen = document.querySelector("#fullscreen") as HTMLButtonElement;
+  const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
+ 
+  const gpu = await WebGPUContext.init(canvas!);
+
+  const context = gpu.build(spec);
 
   const controls = { play: true, reset: false, delta: delta || 0}
 
@@ -31,6 +37,6 @@ export async function player(gpu: WGPUContext, unis?: any, delta?: number) {
       document.exitFullscreen();
     }
   });
-  draw(gpu, unis,controls, { onFPS: (fps) => { fpsSmall.textContent = fps.fps + " fps" } })
+  draw(context, unis,controls, { onFPS: (fps) => { fpsSmall.textContent = fps.fps + " fps" } })
   
 }

@@ -1,12 +1,11 @@
-import { WGPUSpec } from "../../../lib/webgpu/webgpu.interfaces.ts";
-import { WGPUContext } from "../../../lib/webgpu/webgpu.ts";
+import { WebGPUSpec } from "../../../lib/webgpu/webgpu.interfaces.ts";
 import { loadWGSL, triangle } from "../../../lib/webgpu/utils.ts";
 
 export const boids = async () => {
 
     const code = await loadWGSL(`/assets/shaders/boids/boids.wgsl`);
 
-    const spec = ():WGPUSpec => {
+    const spec = ():WebGPUSpec => {
         const size = 2000;
         const boids = Array(size).fill({}).map( (e,i) => ({
             pos: [2 * Math.random() - 1, 2 * Math.random() - 1],
@@ -46,10 +45,5 @@ export const boids = async () => {
         }
     }
 
-    const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
- 
-    const gpu = await WGPUContext.init(canvas!);
-
-    return gpu.build(spec);
-
+    return spec;
 }

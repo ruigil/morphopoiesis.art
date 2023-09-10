@@ -5,8 +5,7 @@ struct Sys {
     time: f32,
     resolution: vec2<f32>,
     mouse: vec2<f32>,
-    aspect: vec2<f32>,
-    agents: array<Agent,4>,
+    aspect: vec2<f32>
 };
 
 struct SimParams {
@@ -66,8 +65,9 @@ fn fragMain(input : VertexOutput) -> @location(0) vec4<f32> {
 @compute @workgroup_size(8, 8)
 fn computeTrailmap(@builtin(global_invocation_id) cell : vec3<u32>) {
 
+  let m = mouseAspectRatio();
   // calculate a black hole with the mouse to apply to the trailmap
-  let bh =  1. - smoothstep( 0., .2, (length((sys.mouse * params.size) - vec2<f32>(cell.xy)) / params.size.x * 2.) ) ;
+  let bh =  1. - smoothstep( 0., .2, (length((m * params.size) - vec2<f32>(cell.xy)) / params.size.x * 2.) ) ;
 
   // we apply a gaussian blur to simulate diffusion of the trailmap values
   let value = conv3x3(K_GAUSSIAN_BLUR, vec2u(cell.xy), vec2u(params.size.xy)) ; 
@@ -173,6 +173,11 @@ fn conv3x3( kernel: array<f32,9>, cell: vec2<u32>, size: vec2<u32>) -> f32 {
     return acc;
 }
 
+fn mouseAspectRatio() -> vec2<f32> {
+    // scale mouse by aspect ratio. We crop on the short side, so we must compensate for mouse coordinates
+    let half = select( vec2((1. - sys.aspect.x) * .5, 0.), vec2(0.,(1. - sys.aspect.y) * .5), sys.aspect.x > sys.aspect.y);
+    return half + (sys.mouse * sys.aspect);
+}
 
 // random number between 0 and 1 with 3 seeds and 3 dimensions
 fn rnd33( seed: vec3u) -> vec3f {

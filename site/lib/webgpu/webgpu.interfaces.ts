@@ -8,9 +8,8 @@ export interface WGPUState {
     pipelines?: Pipelines;
     storages?: Storages;
     clearColor?: {r:number,g:number,b:number,a:number};
-    spec?: () => WGPUSpec;
-    wgslSpec?: WGPUSpec
-
+    spec?: () => WebGPUSpec;
+    wgslSpec?: WebGPUSpec
     bufferListeners?: Array<BufferListener>;
 }
 
@@ -46,7 +45,6 @@ export interface Texture extends Resource {
 export interface ReadStorage  {
     srcBuffer: GPUBuffer;
     dstBuffer: GPUBuffer;
-    size: number;
     view: BufferView;
 }
 
@@ -79,7 +77,7 @@ export interface VAttr {
     instances?: number;
 }
 
-export interface WGPUSpec {
+export interface WebGPUSpec {
     code: string;
     geometry?: { vertex: VAttr, instance?: VAttr };
     uniforms?: any;

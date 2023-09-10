@@ -1,19 +1,13 @@
-import { WGPUSpec, BufferView } from "../../../lib/webgpu/webgpu.interfaces.ts";
-import { WGPUContext } from "../../../lib/webgpu/webgpu.ts";
-import { loadWGSL, square} from "../../../lib/webgpu/utils.ts";
-import { player } from "../../js/player.ts";
+import { WebGPUSpec, BufferView } from "../../../lib/webgpu/webgpu.interfaces.ts";
+import { WebGPUContext } from "../../../lib/webgpu/webgpu.ts";
+import { loadWGSL, draw, square} from "../../../lib/webgpu/utils.ts";
 
 export const dev = async () => {
 
     const code = await loadWGSL(`/assets/shaders/dev/dev.wgsl`);
 
-    const spec = ():WGPUSpec => {
-        const numAgents = 20000;
-        const size = 1024;
-        const agents = new Array(numAgents).fill({}).map( (e,i) => ({
-            pos: [ Math.random()- .5, Math.random() - .5],
-            vel: [Math.random() - .5, Math.random() - .5]
-        }));
+    const spec = ():WebGPUSpec => {
+        const size = 32;
         
         return {
             code: code,
@@ -25,40 +19,28 @@ export const dev = async () => {
                 }
             },
             uniforms: {
-                params: {
+                sim: {
                     size: [size, size],
-                    agents: numAgents,
-                    sa: 22.5 * (Math.PI / 180),
-                    sd: 20.,
-                    evaporation: .99,
+                    gravity: -9.81,
+                    density: 1000.,
+                    dt: 1. / 60.,
+                    iterCount: 40,
                 }
             },
             storages: [
-                { name: "agents", size: numAgents , data: agents },
-                { name: "trailMapA", size: size * size } ,
-                { name: "trailMapB", size: size * size } ,
+                { name: "fluidA", size: size * size } ,
+                { name: "fluidB", size: size * size } ,
                 { name: "debug", size: 1, read: true } ,
             ],
             compute: [
-                { name: "computeTrailmap", workgroups: [size / 8, size / 8, 1] },
-                { name: "computeAgents", workgroups: [Math.ceil(numAgents / 64), 1, 1] }
+                { name: "computeFD", workgroups: [size / 8, size / 8, 1] },
+                { name: "computeFreeDivergence", workgroups: [size / 8, size / 8, 1], instances: 40}
             ],
-            computeGroupCount: 3,
-            bindings: [ [0,1,2,3,4,5], [0,1,3,2,4,5] ]
+            computeGroupCount: 1,
+            bindings: [ [0,1,2,3,4], [0,1,3,2,4] ]
         }
     }
 
-    const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
-  
-    const value = document.querySelector("#value") as HTMLDivElement;
-
-    const gpu = await WGPUContext.init(canvas!);
-    const context = gpu.build(spec)
-    .addBufferListener({ 
-        onRead: (view:Array<BufferView>) => { 
-            value.innerHTML = `<pre><code>${ JSON.stringify(view[0].get(),null,4) }</code></pre>`
-        }
-    });
 
 /*
             //[ ${ Array(8).fill(0).map( (e:any,i:number):number => v[i].toFixed(4) ).join(",") }];
@@ -78,13 +60,55 @@ export const dev = async () => {
         //ctx?.restore();
     }, 16);
 */
-    return context;
+    return spec;
 
 }
 
+const devPage = async () => {
+    const play = document.querySelector("#play") as HTMLButtonElement;
+    const reset = document.querySelector("#reset") as HTMLButtonElement;
+    const full = document.querySelector("#full") as HTMLButtonElement;
+    const fpsSmall = document.querySelector("#fps") as HTMLDivElement;
+    const fullscreen = document.querySelector("#fullscreen") as HTMLButtonElement;
+    const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
+  
+    const value = document.querySelector("#value") as HTMLDivElement;
+    const spec = await dev();
+
+    const gpu = await WebGPUContext.init(canvas!);
+    const context = gpu.build(spec)    
+    .addBufferListener({ 
+        onRead: (view:Array<BufferView>) => { 
+            value.innerHTML = `<pre><code>${ JSON.stringify(view[0].get(),null,4) }</code></pre>`
+        }
+    });
+  
+    const controls = { play: true, reset: false, delta: 100 }
+  
+    play.addEventListener('click', event => {
+      controls.play = !controls.play;
+      play.name = controls.play ? "pause" : "play";
+    });
+  
+    reset.addEventListener('click', event => {
+      controls.reset = true;
+    });
+  
+    full.addEventListener('click', event => {
+      if (!document.fullscreenElement) {
+        //document.documentElement.requestFullscreen();
+        fullscreen.requestFullscreen().then(() => {
+          //console.log("fullscreen")
+          //console.log(window.innerHeight, window.innerWidth)
+        }).catch(err => {});;
+      } else if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    });
+    draw(context, {},controls, { onFPS: (fps:any) => { fpsSmall.textContent = fps.fps + " fps" } })
+  
+}
+
 document.addEventListener('DOMContentLoaded', async (event)  => {
-    const context = await dev();
-
-    player(context, {}, 0);
-
+    devPage();
 });

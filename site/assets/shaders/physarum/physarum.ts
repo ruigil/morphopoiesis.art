@@ -1,12 +1,11 @@
-import { WGPUSpec } from "../../../lib/webgpu/webgpu.interfaces.ts";
-import { WGPUContext } from "../../../lib/webgpu/webgpu.ts";
+import { WebGPUSpec } from "../../../lib/webgpu/webgpu.interfaces.ts";
 import { loadWGSL, square } from "../../../lib/webgpu/utils.ts";
 
 export const physarum = async () => {
 
     const code = await loadWGSL(`/assets/shaders/physarum/physarum.wgsl`);
 
-    const spec = ():WGPUSpec => {
+    const spec = ():WebGPUSpec => {
         const numAgents = 20000;
         const size = 1024;
 
@@ -51,9 +50,5 @@ export const physarum = async () => {
         }
     }
 
-    const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
-  
-    const gpu = await WGPUContext.init(canvas!);
-  
-    return gpu.build(spec)
+    return spec
 }

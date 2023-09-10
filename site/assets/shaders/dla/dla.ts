@@ -1,12 +1,11 @@
-import { WGPUSpec } from "../../../lib/webgpu/webgpu.interfaces.ts";
-import { WGPUContext } from "../../../lib/webgpu/webgpu.ts";
+import { WebGPUSpec } from "../../../lib/webgpu/webgpu.interfaces.ts";
 import { loadWGSL, square } from "../../../lib/webgpu/utils.ts";
 
 export const dla = async () => {
 
     const code = await loadWGSL(`/assets/shaders/dla/dla.wgsl`);
 
-    const spec = ():WGPUSpec => {
+    const spec = ():WebGPUSpec => {
         const numParticles = 170000;
         const size = 1024;
 
@@ -48,10 +47,5 @@ export const dla = async () => {
         }
     }
 
-    const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
-
-    const gpu = await WGPUContext.init(canvas!);
-
-    return gpu.build(spec);
-
+    return spec;
 }

@@ -1,14 +1,14 @@
-import { WGPUSpec } from "../../../lib/webgpu/webgpu.interfaces.ts";
-import { WGPUContext } from "../../../lib/webgpu/webgpu.ts";
+import { WebGPUSpec } from "../../../lib/webgpu/webgpu.interfaces.ts";
 import { loadWGSL, square } from "../../../lib/webgpu/utils.ts";
 
 export const gol = async () => {
 
     const code = await loadWGSL(`/assets/shaders/gol/gol.wgsl`);
 
-    const spec = (): WGPUSpec => {
+    const spec = (): WebGPUSpec => {
         const size = 128;
         const current = Array(size*size).fill(0).map(() => Math.random() > 0.5 ? 1 : 0);
+
         return {
             code: code,
             geometry: {
@@ -37,10 +37,5 @@ export const gol = async () => {
         }
     }
 
-    const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
-
-    const gpu = await WGPUContext.init(canvas!); 
-
-    return gpu.build(spec);
-
+    return spec;
 }
