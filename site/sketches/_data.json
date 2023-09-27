@@ -1,6 +1,15 @@
 {
     "shaders": [
       {
+        "id" : "fluid",
+        "wgsl": "/assets/shaders/fluid/fluid.wgsl",
+        "js": "/assets/shaders/fluid/fluid.js",
+        "title": "Fluid",
+        "description": "Fluid simulator. You can play with your mouse to add color.",
+        "image": "/assets/img/fluid",
+        "tags": ["fluid","fields","mouse"]
+      },
+      {
         "id" : "dla",
         "wgsl": "/assets/shaders/dla/dla.wgsl",
         "js": "/assets/shaders/dla/dla.js",

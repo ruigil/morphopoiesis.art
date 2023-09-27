@@ -1,14 +1,23 @@
-import { PoiesisSpec, BufferView } from "../../../lib/poiesis/poiesis.interfaces.ts";
-import { PoiesisContext } from "../../../lib/poiesis/poiesis.ts";
+import { PSpec, BufferView } from "../../../lib/poiesis/poiesis.interfaces.ts";
+import { PContext } from "../../../lib/poiesis/poiesis.ts";
 import { loadWGSL, square} from "../../../lib/poiesis/utils.ts";
 
 export const dev = async () => {
 
     const code = await loadWGSL(`/assets/shaders/dev/dev.wgsl`);
 
-    const spec = ():PoiesisSpec => {
-        const size = 32;
-        
+    const spec = ():PSpec => {
+        const size = 512;
+
+        const cell = (vel:[number,number], pressure:number, dye: [number,number,number], solid: number) => (
+            { velocity: vel, pressure: pressure, dye: dye, solid: solid }
+        )
+        const circle = (x:number, y:number, r:number): boolean => Math.hypot(x,y) < r;
+        const solid = (x:number, y:number): number =>  ( x == 0 || y == size-1 ||  circle(size/2-x,(size/3)-y,40)) ? 1 : 0;
+    
+        const fluid =  Array.from( { length: size * size }, (_,i) => 
+            cell( [0,0], 0, [0,0,0], solid(i % size, Math.floor(i / size) )) );
+            
         return {
             code: code,
             geometry: {
@@ -21,20 +30,20 @@ export const dev = async () => {
             uniforms: {
                 sim: {
                     size: [size, size],
-                    gravity: -9.81,
-                    density: 1000.,
-                    dt: 1. / 60.,
-                    iterCount: 40,
+                    dt: 1. / 60.
                 }
             },
             storages: [
-                { name: "fluidA", size: size * size } ,
-                { name: "fluidB", size: size * size } ,
-                { name: "debug", size: 1, read: true } ,
+                { name: "fluidA", size: size * size, data: fluid },
+                { name: "fluidB", size: size * size, data: fluid },
+                { name: "divergence", size: size * size }
             ],
             computes: [
-                { name: "computeFD", workgroups: [size / 8, size / 8, 1] },
-                { name: "computeFreeDivergence", workgroups: [size / 8, size / 8, 1], instances: 40}
+                { name: "advect", workgroups: [size / 8, size / 8, 1] },
+                { name: "addForces", workgroups: [size / 8, size / 8, 1] },
+                { name: "computeDivergence", workgroups: [size / 8, size / 8, 1]},
+                { name: "pressureSolver", workgroups: [size / 8, size / 8, 1], instances: 40},
+                { name: "subtractPressureGradient", workgroups: [size / 8, size / 8, 1]}
             ],
             computeGroupCount: 1,
             bindings: [ [0,1,2,3,4], [0,1,3,2,4] ]
@@ -42,24 +51,6 @@ export const dev = async () => {
     }
 
 
-/*
-            //[ ${ Array(8).fill(0).map( (e:any,i:number):number => v[i].toFixed(4) ).join(",") }];
-    // Get a reference to the canvas element
-    const camvas = document.getElementById('webcam') as HTMLCanvasElement;
-    // Get a reference to the canvas context
-    const ctx = camvas.getContext('2d');
-    camvas.width = webcam?.settings.width! ;
-    camvas.height = webcam?.settings.height!;
-    // Draw the video frames onto the canvas
-    setInterval(() => {
-        //ctx?.save();
-        //ctx?.scale(-1, 1);
-        //ctx?.translate(-canvas.width, 0);
-        ctx?.drawImage(webcam.video, 0, 0);
-        // Restore the canvas state
-        //ctx?.restore();
-    }, 16);
-*/
     return spec;
 
 }
@@ -75,7 +66,7 @@ const devPage = async () => {
     const value = document.querySelector("#value") as HTMLDivElement;
     const spec = await dev();
 
-    const gpu = await PoiesisContext.init(canvas!);
+    const gpu = await PContext.init(canvas!);
     const context = gpu.build(spec)    
     .addBufferListener({ 
         onRead: (view:Array<BufferView>) => { 
@@ -83,7 +74,7 @@ const devPage = async () => {
         }
     });
   
-    const controls = { play: true, reset: false, delta: 100 }
+    const controls = { play: true, reset: false, delta: 0 }
   
     play.addEventListener('click', event => {
       controls.play = !controls.play;
@@ -109,6 +100,8 @@ const devPage = async () => {
     context.loop({},controls, { onFPS: (fps:any) => { fpsSmall.textContent = fps.fps + " fps" } })
 }
 
+
 document.addEventListener('DOMContentLoaded', async (event)  => {
     devPage();
 });
+

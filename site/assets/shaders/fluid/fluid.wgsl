@@ -13,7 +13,6 @@ struct Sim {
   dt: f32
 };
 
-
 struct Cell {
   velocity: vec2<f32>,
   pressure: f32,
@@ -28,7 +27,7 @@ struct VertexInput {
 
 struct VertexOutput {
     @builtin(position) pos: vec4<f32>,
-    @location(0) state: vec4<f32>
+    @location(0) state: vec3<f32>
 };
 
 @group(0) @binding(0) var<uniform> sys : Sys;
@@ -37,13 +36,23 @@ struct VertexOutput {
 @group(0) @binding(3) var<storage, read_write> fluidB : array<Cell>;
 @group(0) @binding(4) var<storage, read_write> divergence : array<f32>;
 
+fn getIndex(cell : vec2<f32>) -> u32 { 
+    return u32( (cell.y % sim.size.y) * sim.size.x + (cell.x % sim.size.x) );
+}
+
 @vertex
 fn vertMain( input: VertexInput) -> VertexOutput {
   
     let i = f32(input.instance); 
     let cell = vec2f(i % sim.size.x, floor(i / sim.size.y) );
-    let f = fluidA[input.instance];
-    let state = vec4(f.dye, f.solid);
+
+    let c1 = fluidA[getIndex( vec2(cell.x + input.pos.x ,  cell.y) )].dye;
+    let c2 = fluidA[getIndex( vec2(cell.x + input.pos.x, cell.y - input.pos.y) )].dye;
+    let c3 = fluidA[getIndex( vec2(cell.x , cell.y - input.pos.y) )].dye;
+    let c4 = fluidA[input.instance].dye;
+     
+    // multisample the state to reduce aliasing
+    let state = (c1 + c2 + c3 + c4) / 4.0;
 
     // The cell(0,0) is a the top left corner of the screen.
     // The cell(size.x,size.y) is a the bottom right corner of the screen.
@@ -58,7 +67,7 @@ fn vertMain( input: VertexInput) -> VertexOutput {
 
 @fragment
 fn fragMain(input : VertexOutput) -> @location(0) vec4<f32> {
-  return vec4( 1. - input.state.xyz ,1.0) ;
+  return vec4( 1. - input.state ,1.0) ;
 }
 
 // index the fluid array, keeping the coordinates in the simulation space
