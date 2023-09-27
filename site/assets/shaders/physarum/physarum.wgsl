@@ -4,7 +4,7 @@
 struct Sys {
     time: f32,
     resolution: vec2<f32>,
-    mouse: vec2<f32>,
+    mouse: vec4<f32>,
     aspect: vec2<f32>
 };
 
@@ -176,7 +176,7 @@ fn conv3x3( kernel: array<f32,9>, cell: vec2<u32>, size: vec2<u32>) -> f32 {
 fn mouseAspectRatio() -> vec2<f32> {
     // scale mouse by aspect ratio. We crop on the short side, so we must compensate for mouse coordinates
     let half = select( vec2((1. - sys.aspect.x) * .5, 0.), vec2(0.,(1. - sys.aspect.y) * .5), sys.aspect.x > sys.aspect.y);
-    return half + (sys.mouse * sys.aspect);
+    return half + (sys.mouse.xy * sys.aspect);
 }
 
 // random number between 0 and 1 with 3 seeds and 3 dimensions

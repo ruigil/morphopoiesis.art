@@ -4,7 +4,7 @@
 struct Sys {
     time: f32,
     resolution: vec2<f32>,
-    mouse: vec2<f32>,
+    mouse: vec4<f32>,
     aspect: vec2<f32>
 };
 

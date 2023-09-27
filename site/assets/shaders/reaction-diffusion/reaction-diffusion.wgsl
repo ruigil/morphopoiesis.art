@@ -4,7 +4,7 @@
 struct Sys {
     time: f32,
     resolution: vec2<f32>,
-    mouse: vec2<f32>,
+    mouse: vec4<f32>,
     aspect: vec2<f32>
 };
 
@@ -89,7 +89,7 @@ fn computeMain(@builtin(global_invocation_id) cell: vec3u) {
 
     // we divide the screen in 9 areas and we use 
     // the mouse position to select the pattern
-    let m = floor(sys.mouse * 3);
+    let m = floor(sys.mouse.xy * 3);
     let ai = params[u32(m.y) * 3u + u32(m.x)];
 
     // calculate the value and store it in the next buffer
@@ -100,7 +100,7 @@ fn computeMain(@builtin(global_invocation_id) cell: vec3u) {
     let half = select( vec2((1. - sys.aspect.x) * .5, 0.), vec2(0.,(1. - sys.aspect.y) * .5), sys.aspect.x > sys.aspect.y);
 
     // we add a small amount of B in the mouse position
-    let pos = vec2u(floor(( half + (sys.mouse * sys.aspect)) * uni.size));
+    let pos = vec2u(floor(( half + (sys.mouse.xy * sys.aspect)) * uni.size));
     let index = pos.y * u32(uni.size.y) + pos.x;
     next[index].y = 1.;
 
