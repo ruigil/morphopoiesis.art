@@ -6,7 +6,7 @@ import {
     Resource, 
     Uniform, 
     VertexStorage, 
-    PoiesisSpec, 
+    PSpec, 
     PoiesisState, 
     StorageTypes, 
     Storage, 
@@ -21,7 +21,7 @@ import { ArrayType, MemberInfo, TemplateType, Type, WgslReflect } from "./wgsl-r
 import { square} from "./utils.ts";
 
 
-export class PoiesisContext {
+export class PContext {
     private state: PoiesisState;
 
     static async init(canvas: HTMLCanvasElement) {
@@ -44,7 +44,7 @@ export class PoiesisContext {
             format: navigator.gpu.getPreferredCanvasFormat(),
         });
 
-        return new PoiesisContext({
+        return new PContext({
             canvas: canvas,
             context: context,
             adapter: adapter,
@@ -56,7 +56,7 @@ export class PoiesisContext {
         this.state = {...state};
     }
     
-    build( spec : () => PoiesisSpec ): PoiesisContext {
+    build( spec : () => PSpec ): PContext {
 
         const wgslDefs = (reflect: WgslReflect) => {
         
@@ -105,6 +105,7 @@ export class PoiesisContext {
                 switch (type) {
                     case "f32": return Float32Array;
                     case "u32": return Uint32Array;
+                    case "i32": return Int32Array;
                 }
                 return Uint8Array;
             }
@@ -194,7 +195,7 @@ export class PoiesisContext {
             };
         }
 
-        const createShaderModule = (spec: PoiesisSpec) => {
+        const createShaderModule = (spec: PSpec) => {
             if (!spec.code) throw new Error("Code is not defined in spec");
 
             return this.state.device.createShaderModule({
@@ -203,7 +204,7 @@ export class PoiesisContext {
             });
         }
 
-        const createGeometry = (spec: PoiesisSpec, reflect: WgslReflect): Geometry => {
+        const createGeometry = (spec: PSpec, reflect: WgslReflect): Geometry => {
 
             const buffersLayout:GPUVertexBufferLayout[] = [];
 
@@ -272,7 +273,7 @@ export class PoiesisContext {
             }
         }
 
-        const createUniforms = (spec: PoiesisSpec, defs: Record<string,any>) : Uniform[] => {
+        const createUniforms = (spec: PSpec, defs: Record<string,any>) : Uniform[] => {
 
             const uniforms = spec.uniforms || {};
             const uniRessource:Array<Uniform> = [];
@@ -305,7 +306,7 @@ export class PoiesisContext {
             return uniRessource
         }
 
-        const createStorage = (spec: PoiesisSpec, defs: Record<string,any>) : StorageTypes => {
+        const createStorage = (spec: PSpec, defs: Record<string,any>) : StorageTypes => {
             const stateStorage:Storage[] = new Array<Storage>();
             const readStorage:ReadStorage[] = new Array<ReadStorage>();
             const vertexStorage:VertexStorage[] = new Array<VertexStorage>();
@@ -364,7 +365,7 @@ export class PoiesisContext {
             }
         }
 
-        const createSamplers = (spec: PoiesisSpec, reflect: WgslReflect) => {
+        const createSamplers = (spec: PSpec, reflect: WgslReflect) => {
 
             // TODO: add sampler spec
             const samplers = reflect.samplers.map((element,i):Resource => ({
@@ -379,7 +380,7 @@ export class PoiesisContext {
             return samplers;
         }
 
-        const createTextures = (spec: PoiesisSpec, reflect: WgslReflect) => {
+        const createTextures = (spec: PSpec, reflect: WgslReflect) => {
 
             const texture = ( image: ImageBitmap ) => {
 
@@ -476,7 +477,7 @@ export class PoiesisContext {
             return bindGroupLayout;
         }
 
-        const createBindings = (spec:PoiesisSpec, resources:Resource[], bindGroupLayout: GPUBindGroupLayout, reflect:WgslReflect) => {
+        const createBindings = (spec:PSpec, resources:Resource[], bindGroupLayout: GPUBindGroupLayout, reflect:WgslReflect) => {
             // only have a single bind group for now
             const resbinding = new Array(reflect.getBindGroups()[0].length);
     
@@ -540,12 +541,12 @@ export class PoiesisContext {
             });
         }
 
-        const createComputePipelines = (shaderModule: GPUShaderModule, pipelineLayout:GPUPipelineLayout, reflect: WgslReflect, wgslSpec: PoiesisSpec): ComputeGroupPipeline => {
+        const createComputePipelines = (shaderModule: GPUShaderModule, pipelineLayout:GPUPipelineLayout, reflect: WgslReflect, wgslSpec: PSpec): ComputeGroupPipeline => {
             const pipelines: Compute[] = [];
 
             // we must have a computeGrouCount that is a multiple of the bindings groups
             // we must always end in the same binding group we started if we want to show the current state in the next iteration
-            const computeGC = (spec: PoiesisSpec) => {
+            const computeGC = (spec: PSpec) => {
                 const gc = spec.bindings ? spec.bindings.length : 1;
                 const cgc = spec.computeGroupCount ?  spec.computeGroupCount : 1;
                 return cgc > 1 ? cgc + (gc - ((cgc-2) % gc) - 1) : 1;
@@ -612,6 +613,7 @@ export class PoiesisContext {
 
         const wgslSpec = spec();
         const reflect = new WgslReflect(wgslSpec.code);
+        console.log(reflect)
         const defs = wgslDefs(reflect);
 
         const shaderModule = createShaderModule(wgslSpec);
@@ -631,7 +633,7 @@ export class PoiesisContext {
         const computePipelines = createComputePipelines(shaderModule, pipelineLayout, reflect, wgslSpec);
         
         
-        return new PoiesisContext({
+        return new PContext({
             ...this.state,
             geometry: geometry,
             uniforms: uniforms,
@@ -650,7 +652,7 @@ export class PoiesisContext {
     addBufferListener( listener: BufferListener ) {        
         const bls = this.state.bufferListeners ? [...this.state.bufferListeners, listener] : [listener];
         
-        return new PoiesisContext({
+        return new PContext({
             ...this.state,
             bufferListeners: bls
         });
@@ -660,7 +662,7 @@ export class PoiesisContext {
         this.state =  this.build(this.state.spec!).state;
     }
 
-    frame(frame: number, unis?: any) {
+    async frame(frame: number, unis?: any) {
         const { bufferListeners, storages, device, uniforms, pipelines, geometry, context, clearColor, wgslSpec } = this.state;
 
         const bindGroup = (i:number) => wgslSpec!.bindings ? (i % wgslSpec!.bindings.length) : 0;
@@ -718,7 +720,8 @@ export class PoiesisContext {
                         computePass.setPipeline(compute.pipeline);
 
                         for (let i = 0; i < compute.instances ; i++) {
-                            computePass.setBindGroup(0, pipelines.bindings(bg));
+                            const g = bindGroup(bg + i )
+                            computePass.setBindGroup(0, pipelines.bindings(g));
                             computePass.dispatchWorkgroups(...compute.workgroups);
                         }
                     }    
@@ -738,31 +741,31 @@ export class PoiesisContext {
             device.queue.submit([encoder.finish()]);    
         }
 
-        const readBuffers = () => {
+        const readBuffers = async () => {
             if (bufferListeners) {
                 const buffers = storages?.readStorages || [];
                 if (buffers.length == 0) return;
-                Promise.all(buffers.map( buff => buff.dstBuffer.mapAsync(GPUMapMode.READ))).then( () => {
-                    bufferListeners.forEach((listener) => {
-                        const data = buffers.map(s=> {
-                            s.view.update(s.dstBuffer!.getMappedRange());
-                            return s.view;
-                        });
-                        listener.onRead( data );
-                        buffers.forEach(s=> s.dstBuffer.unmap() );
-                    });    
-                });
+                await Promise.all(buffers.map( buff => buff.dstBuffer.mapAsync(GPUMapMode.READ)))
+                bufferListeners.forEach((listener) => {
+                    const data = buffers.map(s=> {
+                        s.view.update(s.dstBuffer!.getMappedRange());
+                        return s.view;
+                    });
+                    listener.onRead( data );
+                    buffers.forEach(s=> s.dstBuffer.unmap() );
+                });    
             } 
         }
  
         // update uniforms
         setUniforms(unis);
 
+        // read buffers into staging buffers
+        await readBuffers();
+
         // submit commands
         submitCommands();
 
-        // read buffers into staging buffers
-        readBuffers();
     }
 
 
@@ -776,7 +779,7 @@ export class PoiesisContext {
         const canvas = this.state.canvas;
         const crtl = controls || { play: true, reset: false, delta: 0 };
     
-        const mouse: Array<number> = [0,0];
+        const mouse: Array<number> = [0,0,0,0];
         const resolution: Array<number> = [0,0];
         const aspectRatio: Array<number> = [1,1];
     
@@ -794,6 +797,8 @@ export class PoiesisContext {
     
         observer.observe(canvas)
         canvas.addEventListener('mousemove', (event:MouseEvent) => {
+            mouse[2] = mouse[0]; // last position x
+            mouse[3] = mouse[1]; // last position y
             mouse[0] = event.offsetX/canvas.clientWidth;
             mouse[1] = event.offsetY/canvas.clientHeight;
         });
@@ -823,7 +828,7 @@ export class PoiesisContext {
             if ( crtl.play || crtl.reset ) {
                 if (crtl.reset) crtl.reset = false; 
         
-                this.frame(frame, { 
+                await this.frame(frame, { 
                     sys: { 
                         frame: frame, 
                         time: elapsed, 

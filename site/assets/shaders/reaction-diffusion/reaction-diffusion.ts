@@ -1,11 +1,11 @@
-import { PoiesisSpec } from "../../../lib/poiesis/poiesis.interfaces.ts";
+import { PSpec } from "../../../lib/poiesis/poiesis.interfaces.ts";
 import { loadWGSL, square } from "../../../lib/poiesis/utils.ts";
 
 export const rd = async () => {
 
     const code = await loadWGSL(`/assets/shaders/reaction-diffusion/reaction-diffusion.wgsl`);
 
-    const spec =  () : PoiesisSpec => {
+    const spec =  () : PSpec => {
         const size = 512;
         const current = Array(size * size).fill([0,0]).map((v,i) => [ 1 , (Math.random() > 0.01 ? 0 : 1) ] );
 

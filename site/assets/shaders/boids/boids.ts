@@ -1,11 +1,11 @@
-import { PoiesisSpec } from "../../../lib/poiesis/poiesis.interfaces.ts";
+import { PSpec } from "../../../lib/poiesis/poiesis.interfaces.ts";
 import { loadWGSL, triangle } from "../../../lib/poiesis/utils.ts";
 
 export const boids = async () => {
 
     const code = await loadWGSL(`/assets/shaders/boids/boids.wgsl`);
 
-    const spec = ():PoiesisSpec => {
+    const spec = ():PSpec => {
         const size = 2000;
         const boids = Array(size).fill({}).map( (e,i) => ({
             pos: [2 * Math.random() - 1, 2 * Math.random() - 1],

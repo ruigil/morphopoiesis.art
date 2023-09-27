@@ -8,8 +8,8 @@ export interface PoiesisState {
     pipelines?: Pipelines;
     storages?: StorageTypes;
     clearColor?: {r:number,g:number,b:number,a:number};
-    spec?: () => PoiesisSpec;
-    wgslSpec?: PoiesisSpec
+    spec?: () => PSpec;
+    wgslSpec?: PSpec
     bufferListeners?: Array<BufferListener>;
 }
 
@@ -93,7 +93,7 @@ export interface VAttr {
     instances?: number;
 }
 
-export interface PoiesisSpec {
+export interface PSpec {
     code: string;
     uniforms?: any;
     geometry?: { vertex: VAttr, instance?: VAttr };

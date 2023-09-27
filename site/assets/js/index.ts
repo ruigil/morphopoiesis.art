@@ -1,5 +1,5 @@
 
-import { PoiesisContext } from "../../lib/poiesis/poiesis.ts";
+import { PContext } from "../../lib/poiesis/poiesis.ts";
 import { dla } from '../shaders/dla/dla.ts'
 
 document.addEventListener('DOMContentLoaded', async (event) => {
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     const spec = await dla();
 
     const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
-    const context = await PoiesisContext.init(canvas!);
+    const context = await PContext.init(canvas!);
     context.build(spec).loop({ params: { fcolor: color.fcolor, bcolor: color.bcolor }});
   
   }

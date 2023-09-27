@@ -4,7 +4,7 @@
 struct Sys {
     time: f32,
     resolution: vec2<f32>,
-    mouse: vec2<f32>,
+    mouse: vec4<f32>,
     aspect: vec2<f32>
 };
 
@@ -82,7 +82,7 @@ fn computeMain(@builtin(global_invocation_id) cell: vec3u) {
     let half = select( vec2((1. - sys.aspect.x) * .5, 0.), vec2(0.,(1. - sys.aspect.y) * .5), sys.aspect.x > sys.aspect.y);
 
     // mouse noise 
-    let m = vec2u(( half + (sys.mouse * sys.aspect)) * uni.size);
+    let m = vec2u(( half + (sys.mouse.xy * sys.aspect)) * uni.size);
     next[m.y * size.y + m.x] = 1u;
 
 }

@@ -1,11 +1,11 @@
-import { PoiesisSpec } from "../../../lib/poiesis/poiesis.interfaces.ts";
+import { PSpec } from "../../../lib/poiesis/poiesis.interfaces.ts";
 import { loadWGSL, square } from "../../../lib/poiesis/utils.ts";
 
 export const physarum = async () => {
 
     const code = await loadWGSL(`/assets/shaders/physarum/physarum.wgsl`);
 
-    const spec = ():PoiesisSpec => {
+    const spec = ():PSpec => {
         const numAgents = 20000;
         const size = 1024;
 

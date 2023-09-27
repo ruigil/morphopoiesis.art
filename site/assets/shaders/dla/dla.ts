@@ -1,11 +1,11 @@
-import { PoiesisSpec } from "../../../lib/poiesis/poiesis.interfaces.ts";
+import { PSpec } from "../../../lib/poiesis/poiesis.interfaces.ts";
 import { loadWGSL, square } from "../../../lib/poiesis/utils.ts";
 
 export const dla = async () => {
 
     const code = await loadWGSL(`/assets/shaders/dla/dla.wgsl`);
 
-    const spec = ():PoiesisSpec => {
+    const spec = ():PSpec => {
         const numParticles = 170000;
         const size = 1024;
 
