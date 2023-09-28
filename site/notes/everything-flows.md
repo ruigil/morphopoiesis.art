@@ -12,7 +12,7 @@ tags:
 
 > You cannot step into the same river twice - Heraclitus
 
-This quote from the ancient and obscure Greek philosopher Heraclitus, highlights one of the most fundamental properties of Nature, that the only constant is change. Everything changes, we change, the river change, nothing stays the same. Perhaps we can imagine something static in space, but we cannot imagine something static in time, not until we know what happens inside black holes.
+This quote from the ancient and obscure Greek philosopher [Heraclitus](https://en.wikipedia.org/wiki/Heraclitus), highlights one of the most fundamental properties of Nature, that the only constant is change. Everything changes, we change, the river change, nothing stays the same. Perhaps we can imagine something static in space, but we cannot imagine something static in time, not until we know what happens inside black holes.
 
 The inevitability of time is probably the most fundamental breaking of symmetry of the Universe. It imposes an irreversability that the future cannot be like the past. Everything changes and is transient. On a long enough timeline, everyone and everything survival rate drops to zero, even survival of the Universe itself in its final heath death.
 
