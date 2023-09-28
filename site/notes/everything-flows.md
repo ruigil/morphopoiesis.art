@@ -16,7 +16,7 @@ This quote from the ancient and obscure Greek philosopher Heraclitus, highlights
 
 The inevitability of time is probably the most fundamental breaking of symmetry of the Universe. It imposes an irreversability that the future cannot be like the past. Everything changes and is transient. On a long enough timeline, everyone and everything survival rate drops to zero, even survival of the Universe itself in its final heath death.
 
-This creates a existential problem to the human condition, because Humans survive on certainty. In fact, survival is by definition the fight against change. Survival is the ability to identify some degree of certainty in a sea of change that allows to predict the future, and come up with an action plan. Run from probable predators, engage with probable mates, to continue existing...
+This creates an existential problem to the human condition, because Humans survive on certainty. In fact, survival is by definition the fight against change. Survival is the ability to identify some degree of certainty in a sea of change that allows to predict the future, and come up with an action plan. Run from probable predators, engage with probable mates, to continue existing...
 
 So, it's only natural that humans resist change in all its forms. This resistance is so natural that we strive continously to reach the ultimate certainty. The One thing that is immutable and absolute that will never change and help us in our quest for survival. This is the origin source for all religions.
 
