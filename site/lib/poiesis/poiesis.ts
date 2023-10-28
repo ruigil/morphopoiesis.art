@@ -769,7 +769,7 @@ export class PContext {
     }
 
 
-    loop(unis?:any, controls?: Controls, fpsListener?: FPSListener) {
+    animate(unis?:any, controls?: Controls, fpsListener?: FPSListener) {
         let frame = 0;
         let intid = 0;
         let elapsed = 0;
@@ -853,3 +853,4 @@ export class PContext {
     }
     
 }
+

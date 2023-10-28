@@ -1,6 +1,4 @@
-import { PSpec, BufferView } from "../../../lib/poiesis/poiesis.interfaces.ts";
-import { PContext } from "../../../lib/poiesis/poiesis.ts";
-import { loadWGSL, square} from "../../../lib/poiesis/utils.ts";
+import { PContext, PSpec, BufferView, loadWGSL, square } from "../../../lib/poiesis/index.ts";
 
 export const dev = async () => {
 
@@ -97,11 +95,12 @@ const devPage = async () => {
       }
     });
 
-    context.loop({},controls, { onFPS: (fps:any) => { fpsSmall.textContent = fps.fps + " fps" } })
+    context.animate({},controls, { onFPS: (fps:any) => { fpsSmall.textContent = fps.fps + " fps" } })
 }
 
 
 document.addEventListener('DOMContentLoaded', async (event)  => {
     devPage();
 });
+
 

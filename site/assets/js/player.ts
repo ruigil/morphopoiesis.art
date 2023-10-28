@@ -36,6 +36,6 @@ export const player = async (spec: () => PSpec, unis?: any, delta?: number) => {
     }
   });
 
-  context.build(spec).loop(unis, controls, { onFPS: (fps) => { fpsSmall.textContent = fps.fps + " fps" } })
+  context.build(spec).animate(unis, controls, { onFPS: (fps) => { fpsSmall.textContent = fps.fps + " fps" } })
   
 }

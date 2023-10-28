@@ -46,7 +46,7 @@ fn vertMain( input: VertexInput) -> VertexOutput {
     let i = f32(input.instance); 
     let cell = vec2f(i % sim.size.x, floor(i / sim.size.y) );
 
-    let c1 = fluidA[getIndex( vec2(cell.x + input.pos.x ,  cell.y) )].dye;
+    let c1 = fluidA[getIndex( vec2(cell.x + input.pos.x,  cell.y) )].dye;
     let c2 = fluidA[getIndex( vec2(cell.x + input.pos.x, cell.y - input.pos.y) )].dye;
     let c3 = fluidA[getIndex( vec2(cell.x , cell.y - input.pos.y) )].dye;
     let c4 = fluidA[input.instance].dye;
@@ -72,12 +72,11 @@ fn fragMain(input : VertexOutput) -> @location(0) vec4<f32> {
 
 // index the fluid array, keeping the coordinates in the simulation space
 fn ix( x: i32, y: i32 ) -> u32 {
-  let sx = i32(sim.size.x);
-  let sy = i32(sim.size.y);
+  let s = vec2<i32>(sim.size);
 
   let r: vec2<u32> = vec2<u32>( 
-    select( u32(x % sx), u32((x % sx) + sx), x < 0), 
-    select( u32(y % sy), u32((y % sy) + sy), y < 0) 
+    select( u32(x % s.x), u32((x % s.x) + s.x), x < 0), 
+    select( u32(y % s.y), u32((y % s.y) + s.y), y < 0) 
   );
 
   return r.x + r.y * u32(sim.size.x);

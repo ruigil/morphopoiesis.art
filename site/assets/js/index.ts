@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async (event) => {
 
     const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
     const context = await PContext.init(canvas!);
-    context.build(spec).loop({ params: { fcolor: color.fcolor, bcolor: color.bcolor }});
+    context.build(spec).animate({ params: { fcolor: color.fcolor, bcolor: color.bcolor }});
   
   }
 

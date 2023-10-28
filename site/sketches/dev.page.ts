@@ -39,6 +39,5 @@ export default  async (pd: PageData) => {
     <div class="w-1/2">${board}</div>
     <div class="w-1/2">${debugPanel}</div>
     <canvas id="sim" ></canvas>
-    <canvas id="simulation" ></canvas>
     </div>`
 }

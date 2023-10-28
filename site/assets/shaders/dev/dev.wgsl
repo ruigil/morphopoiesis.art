@@ -66,6 +66,8 @@ fn ix( x: i32, y: i32 ) -> u32 {
   let sx = i32(sim.size.x);
   let sy = i32(sim.size.y);
 
+  let rr = vec2<i32>(2,3) < 0;
+
   let r: vec2<u32> = vec2<u32>( 
     select( u32(x % sx), u32((x % sx) + sx), x < 0), 
     select( u32(y % sy), u32((y % sy) + sy), y < 0) 
