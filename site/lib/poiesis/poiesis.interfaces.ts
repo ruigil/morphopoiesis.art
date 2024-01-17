@@ -24,7 +24,7 @@ export interface Geometry {
 export interface Resource {
     binding: number;
     resource: GPUBufferBinding | GPUSampler | GPUTextureView | GPUExternalTexture;
-    type: GPUBufferBindingType | "sampler" | "texture" | "external_texture";
+    type: GPUBufferBindingType | "sampler" | "texture" | "external_texture" | "storage_texture";
 }
 
 export interface Uniform extends Resource {
@@ -99,7 +99,7 @@ export interface PSpec {
     geometry?: { vertex: VAttr, instance?: VAttr };
     storages?: Array<{ name: string, size: number, data?: Array<any>, read?:boolean, vertex?:boolean, }>;
     samplers?: Array<{ name : string, magFilter: string, minFilter: string }>;
-    textures?: Array<{ name : string, data: ImageBitmap | HTMLVideoElement | undefined}>;
+    textures?: Array<{ name : string, data: ImageBitmap | HTMLVideoElement | undefined, storage?: boolean}>;
     computes?: Array<{ name: string, workgroups: [number,number,number], instances?: number }>;
     computeGroupCount?: number;
     clearColor?: { r:number, g:number, b:number, a:number}

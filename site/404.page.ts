@@ -1,11 +1,8 @@
-import type { PageData, PageHelpers } from "lume/core.ts";
-
 export const title = "404 Not found";
 export const layout = "about.layout.ts";
 export const url = "/404.html"
 
-export default ({ comp, featured, metas, search }: PageData, helpers: PageHelpers): string => {
-  
+export default ({ comp, featured, metas, search }: Lume.Data, helpers: Lume.Helpers): string => {
   
     return `
     <h1>Error 404 - Page not found :( </h1>

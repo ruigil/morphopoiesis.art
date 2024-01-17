@@ -1,8 +1,7 @@
-import type { PageData, PageHelpers } from "lume/core.ts";
 
 export const layout = "base.layout.ts";
 
-export default ( data: PageData, helpers:PageHelpers) => {
+export default ( data: Lume.Data, helpers:Lume.Helpers) => {
 
   return `
       <div class="flex items-center h-60" style="background-image: url(${data.header}-big.webp); background-size: cover;" ">

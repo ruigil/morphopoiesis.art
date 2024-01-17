@@ -10,8 +10,8 @@ import metas from "lume/plugins/metas.ts";
 import codeHighlight from "lume/plugins/code_highlight.ts";
 import sitemap from "lume/plugins/sitemap.ts";
 import feed from "lume/plugins/feed.ts";
-import pagefind from "lume/plugins/pagefind.ts";
-import imagick from "lume/plugins/imagick.ts";
+//import pagefind from "lume/plugins/pagefind.ts";
+import transformImages from "lume/plugins/transform_images.ts";
 
 // config
 const site = lume({
@@ -19,11 +19,7 @@ const site = lume({
   location: new URL("https://morphopoiesis.art"),
 }, {
   modules: {
-    extensions: {
-      pages: [".page.js", ".page.ts",".layout.ts",".layout.js"],
-      data: [".data.js", ".data.ts"],
-      components: [".component.js", ".component.ts"],
-    }
+    extensions: [".ts", ".js"],
   }
 });
 
@@ -42,8 +38,8 @@ site.use(postcss());
 site.use(metas());
 site.use(katex());
 site.use(codeHighlight());
-site.use(pagefind());
-site.use(imagick());
+//site.use(pagefind());
+site.use(transformImages());
 site.use(feed({
   output: ["/notes.rss", "/notes.json"],
   query: "type=post",

@@ -1,6 +1,5 @@
-import type { PageData, PageHelpers } from "lume/core.ts";
 
-const footer = (data: PageData, { date }: PageHelpers) => {
+const footer = (data: Lume.Data, { date }: Lume.Helpers) => {
 
   return `
   <footer class="footer">
@@ -24,14 +23,14 @@ const footer = (data: PageData, { date }: PageHelpers) => {
   `
 }
 
-const toolbar = ({ search, metas, url }: PageData) => {
+const toolbar = ({ search, metas, url }: Lume.Data) => {
 
   const items = () => {
       const menuItems: string[] = []
 
-      search.pages("menu.visible=true", "menu.order").map((page) => {
+      search.pages("menu.visible=true", "menu.order").map((data:any) => {
           const current = url || "/";
-          menuItems.push(`<li><a ${current === page?.data.url ? "class='is-selected'" : ''} href="${page?.data.url}">${page?.data.title}</a></li>`)
+          menuItems.push(`<li><a ${current === data.url ? "class='is-selected'" : ''} href="${data.url}">${data.title}</a></li>`)
       });
       return menuItems.join("")
   }
@@ -58,7 +57,7 @@ const toolbar = ({ search, metas, url }: PageData) => {
 }
 
 
-export default ( data : PageData, helpers: PageHelpers) => {
+export default ( data : Lume.Data, helpers: Lume.Helpers) => {
 
   return `
   <html lang="en">

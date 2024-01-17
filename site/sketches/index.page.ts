@@ -1,4 +1,3 @@
-import type { PageData } from "lume/core.ts";
 
 export const title = "Sketches";
 export const layout = "page.layout.ts";
@@ -14,7 +13,7 @@ type Shader = {
     tags: string[]
 }
 
-export default ({ shaders, comp }: PageData ) : string => {
+export default ({ shaders, comp }: Lume.Data ) : string => {
 
     const items = () => {
         const tags:Map<string,number> = new Map()

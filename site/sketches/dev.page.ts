@@ -35,9 +35,8 @@ export default  async (pd: PageData) => {
     `
 
     return `
-    <div class="flex w-full flex-wrap gap-4">
+    <div class="flex gap-4">
     <div class="w-1/2">${board}</div>
     <div class="w-1/2">${debugPanel}</div>
-    <canvas id="sim" ></canvas>
     </div>`
 }

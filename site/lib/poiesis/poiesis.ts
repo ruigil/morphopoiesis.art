@@ -382,13 +382,13 @@ export class PContext {
 
         const createTextures = (spec: PSpec, reflect: WgslReflect) => {
 
-            const texture = ( image: ImageBitmap ) => {
+            const texture = ( image: ImageBitmap, l: string ) => {
 
                 const texture = this.state.device.createTexture({
-                    label: "",
+                    label: l,
                     size: { width: image.width, height: image.height },
                     format: "rgba8unorm",
-                    usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
+                    usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.RENDER_ATTACHMENT,
                 });
 
                 this.state.device.queue.copyExternalImageToTexture(
@@ -397,7 +397,7 @@ export class PContext {
                     [ image.width, image.height ]
                 );
 
-                return texture.createView();
+                return texture.createView( { format: "rgba8unorm" , label: l});
             }
 
             const textures = reflect.textures.map((element,i): Texture => {
@@ -413,8 +413,8 @@ export class PContext {
                     }:
                     { 
                         binding: element.binding,
-                        resource: texture(tex.data),
-                        type: 'texture'
+                        resource: texture(tex.data, tex.storage ? 'storage_texture': 'texture'),
+                        type: tex.storage ? 'storage_texture': 'texture'
                     };
                 return resource;
             });
@@ -456,6 +456,12 @@ export class PContext {
                             binding: element.binding,
                             visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE, 
                             texture: { viewDimension: "2d" }
+                        }); break;;
+                    case "storage_texture":
+                        entries.push({ 
+                            binding: element.binding,
+                            visibility: GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE, 
+                            storageTexture: { viewDimension: "2d", format: "rgba8unorm" }
                         }); break;;
                     case "external_texture": 
                         entries.push({ 
@@ -503,7 +509,10 @@ export class PContext {
                     if (!res) throw new Error(`Binding ${index} defined in groups not found`);
 
                     entries[i].push({
-                        binding: resources[j].binding,
+                        // we need to use the first group to define the bindings reference
+                        // this will fail if one binding group and bindings not sequential
+                        // we want to keep the binding order but change the resources order
+                        binding: spec.bindings ? spec.bindings[0][j] : j, 
                         resource: res 
                     })
                     if (resources[j].type === 'external_texture') {

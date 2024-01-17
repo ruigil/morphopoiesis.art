@@ -4,6 +4,9 @@
       "esnext",
       "dom",
       "deno.window"
+    ],
+    "types": [
+      "lume/types.ts"
     ]
   },
   "tasks": {
@@ -12,6 +15,6 @@
     "serve": "deno task lume -s"
   },
   "imports": {
-    "lume/": "https://deno.land/x/lume@v1.18.5/"
+    "lume/": "https://deno.land/x/lume@v2.0.3/"
   }
 }

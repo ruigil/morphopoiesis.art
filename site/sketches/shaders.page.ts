@@ -1,9 +1,8 @@
-import type { PageData } from "lume/core.ts";
 import hljs from 'npm:highlight.js';
 
 export const layout = "page.layout.ts";
 
-const related = (shader:any, data : PageData) => {
+const related = (shader:any, data : Lume.Data) => {
 
   const items = () => {
     const menuItems:string[] = []
@@ -18,7 +17,7 @@ const related = (shader:any, data : PageData) => {
   return `<div class="w-full">${items()}</div>`
 }
 
-const shaderContent = async (shader:any, data: PageData) => {
+const shaderContent = async (shader:any, data: Lume.Data) => {
 
   const wgslCode = await Deno.readTextFile(`./site/${shader.wgsl}`);
   const tsCode = await Deno.readTextFile(`./site/${shader.js.substring(0,shader.js.indexOf('.'))}.ts`);
@@ -70,8 +69,7 @@ const shaderContent = async (shader:any, data: PageData) => {
   `;
 }
 
-export default function* (data: PageData) {
-
+export default function* (data: Lume.Data) {
 
     for (const s of data.shaders) {
         yield {
