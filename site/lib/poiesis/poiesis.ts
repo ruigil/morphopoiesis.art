@@ -622,7 +622,7 @@ export class PContext {
 
         const wgslSpec = spec();
         const reflect = new WgslReflect(wgslSpec.code);
-        console.log(reflect)
+        //console.log(reflect)
         const defs = wgslDefs(reflect);
 
         const shaderModule = createShaderModule(wgslSpec);
