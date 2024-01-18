@@ -10,10 +10,19 @@ export const player = async (spec: () => PSpec, unis?: any, delta?: number) => {
   const fullscreen = document.querySelector("#fullscreen") as HTMLButtonElement;
 
   const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
- 
-  const context = await PContext.init(canvas!);
-  
   const controls = { play: true, reset: false, delta: delta || 0}
+ 
+  try {
+    const context = await PContext.init(canvas!);
+    context.build(spec).animate(unis, controls, { onFPS: (fps) => { fpsSmall.textContent = fps.fps + " fps" } })
+  } catch (err) {
+    const error = document.querySelector("#error") as HTMLDivElement;
+    error.innerHTML = "<span>Sorry, but there was an error with your WebGPU context. <br/> " + 
+    "WebGPU is a new standard for graphics on the web.<br/>" +
+    "The standard is currently implemented only <a href='https://caniuse.com/webgpu'>on certain browsers</a>.<br/>" +
+    "For the full experience please use a supported browser. <br/>" +
+    "<span style='color:red;'>" + err + "</span><span/>";
+  }
 
   play.addEventListener('click', event => {
     controls.play = !controls.play;
@@ -36,6 +45,5 @@ export const player = async (spec: () => PSpec, unis?: any, delta?: number) => {
     }
   });
 
-  context.build(spec).animate(unis, controls, { onFPS: (fps) => { fpsSmall.textContent = fps.fps + " fps" } })
   
 }

@@ -31,7 +31,8 @@ const shaderContent = async (shader:any, data: Lume.Data) => {
         <canvas id="canvas"></canvas>
       </div>
       <div class="flex flex-col gap-2">
-        <strong>${shader.title}</strong>
+      <div id="error"></div>
+      <strong>${shader.title}</strong>
         <div>${shader.description}</div>
         <div class="flex-wrap">${shader.tags?.map((tag: string) => `<sl-tag >${tag}</sl-tag>`).join(" ")}</div>
       </div>

@@ -55,8 +55,17 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     const spec = await dla();
 
     const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
-    const context = await PContext.init(canvas!);
-    context.build(spec).animate({ params: { fcolor: color.fcolor, bcolor: color.bcolor }});
+    try {
+      const context = await PContext.init(canvas!);
+      context.build(spec).animate({ params: { fcolor: color.fcolor, bcolor: color.bcolor }});
+    } catch (e) {
+      const error = document.querySelector("#error") as HTMLDivElement;
+      error.innerHTML = "<span>Sorry, but there was an error with your WebGPU context. <br/> " + 
+      "WebGPU is a new standard for graphics on the web.<br/>" +
+      "The standard is currently implemented only <a href='https://caniuse.com/webgpu'>on certain browsers</a>.<br/>" +
+      "For the full experience please use a supported browser. <br/>" +
+      "<span style='color:red;'>" + e + "</span><span/>";
+      }
   
   }
 

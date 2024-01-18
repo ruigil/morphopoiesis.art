@@ -38,7 +38,7 @@ export default ({ search }: Lume.Data, helpers: Lume.Helpers): string => {
   return `
   <main class="flex flex-col flex-grow screen w-full">
     <div class="grow"></div>
-    <div class="pt-4  text-2xl desc text-center text-5xl font-bold h-20 w-full desc backdrop-blur">studies on the synthesis of form</div>
+    <div class="pt-4  text-2xl desc text-center text-5xl font-bold h-20 w-full desc backdrop-blur">&darr; studies on the synthesis of form &darr;</div>
   </main>
   <div class="featured w-full">
     <div class="container w-full max-w-4xl mx-auto p-10 mb-20">
@@ -48,6 +48,7 @@ export default ({ search }: Lume.Data, helpers: Lume.Helpers): string => {
       </div>
     </div>
   </div>
+  <div id="error" class="full-window"></div>
   <canvas class="full-window" id="canvas"></canvas>
   <style>
     .screen {
@@ -70,6 +71,12 @@ export default ({ search }: Lume.Data, helpers: Lume.Helpers): string => {
 
       width: 100vw;
       height: 100vh;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 5;
     }
   </style>
   <script type="module" src="/assets/js/index.js" defer></script>
