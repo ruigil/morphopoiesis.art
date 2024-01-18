@@ -1,10 +1,8 @@
-import type { PageData } from "lume/core.ts";
 
 export const layout = "page.layout.ts";
 
-export default  async (pd: PageData) => {
+export default  async (pd: Lume.Data) => {
 
- 
     const board = `
     <sl-card class="card-overview w-full">
       <div slot="image" id="fullscreen" class="w-full">
