@@ -39,6 +39,6 @@ fn fragmentMain(@builtin(position) coord: vec4f) -> @location(0) vec4f {
 It's written in [WGSL](https://www.w3.org/TR/WGSL/), an it's a little program that can be runed for every pixel of the screen. If we take that this program can iterates 100 times over a function for every pixel in a 4K monitor with 60 frames per second, that means that the statement inside the loop is executed 50 billion times per second. Or to put it in another way, if we travel at light speed, at every loop, we would only be able to travel 6mm... Not enough to cross the GPU from side to side. And things are going to get even crazier !
 
 
-Here [try it](/sketches/color-ifs/), you can play with your mouse.
+Here [try it](/sketches/colorIFS/), you can play with your mouse.
 
-![ColorIFS](/assets/img/color-ifs-big.webp)
+[![ColorIFS](/assets/img/color-ifs-big.webp)](/sketches/colorIFS/)
