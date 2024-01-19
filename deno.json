@@ -4,7 +4,10 @@
       "esnext",
       "dom",
       "deno.ns"
-    ]
+    ],
+    "types": [
+      "lume/types.ts"
+    ]    
   },
   "tasks": {
     "lume": "echo \"import 'lume/cli.ts'\" | deno run --allow-read --unstable -A -",
