@@ -1,30 +1,31 @@
+import { html } from "../utilities.ts";
 import hljs from 'npm:highlight.js';
 
 export const layout = "page.layout.ts";
 
-const related = (shader:any, data : Lume.Data) => {
+const related = (shader: any, data: Lume.Data) => {
 
   const items = () => {
-    const menuItems:string[] = []
-    
-    data.search.pages(`${shader.id}`,"date=desc").map((page) => {
-      menuItems.push(`<a href="${page?.data.url}" >${page?.data.title}</a>`)
+    const menuItems: string[] = []
+
+    data.search.pages(`${shader.id}`, "date=desc").map((page) => {
+      menuItems.push(`<a href="${data.url}" >${data.title}</a>`)
     });
     //console.log(menuItems)
     return menuItems.join("")
   }
 
-  return `<div class="w-full">${items()}</div>`
+  return html`<div class="w-full">${items()}</div>`
 }
 
-const shaderContent = async (shader:any, data: Lume.Data) => {
+const shaderContent = async (shader: any, data: Lume.Data) => {
 
   const wgslCode = await Deno.readTextFile(`./site/${shader.wgsl}`);
-  const tsCode = await Deno.readTextFile(`./site/${shader.js.substring(0,shader.js.indexOf('.'))}.ts`);
+  const tsCode = await Deno.readTextFile(`./site/${shader.js.substring(0, shader.js.indexOf('.'))}.ts`);
   const htmlWgsl = hljs.highlight(wgslCode, { language: 'rust' }).value
   const htmlTs = hljs.highlight(tsCode, { language: 'typescript' }).value
- 
-  return `
+
+  return html`
     <div class="flex-col w-full max-w-3xl mx-auto">
     <sl-card class="card-overview w-full">
       <div slot="image" id="fullscreen" class="w-full">
@@ -65,19 +66,19 @@ const shaderContent = async (shader:any, data: Lume.Data) => {
     </div>
     <div class="w-4xl mx-auto">
     <hr>
-    ${ related(shader,data) }
+      ${related(shader, data)}
     </div> 
   `;
 }
 
 export default function* (data: Lume.Data) {
 
-    for (const s of data.shaders) {
-        yield {
-            url: `./${s.id}/`,
-            title: s.title,
-            description: s.description,
-            content: shaderContent(s,data),
-          };              
-    }
+  for (const s of data.shaders) {
+    yield {
+      url: `./${s.id}/`,
+      title: s.title,
+      description: s.description,
+      content: shaderContent(s, data),
+    };
+  }
 }

@@ -23,9 +23,7 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     }
 
     const color = isDark() ? {
-      //bcolor: getRGBValues(styles.backgroundColor),
       bcolor: [16,24,42],
-      //fcolor: getRGBValues(styles.color)
       fcolor: [255,255,255]
     } :
     {
@@ -36,8 +34,6 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     const observer = new MutationObserver(mutations => {
       mutations.forEach(mutation => {
         if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-          //console.log('Style changed:', mutation.target.classList.length);
-          //const styles = getComputedStyle(body!);
           let dark = (mutation.target as HTMLBodyElement).classList.contains('sl-theme-dark');
           if (dark) {
             color.bcolor.splice(0,3, ...[16,24,42] );
@@ -52,11 +48,11 @@ document.addEventListener('DOMContentLoaded', async (event) => {
 
     observer.observe(body!, { attributes: true });
 
-    const spec = await dla();
-
     const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
+
     try {
       const context = await PContext.init(canvas!);
+      const spec = await dla();
       context.build(spec).animate({ params: { fcolor: color.fcolor, bcolor: color.bcolor }});
     } catch (e) {
       const error = document.querySelector("#error") as HTMLDivElement;

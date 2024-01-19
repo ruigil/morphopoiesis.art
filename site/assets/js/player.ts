@@ -35,7 +35,6 @@ export const player = async (spec: () => PSpec, unis?: any, delta?: number) => {
 
   full.addEventListener('click', event => {
     if (!document.fullscreenElement) {
-      //document.documentElement.requestFullscreen();
       fullscreen.requestFullscreen().then(() => {
         //console.log("fullscreen")
         //console.log(window.innerHeight, window.innerWidth)
@@ -45,5 +44,4 @@ export const player = async (spec: () => PSpec, unis?: any, delta?: number) => {
     }
   });
 
-  
 }

@@ -1,9 +1,10 @@
+import { html } from "../utilities.ts";
 
 export const layout = "page.layout.ts";
 
-export default  async (pd: Lume.Data) => {
+export default async (pd: Lume.Data) => {
 
-    const board = `
+  const board = html`
     <sl-card class="card-overview w-full">
       <div slot="image" id="fullscreen" class="w-full">
         <canvas id="canvas"></canvas>
@@ -19,8 +20,9 @@ export default  async (pd: Lume.Data) => {
     </sl-card>
     <script type="module" src="/assets/shaders/dev/dev.js" defer>
     </script>
-    `
-    const debugPanel = `
+  `;
+
+  const debugPanel = html`
     <sl-card class="card-overview w-full">
     <div class="flex items-center gap-4">
         <sl-tag variant="primary">debug</sl-tag><div id="value">hello word</div>
@@ -28,13 +30,13 @@ export default  async (pd: Lume.Data) => {
     </sl-card>
     <sl-card class="card-overview mt-4">
     <canvas id="webcam" class="border" ></canvas>
-    </sl-card>
-    
-    `
+    </sl-card>  
+  `;
 
-    return `
+  return html`
     <div class="flex gap-4">
     <div class="w-1/2">${board}</div>
     <div class="w-1/2">${debugPanel}</div>
-    </div>`
+    </div>
+  `;
 }
