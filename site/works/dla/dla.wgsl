@@ -87,7 +87,10 @@ fn computeDrops(@builtin(global_invocation_id) id : vec3<u32>) {
     var turn = vec2<f32>(cos( rnd.x * 6.28), sin( rnd.y * 6.28));
 
     // update velocity and position
-    let vel = normalize(dir + turn) / (params.size *.5);
+    // pos goes from -1 to 1 which means that we have distance = 2.
+    // if we want to move 1 pixel we need to divide by the half the size of the simulation to get the correct maximum velocity
+    // but we must choose the minimum size to avoid horizontal or vertical being different ratios
+    let vel = normalize(dir + turn) / (max(params.size.x, params.size.y) * .5);
     drops[i].vel = vel;
     pos += vel;
     
