@@ -1,4 +1,4 @@
-import { html } from "../utilities.ts";
+import { html } from "../lib/utilities.ts";
 
 export const layout = "base.layout.ts";
 

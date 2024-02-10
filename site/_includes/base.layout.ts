@@ -1,4 +1,4 @@
-import { html } from "../utilities.ts";
+import { html } from "../lib/utilities.ts";
 
 const footer = (data: Lume.Data, { date }: Lume.Helpers) => {
 

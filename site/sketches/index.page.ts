@@ -1,4 +1,4 @@
-import { html } from "../utilities.ts";
+import { html } from "../lib/utilities.ts";
 
 export const title = "Sketches";
 export const layout = "page.layout.ts";
@@ -8,10 +8,9 @@ type Shader = {
     id: number,
     title: string,
     description: string,
-    wgsl: string,
     image: string,
-    js: string,
-    tags: string[]
+    tags: string[],
+    sketch: boolean,
 }
 
 export default ({ shaders, comp }: Lume.Data ) : string => {
@@ -19,7 +18,7 @@ export default ({ shaders, comp }: Lume.Data ) : string => {
     const items = () => {
         const tags:Map<string,number> = new Map()
 
-        const list = shaders.map((shader:Shader) => {
+        const list = shaders.filter( (s:Shader) => s.sketch).map((shader:Shader) => {
             shader.tags.map((tag:string) => tags.set(tag, tags.get(tag) ? tags.get(tag)! + 1 : 1))
 
             return html`

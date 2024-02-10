@@ -1,4 +1,4 @@
-import { html } from "../utilities.ts";
+import { html } from "../lib/utilities.ts";
 import hljs from 'npm:highlight.js';
 
 export const layout = "page.layout.ts";
@@ -20,16 +20,16 @@ const related = (shader: any, data: Lume.Data) => {
 
 const shaderContent = async (shader: any, data: Lume.Data) => {
 
-  const wgslCode = await Deno.readTextFile(`./site/${shader.wgsl}`);
-  const tsCode = await Deno.readTextFile(`./site/${shader.js.substring(0, shader.js.indexOf('.'))}.ts`);
+  const wgslCode = await Deno.readTextFile(`./site/works/${shader.id}/${shader.id}.wgsl`);
+  const tsCode = await Deno.readTextFile(`./site/works/${shader.id}/${shader.id}.ts`);
   const htmlWgsl = hljs.highlight(wgslCode, { language: 'rust' }).value
   const htmlTs = hljs.highlight(tsCode, { language: 'typescript' }).value
 
   return html`
     <div class="flex-col w-full max-w-3xl mx-auto">
     <sl-card class="card-overview w-full">
-      <div slot="image" id="fullscreen" class="w-full">
-        <canvas id="canvas"></canvas>
+      <div slot="image" class="w-full" style="padding-top: 100%; position:relative;">
+        <canvas id="canvas" style="position:absolute;top:0;left:0;right:0;bottom:0;"></canvas>
       </div>
       <div class="flex flex-col gap-2">
       <div id="error"></div>
@@ -55,19 +55,19 @@ const shaderContent = async (shader: any, data: Lume.Data) => {
         <small id="fps">0 fps</small>          
       </div>
     </sl-card>
-    <script type="module" defer>
-        import { player } from '/assets/js/player.js';
-        import { ${shader.id} } from '${shader.js}';
-        
-        document.addEventListener('DOMContentLoaded', async (event)  => {
-            player( await ${shader.id}() );
-        });
-    </script>
     </div>
     <div class="w-4xl mx-auto">
     <hr>
       ${related(shader, data)}
     </div> 
+    <script type="module" defer>
+        import { player } from '../../assets/js/player.js';
+        import { ${shader.id} } from '../../works/${shader.id}/${shader.id}.js';
+        
+        document.addEventListener('DOMContentLoaded', async (event)  => {
+            player( await ${shader.id}('../../works/${shader.id}/${shader.id}.wgsl','../../works/${shader.id}/${shader.id}.json') );
+        });
+    </script>
   `;
 }
 

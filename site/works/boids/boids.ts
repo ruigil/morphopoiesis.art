@@ -1,13 +1,13 @@
-import { PSpec } from "../../../lib/poiesis/poiesis.interfaces.ts";
-import { loadWGSL, triangle } from "../../../lib/poiesis/utils.ts";
+import { PSpec, loadWGSL, loadJSON, triangle } from "../../lib/poiesis/index.ts";
 
-export const boids = async () => {
+export const boids = async (wgsl:string, json:string) => {
 
-    const code = await loadWGSL(`/assets/shaders/boids/boids.wgsl`);
+    const code = await loadWGSL(wgsl);
+    const defs = await loadJSON(json);
 
     const spec = ():PSpec => {
-        const size = 2000;
-        const boids = Array(size).fill({}).map( (e,i) => ({
+        const numBoids = 2000;
+        const boids = Array(numBoids).fill({}).map( (e,i) => ({
             pos: [2 * Math.random() - 1, 2 * Math.random() - 1],
             vel: [2 * Math.random() - 1, 2 * Math.random() - 1],
             pha: 2 * Math.PI * Math.random() 
@@ -15,6 +15,7 @@ export const boids = async () => {
 
         return {
             code: code,
+            defs: defs,
             geometry: {
                 vertex: {
                     data: triangle(1.),
@@ -22,11 +23,12 @@ export const boids = async () => {
                 },
                 instance: {
                     attributes: ["partPos","partVel","partPha"],
-                    instances: size
+                    instances: numBoids
                 }
             },
             uniforms: {
                 params: {
+                    boids: numBoids,
                     deltaT: .01,
                     scale: .015,
                     forces: [.04, .025, .025, .02], // last one is mouse force
@@ -35,11 +37,11 @@ export const boids = async () => {
                 }
             },
             storages: [
-                { name: "particlesA", size: size , data: boids, vertex: true} ,
-                { name: "particlesB", size: size , vertex: true} 
+                { name: "particlesA", size: numBoids , data: boids, vertex: true} ,
+                { name: "particlesB", size: numBoids , vertex: true} 
             ],
             computes: [
-                { name: "computeMain", workgroups:  [Math.ceil(size / 64), 1, 1] },
+                { name: "computeMain", workgroups:  [Math.ceil(numBoids / 64), 1, 1] },
             ],
             bindings: [ [0,4,1,2,3], [0,4,2,1,3] ]
         }

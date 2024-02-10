@@ -44,7 +44,7 @@ fn getIndex(cell : vec2<f32>) -> u32 {
 fn vertMain( input: VertexInput) -> VertexOutput {
   
     let i = f32(input.instance); 
-    let cell = vec2f(i % sim.size.x, floor(i / sim.size.y) );
+    let cell = vec2f(i % sim.size.x, floor(i / sim.size.x) );
 
     let c1 = fluidA[getIndex( vec2(cell.x + input.pos.x,  cell.y) )].dye;
     let c2 = fluidA[getIndex( vec2(cell.x + input.pos.x, cell.y - input.pos.y) )].dye;
@@ -54,13 +54,15 @@ fn vertMain( input: VertexInput) -> VertexOutput {
     // multisample the state to reduce aliasing
     let state = (c1 + c2 + c3 + c4) / 4.0;
 
+    let cellSize = 2. / sim.size.xy ;
     // The cell(0,0) is a the top left corner of the screen.
-    // The cell(size.x,size.y) is a the bottom right corner of the screen.
-    let cellOffset = vec2(cell.x, sim.size.y - cell.y - 1.) / sim.size * 2.; 
-    let cellPos = (input.pos + 1.) / sim.size - 1. + cellOffset;
+    // The cell(uni.size.x,uni.size.y) is a the bottom right corner of the screen.
+    let cellOffset =  vec2(cell.x, sim.size.y - 1. - cell.y) * cellSize + (cellSize * .5) ;
+    // input.pos is in the range [-1,1]...[1,1] and it's the same coord system as the uv of the screen
+    let cellPos =  (input.pos  / sim.size.xy) + cellOffset - 1.; 
 
     var output: VertexOutput;
-    output.pos = vec4f(cellPos / sys.aspect, 0., 1.);
+    output.pos = vec4f(cellPos, 0., 1.);
     output.state = state;
     return output;
 }
@@ -132,7 +134,7 @@ fn addForces(@builtin(global_invocation_id) cell : vec3<u32>) {
   }
 
   // add some dye and velocity to a radius of the mouse position
-  let mouse = sys.mouse.xy * sim.size ;
+  let mouse = (sys.mouse.xy  * sim.size);
   let d = length(vec2<f32>(cc.xy) - mouse.xy);
 
   if ((d < 20.) && (fluidB[ ix(cc.x,cc.y) ].solid == 0.)) {    

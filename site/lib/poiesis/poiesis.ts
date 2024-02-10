@@ -17,7 +17,7 @@ import {
     Controls,
     FPSListener
 } from "./poiesis.interfaces.ts";
-import { ArrayType, MemberInfo, TemplateType, Type, WgslReflect } from "./wgsl-reflect/index.ts";
+import { MemberInfo} from "./wgsl-reflect/index.ts";
 import { square} from "./utils.ts";
 
 
@@ -44,6 +44,7 @@ export class PContext {
             format: navigator.gpu.getPreferredCanvasFormat(),
         });
 
+
         return new PContext({
             canvas: canvas,
             context: context,
@@ -56,47 +57,9 @@ export class PContext {
         this.state = {...state};
     }
     
-    build( spec : () => PSpec ): PContext {
+    build( spec : (w:number,h:number) => PSpec ): PContext {
 
-        const wgslDefs = (reflect: WgslReflect) => {
         
-            const typedArrayName = (type: Type | null): string => {
-                if (type instanceof ArrayType) return typedArrayName(type.format);
-                if (type instanceof TemplateType) return typedArrayName(type.format);
-                return type!.name;
-            }
-        
-            const members = (ms :MemberInfo[] | null) : any =>  {
-                if (!ms) return undefined;
-                return ms.map( m => ({
-                    arrayCount: m.arrayCount,
-                    arrayStride: m.arrayStride,
-                    isArray: m.isArray,
-                    isStruct: m.isStruct,
-                    name: m.name,
-                    offset: m.offset,
-                    size: m.size,
-                    members: members(m.members),
-                    type: typedArrayName(m.type),
-                })).reduce( (acc:Record<string,any>, e:any) => { acc[e.name] = e; return acc; },{})
-            };
-            
-            // transformation of the reflect data into a more usable format for buffers
-            // This will be used to create the buffer views
-            const defs = reflect.storage.map( s => ({ access: s.node.access, ...reflect.getStorageBufferInfo(s)! }) )
-                .map( s => ({...s, category: "storage"})) 
-                .concat(reflect.uniforms.map( u => reflect.getUniformBufferInfo(u)!)
-                .map( u => ({...u, category: "uniform", access: "read_write"})))
-                .map( b => ({
-                    ...b,
-                    members: members(b.members),
-                    type:  typedArrayName(b.type),
-                }))
-                .reduce( (acc:Record<string,any>, e:any) => { acc[e.name] = e; return acc; },{} )
-            
-            return defs;
-        }
-              
         const makeBufferView = (defs:any, size: number = 1): BufferView => {
         
             const buffer = defs.isArray ? new ArrayBuffer(defs.arrayStride * size) : new ArrayBuffer(defs.size);
@@ -204,7 +167,7 @@ export class PContext {
             });
         }
 
-        const createGeometry = (spec: PSpec, reflect: WgslReflect): Geometry => {
+        const createGeometry = (spec: PSpec): Geometry => {
 
             const buffersLayout:GPUVertexBufferLayout[] = [];
 
@@ -215,7 +178,7 @@ export class PContext {
                 const type = (format:string,name:string) => `${(format == 'f32' ? 'float32' : 'uint32')}${ name == 'vec2' ? 'x2' : name == 'vec3' ? 'x3' : name == 'vec4' ? 'x4' : ''}`;
                 
                 // assume only one vertex shader in the module
-                const inputs = reflect.entry?.vertex[0].inputs;
+                const inputs = spec.defs.reflect.entry?.vertex[0].inputs;
                 let stride = 0;
                 const vattrs = inputs.filter( (i:any) => attrs.some( a => a === i.name) && i.locationType === 'location').map( (i:any): GPUVertexAttribute => {                
                     const attr = {
@@ -273,12 +236,12 @@ export class PContext {
             }
         }
 
-        const createUniforms = (spec: PSpec, defs: Record<string,any>) : Uniform[] => {
+        const createUniforms = (spec: PSpec) : Uniform[] => {
 
             const uniforms = spec.uniforms || {};
             const uniRessource:Array<Uniform> = [];
 
-            for (const [key, value] of Object.entries(defs)) {
+            for (const [key, value] of Object.entries(spec.defs.bindings as Record<string,any>)) {
                 if (value.category === "uniform") {
                     const uniformDef = value;
                     const uniformView = makeBufferView(uniformDef);
@@ -306,7 +269,7 @@ export class PContext {
             return uniRessource
         }
 
-        const createStorage = (spec: PSpec, defs: Record<string,any>) : StorageTypes => {
+        const createStorage = (spec: PSpec) : StorageTypes => {
             const stateStorage:Storage[] = new Array<Storage>();
             const readStorage:ReadStorage[] = new Array<ReadStorage>();
             const vertexStorage:VertexStorage[] = new Array<VertexStorage>();
@@ -315,7 +278,7 @@ export class PContext {
                 return spec.storages ? spec.storages.find((element) => element.name === name) : undefined;
             }
 
-            for (const [key,value] of Object.entries(defs)) {
+            for (const [key,value] of Object.entries(spec.defs.bindings as Record<string,any>)) {
                 if (value.category === "storage") {
                     const storageDef = value;
                     const storageSpec = storage(key);
@@ -365,10 +328,10 @@ export class PContext {
             }
         }
 
-        const createSamplers = (spec: PSpec, reflect: WgslReflect) => {
+        const createSamplers = (spec: PSpec) => {
 
             // TODO: add sampler spec
-            const samplers = reflect.samplers.map((element,i):Resource => ({
+            const samplers = spec.defs.reflect.samplers.map((element:any,i:any):Resource => ({
                 binding: element.binding,
                 resource: this.state.device.createSampler({
                     label: element.name,
@@ -380,7 +343,7 @@ export class PContext {
             return samplers;
         }
 
-        const createTextures = (spec: PSpec, reflect: WgslReflect) => {
+        const createTextures = (spec: PSpec) => {
 
             const texture = ( image: ImageBitmap, l: string ) => {
 
@@ -400,10 +363,10 @@ export class PContext {
                 return texture.createView( { format: "rgba8unorm" , label: l});
             }
 
-            const textures = reflect.textures.map((element,i): Texture => {
-                const tex = spec.textures ? spec.textures.find( e => e.name === element.name) : undefined;
-                if (!tex) throw new Error(`Texture spec for ${element.name} is undefined`);
-                if (!tex.data) throw new Error(`Texture data for ${element.name} is undefined`);
+            const textures = spec.defs.reflect.textures.map((element:any,i:any): Texture => {
+                const tex = spec.textures ? spec.textures.find( e => e.name === element.node.name) : undefined;
+                if (!tex) throw new Error(`Texture spec for ${element.node.name} is undefined`);
+                if (!tex.data) throw new Error(`Texture data for ${element.node.name} is undefined`);
                 const resource:Texture = tex.data instanceof HTMLVideoElement ? 
                     { 
                         binding: element.binding,
@@ -483,9 +446,9 @@ export class PContext {
             return bindGroupLayout;
         }
 
-        const createBindings = (spec:PSpec, resources:Resource[], bindGroupLayout: GPUBindGroupLayout, reflect:WgslReflect) => {
+        const createBindings = (spec:PSpec, resources:Resource[], bindGroupLayout: GPUBindGroupLayout) => {
             // only have a single bind group for now
-            const resbinding = new Array(reflect.getBindGroups()[0].length);
+            const resbinding = new Array(spec.defs.bindGroupLength);
     
             resources.forEach((element: Resource) => {
                 resbinding[element.binding] = element.resource;
@@ -550,7 +513,7 @@ export class PContext {
             });
         }
 
-        const createComputePipelines = (shaderModule: GPUShaderModule, pipelineLayout:GPUPipelineLayout, reflect: WgslReflect, wgslSpec: PSpec): ComputeGroupPipeline => {
+        const createComputePipelines = (shaderModule: GPUShaderModule, pipelineLayout:GPUPipelineLayout, spec: PSpec): ComputeGroupPipeline => {
             const pipelines: Compute[] = [];
 
             // we must have a computeGrouCount that is a multiple of the bindings groups
@@ -561,10 +524,10 @@ export class PContext {
                 return cgc > 1 ? cgc + (gc - ((cgc-2) % gc) - 1) : 1;
             }
 
-            const compute = (name: string)  => wgslSpec.computes ? wgslSpec.computes.find( e => e.name === name) : undefined;
+            const compute = (name: string)  => spec.computes ? spec.computes.find( e => e.name === name) : undefined;
 
-            for( let i = 0; i< reflect.entry!.compute.length; i++) {
-                const entryPoint = reflect.entry?.compute[i].node.name;
+            for( let i = 0; i< spec.defs.reflect.entry!.compute.length; i++) {
+                const entryPoint = spec.defs.reflect.entry?.compute[i].node.name;
                 const c = compute(entryPoint);
                 if (!c) throw new Error(`Spec for compute ${entryPoint} not found!`);
 
@@ -586,21 +549,21 @@ export class PContext {
 
             return {
                 computeGroup: pipelines,
-                computeGroupCount: computeGC(wgslSpec)
+                computeGroupCount: computeGC(spec)
             };
         }
 
-        const createRenderPipeline = (shaderModule: GPUShaderModule, pipelineLayout:GPUPipelineLayout, reflect: WgslReflect) => {            
+        const createRenderPipeline = (shaderModule: GPUShaderModule, pipelineLayout:GPUPipelineLayout, spec: PSpec) => {            
             const render = 
-                reflect.entry?.vertex && 
-                reflect.entry?.fragment && 
-                reflect.entry?.vertex.length > 0 && 
-                reflect.entry?.fragment.length > 0;  
+                spec.defs.reflect.entry?.vertex && 
+                spec.defs.reflect.entry?.fragment && 
+                spec.defs.reflect.entry?.vertex.length > 0 && 
+                spec.defs.reflect.entry?.fragment.length > 0;  
 
             if (!render) return undefined;
 
-            const vertexEntryPoint = reflect.entry?.vertex[0].node.name;
-            const fragmentEntryPoint = reflect.entry?.fragment[0].node.name;
+            const vertexEntryPoint = spec.defs.reflect.entry?.vertex[0].node.name;
+            const fragmentEntryPoint = spec.defs.reflect.entry?.fragment[0].node.name;
 
             return this.state.device.createRenderPipeline({
                 label: "Render pipeline",
@@ -620,26 +583,25 @@ export class PContext {
             });
         }
 
-        const wgslSpec = spec();
-        const reflect = new WgslReflect(wgslSpec.code);
-        //console.log(reflect)
-        const defs = wgslDefs(reflect);
+
+        const wgslSpec = spec(this.state.canvas.width, this.state.canvas.height);
+        //console.log(wgslSpec)
 
         const shaderModule = createShaderModule(wgslSpec);
-        const geometry = createGeometry(wgslSpec, reflect);
-        const uniforms = createUniforms(wgslSpec, defs);
-        const storages = createStorage(wgslSpec, defs);
-        const samplers = createSamplers(wgslSpec, reflect);
-        const textures = createTextures(wgslSpec, reflect);
+        const geometry = createGeometry(wgslSpec);
+        const uniforms = createUniforms(wgslSpec);
+        const storages = createStorage(wgslSpec);
+        const samplers = createSamplers(wgslSpec);
+        const textures = createTextures(wgslSpec);
 
         const resources = [...uniforms, ...storages.storages, ...samplers, ...textures];
         
         const bindGroupLayout = createBindGroupLayout(resources);
         const pipelineLayout = createPipelineLayout(bindGroupLayout);
-        const bindings = createBindings(wgslSpec, resources, bindGroupLayout, reflect);
+        const bindings = createBindings(wgslSpec, resources, bindGroupLayout);
         
-        const renderPipeline = createRenderPipeline(shaderModule, pipelineLayout, reflect);
-        const computePipelines = createComputePipelines(shaderModule, pipelineLayout, reflect, wgslSpec);
+        const renderPipeline = createRenderPipeline(shaderModule, pipelineLayout, wgslSpec);
+        const computePipelines = createComputePipelines(shaderModule, pipelineLayout, wgslSpec);
         
         
         return new PContext({
@@ -791,25 +753,26 @@ export class PContext {
         const mouse: Array<number> = [0,0,0,0];
         const resolution: Array<number> = [0,0];
         const aspectRatio: Array<number> = [1,1];
+        resolution[0] = canvas.width;
+        resolution[1] = canvas.height;
+        const factor = resolution[0] < resolution[1] ? resolution[0] : resolution[1];
+        aspectRatio[0] = resolution[0] / factor;
+        aspectRatio[1] = resolution[1] / factor;
     
-        const observer = new ResizeObserver((entries) => {
-            canvas.width = entries[0].target.clientWidth * devicePixelRatio;
-            canvas.height = entries[0].target.clientWidth * devicePixelRatio;
-            //this.state.canvas.width = entries[0].devicePixelContentBoxSize[0].inlineSize;
-            //this.state.canvas.height = entries[0].devicePixelContentBoxSize[0].blockSize;
-            resolution[0] = entries[0].target.clientWidth;
-            resolution[1] = entries[0].target.clientHeight;
-            const factor = resolution[0] > resolution[1] ? resolution[0] : resolution[1];
-            aspectRatio[0] = resolution[0] / factor;
-            aspectRatio[1] = resolution[1] / factor;
-        });
-    
-        observer.observe(canvas)
         canvas.addEventListener('mousemove', (event:MouseEvent) => {
             mouse[2] = mouse[0]; // last position x
             mouse[3] = mouse[1]; // last position y
-            mouse[0] = event.offsetX/canvas.clientWidth;
-            mouse[1] = event.offsetY/canvas.clientHeight;
+            let rect = canvas.getBoundingClientRect();
+            mouse[0] = (event.clientX - rect.left) / rect.width;
+            mouse[1] = (event.clientY - rect.top) / rect.height;
+        });
+        canvas.addEventListener('touchmove', (event:TouchEvent) => {
+            mouse[2] = mouse[0]; // last position x
+            mouse[3] = mouse[1]; // last position y
+            const touch = event.touches[0];
+            let rect = canvas.getBoundingClientRect();
+            mouse[0] = (touch.clientX - rect.left) / rect.width;
+            mouse[1] = (touch.clientY - rect.top) / rect.height;
         });
     
         const fps = () => {

@@ -12,6 +12,7 @@ struct Uni {
     size: vec2<f32>
 }
 
+
 @group(0) @binding(0) var<uniform> uni: Uni;
 @group(0) @binding(4) var<uniform> sys: Sys;
 @group(0) @binding(1) var<storage> current: array<vec2<f32>>;
@@ -30,13 +31,14 @@ struct VertexOutput {
 }
 
 fn getIndex(cell : vec2<f32>) -> u32 { 
-    return u32( (cell.y%uni.size.y) * uni.size.y + (cell.x % uni.size.x) );
+    let c = (cell + uni.size) % uni.size;
+    return u32( c.y * uni.size.x + c.x );
 }
 
 @vertex
 fn vertexMain(input : VertexInput) -> VertexOutput {
     let i = f32(input.instance); 
-    let cell = vec2f(i % uni.size.x,  floor(i / uni.size.y) );
+    let cell = vec2f(i % uni.size.x,  floor(i / uni.size.x) );
 
     let c1 = current[getIndex( vec2(cell.x + input.pos.x ,  cell.y) )];
     let c2 = current[getIndex( vec2(cell.x + input.pos.x, cell.y - input.pos.y) )];
@@ -46,13 +48,15 @@ fn vertexMain(input : VertexInput) -> VertexOutput {
     // multisample the state to reduce aliasing
     let state = (c1 + c2 + c3 + c4) / 4.0;
 
+    let cellSize = 2. / uni.size.xy ;
     // The cell(0,0) is a the top left corner of the screen.
     // The cell(uni.size.x,uni.size.y) is a the bottom right corner of the screen.
-    let cellOffset = vec2(cell.x, uni.size.y - cell.y - 1.) / uni.size * 2.; 
-    let cellPos = (input.pos + 1.) / uni.size - 1. + cellOffset;
+    let cellOffset =  vec2(cell.x, uni.size.y - 1. - cell.y) * cellSize + (cellSize * .5) ;
+    // input.pos is in the range [-1,1]...[1,1] and it's the same coord system as the uv of the screen
+    let cellPos =  (input.pos  / uni.size.xy) + cellOffset - 1.; 
 
     var output: VertexOutput;
-    output.pos = vec4f(vec2(cellPos / sys.aspect), 0., 1.); //[0.1,0.1]...[0.9,0.9] cell vertex positions
+    output.pos = vec4f(vec2(cellPos), 0., 1.); //[0.1,0.1]...[0.9,0.9] cell vertex positions
     output.uv = vec2f(input.pos.xy); // [-1,-1]...[1,1]
     output.cell = cell; // [0,0],[1,1] ... [size.x, size.y]
     output.state = state; // the current state
@@ -66,12 +70,17 @@ fn fragmentMain( input: VertexOutput) -> @location(0) vec4f {
     let v = input.state;
     let color:vec3f = hsv2rgb(vec3f( abs(v.y-v.x)  , 1., pow(v.y + 0.001 ,.5) ));
 
+    //return vec4f( 1.0,0.,0.,1.); //vec4f( tosRGB(color), 1.;
+
     return vec4f( tosRGB(color), 1.);
 }      
 
 
 @compute @workgroup_size(8, 8)
 fn computeMain(@builtin(global_invocation_id) cell: vec3u) {
+
+    // keep the simulation in the range [0,size]
+    if (cell.x >= u32(uni.size.x) || cell.y >= u32(uni.size.y)) { return; }
 
     // a non exhaustive list of the type of patterns we can create 
     // the first controls the activation, the second the inhibition
@@ -86,22 +95,18 @@ fn computeMain(@builtin(global_invocation_id) cell: vec3u) {
         vec2(0.039, 0.058), // holes
         vec2(0.022, 0.0610) // microbes
     );
+    let pos = vec2u(floor(sys.mouse.xy * uni.size));
 
     // we divide the screen in 9 areas and we use 
     // the mouse position to select the pattern
     let m = floor(sys.mouse.xy * 3);
     let ai = params[u32(m.y) * 3u + u32(m.x)];
-
     // calculate the value and store it in the next buffer
     let v = rd( cell.xy, vec2u(uni.size), ai.x, ai.y);
-    next[cell.y * u32(uni.size.y) + cell.x] = clamp(v, vec2(0.), vec2(1.));
-
-    // scale mouse by aspect ratio. We crop on the short side, so we must compensate for mouse coordinates
-    let half = select( vec2((1. - sys.aspect.x) * .5, 0.), vec2(0.,(1. - sys.aspect.y) * .5), sys.aspect.x > sys.aspect.y);
+    next[cell.y * u32(uni.size.x) + cell.x] = clamp(v, vec2(0.), vec2(1.));
 
     // we add a small amount of B in the mouse position
-    let pos = vec2u(floor(( half + (sys.mouse.xy * sys.aspect)) * uni.size));
-    let index = pos.y * u32(uni.size.y) + pos.x;
+    let index = pos.y * u32(uni.size.x) + pos.x;
     next[index].y = 1.;
 
 }
@@ -133,7 +138,7 @@ fn conv3x3( kernel: array<f32,9>, cell: vec2<u32>, size: vec2<u32>) -> vec2f {
     
     for(var i = 0u; i < 9u; i++) {
         let offset =  (vec2u( (i / 3u) - 1u , (i % 3u) - 1u ) + cell + size) % size;
-        acc += (kernel[i] * current[offset.y * size.y + offset.x]);
+        acc += (kernel[i] * current[offset.y * size.x + offset.x]);
     } 
     
     return acc;
@@ -145,7 +150,7 @@ fn rd( cell: vec2<u32>, size: vec2<u32>, feed:f32, decay:f32) -> vec2f {
     // convolution with a Laplace kernel with a 9 point stencil
     let laplace = conv3x3(K_LAPLACE9, cell, size);
     // chemicals A and B are stored in the x and y component of buffer
-    let ab = current[ cell.y * size.y + cell.x];
+    let ab = current[ cell.y * size.x + cell.x];
 
     // calculate the dA and dB
     let da = ((.2097 * laplace.x) - (ab.x * ab.y * ab.y)) + (feed * (1. - ab.x));

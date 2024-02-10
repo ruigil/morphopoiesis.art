@@ -15,6 +15,7 @@ struct Particle {
 }
 
 struct SimParams {
+  boids : u32,
   deltaT : f32,
   scale: f32,
   forces : vec4<f32>,
@@ -70,6 +71,8 @@ fn fragMain(input : VertexOutput) -> @location(0) vec4<f32> {
 @compute @workgroup_size(64)
 fn computeMain(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
   var index = GlobalInvocationID.x;
+    // keep the simulation in the range [0,size]
+  if (index >= u32(params.boids)) { return; }
 
   var vPos = particlesA[index].pos;
   var vVel = particlesA[index].vel;

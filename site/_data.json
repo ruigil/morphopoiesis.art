@@ -7,5 +7,87 @@
     "keywords": ["morpho","poiesis","generative","art","emergence","information","computation","algorithms","webgpu","wgsl"],
     "lang": "en",
     "generator": true  
-  }
+  },
+  "shaders": [
+    {
+      "id" : "pathtracer",
+      "title": "Path Tracer",
+      "description": "A simple path tracer",
+      "image": "/assets/img/fluid",
+      "tags": ["pathtracer","raymarching"],
+      "license" : "cc-by",
+      "sketch" : false,
+      "debug" : true
+    },
+    {
+      "id" : "fluid",
+      "title": "Fluid",
+      "description": "Fluid simulator. You can play with your mouse to add color.",
+      "image": "/assets/img/fluid",
+      "tags": ["fluid","fields","mouse"],
+      "license" : "cc-by",
+      "sketch" : true,
+      "debug" : false
+    },
+    {
+      "id" : "dla",
+      "title": "DLA",
+      "description": "Diffuse Limited Aggregation, to create an Ice structure. You can play with your mouse to melt the ice.",
+      "image": "/assets/img/dla",
+      "tags": ["dla","particles","fields","mouse"],
+      "license" : "cc-by",
+      "sketch" : true,
+      "debug" : false
+    },
+    {
+      "id" : "physarum",
+      "title": "Physarum",
+      "description": "A slime mold building a transport network. You can play with your mouse to erase the chemical field.",
+      "image": "/assets/img/physarum",
+      "tags": ["physarum","particles","fields","mouse","network"],
+      "license" : "cc-by",
+      "sketch" : true,
+      "debug" : true
+    },
+    {
+      "id" : "boids",
+      "title": "Boids",
+      "description": "Android birds trying to sync their movement and blinking. You can play with your mouse to attract them.",
+      "image": "/assets/img/boids",
+      "tags": ["boids","particles","mouse"],
+      "license" : "cc-by",
+      "sketch" : true,
+      "debug" : false
+    },
+    {
+      "id" : "rd",
+      "title": "Reaction Diffusion",
+      "description": "Move your mouse to explore the generation of different patterns.",
+      "image": "/assets/img/rd",
+      "tags": ["cellular automata","reaction diffusion", "mouse"],
+      "license" : "cc-by",
+      "sketch" : true,
+      "debug" : true
+    },
+    {
+      "id" : "gol",
+      "title": "Game of Life",
+      "description": "Conway's Game of Life",
+      "image": "/assets/img/gol",
+      "tags": ["cellular automata", "life", "mouse"],
+      "license" : "cc-by",
+      "sketch" : true,
+      "debug" : true
+    },
+    {
+      "id": "colorIFS",
+      "title": "Color IFS",
+      "description": "A simple colorized IFS fractal",
+      "image": "/assets/img/color-ifs",
+      "tags": ["fractal", "ifs","mouse"],
+      "license" : "cc-by-nc-nd",
+      "sketch" : true,
+      "debug" : false
+    }
+  ]
 }

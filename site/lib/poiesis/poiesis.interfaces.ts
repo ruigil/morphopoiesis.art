@@ -8,7 +8,7 @@ export interface PoiesisState {
     pipelines?: Pipelines;
     storages?: StorageTypes;
     clearColor?: {r:number,g:number,b:number,a:number};
-    spec?: () => PSpec;
+    spec?: (w:number,h:number) => PSpec;
     wgslSpec?: PSpec
     bufferListeners?: Array<BufferListener>;
 }
@@ -104,6 +104,7 @@ export interface PSpec {
     computeGroupCount?: number;
     clearColor?: { r:number, g:number, b:number, a:number}
     bindings?: Array<Array<number>>;
+    defs?: any;
 }
 
 

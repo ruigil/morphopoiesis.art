@@ -43,6 +43,14 @@ export const cube = (x: number) => {
 export const loadWGSL = async (url: string) => {
     return await (await fetch(url)).text()
 }
+export const loadJSON = async (url: string) => {
+    return await (await fetch(url)).json();
+}
+
+export const scaleAspect = (w:number,h:number,scale:number) => {
+    const cellSize = Math.min(w,h) / scale;
+    return { x: Math.floor(w / cellSize + .5) , y: Math.floor(h / cellSize + .5) };
+}
 
 export const loadTexture = async (url: string) => {
     const response = await fetch(new URL(url, import.meta.url).toString());

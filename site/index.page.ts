@@ -1,4 +1,4 @@
-import { html } from "./utilities.ts";
+import { html } from "./lib/utilities.ts";
 
 export const title = "Home";
 export const motto = "studies on the synthesis of form";
@@ -10,7 +10,7 @@ const post = (data: Lume.Data | undefined, { date }: Lume.Helpers) => {
     <div class="rounded border w-full p-4 panel visible">
       <div class="flex flex-wrap gap-4">
         <div class="flex-start">
-          <img src="${data!.header}-small.webp" class="w-40 h-40 rounded-lg m-0" alt="${data!.title}">
+          <img src=".${data!.header}-small.webp" class="w-40 h-40 rounded-lg m-0" alt="${data!.title}">
         </div>
         <div class="flex flex-col gap-3 max-w-md">
           <div class="text-2xl"><a href="${data!.url}">${data!.title}</a></div>
@@ -76,6 +76,6 @@ export default ({ search }: Lume.Data, helpers: Lume.Helpers): string => {
         z-index: 5;
       }
     </style>
-    <script type="module" src="/assets/js/index.js" defer></script>
+    <script type="module" src="./assets/js/index.js" defer></script>
   `;
 };

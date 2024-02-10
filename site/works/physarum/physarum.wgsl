@@ -41,16 +41,18 @@ struct VertexOutput {
 fn vertMain( input: VertexInput) -> VertexOutput {
   
     let i = f32(input.instance); 
-    let cell = vec2f(i % params.size.x, floor(i / params.size.y) );
+    let cell = vec2f(i % params.size.x, floor(i / params.size.x) );
     let state = vec2<f32>(trailMapA[input.instance]);
 
+    let cellSize = 2. / params.size.xy ;
     // The cell(0,0) is a the top left corner of the screen.
-    // The cell(size.x,size.y) is a the bottom right corner of the screen.
-    let cellOffset = vec2(cell.x, params.size.y - cell.y - 1.) / params.size * 2.; 
-    let cellPos = (input.pos + 1.) / params.size - 1. + cellOffset;
+    // The cell(params.size.x,params.size.y) is a the bottom right corner of the screen.
+    let cellOffset =  vec2(cell.x, params.size.y - 1. - cell.y) * cellSize + (cellSize * .5) ;
+    // input.pos is in the range [-1,1]...[1,1] and it's the same coord system as the uv of the screen
+    let cellPos =  (input.pos  / params.size.xy) + cellOffset - 1.; 
 
     var output: VertexOutput;
-    output.pos = vec4f(cellPos / sys.aspect, 0., 1.);
+    output.pos = vec4f(cellPos, 0., 1.);
     output.state = state;
     return output;
 }
@@ -64,20 +66,21 @@ fn fragMain(input : VertexOutput) -> @location(0) vec4<f32> {
 
 @compute @workgroup_size(8, 8)
 fn computeTrailmap(@builtin(global_invocation_id) cell : vec3<u32>) {
+  // keep the simulation in the range [0,size]
+  if (cell.x >= u32(params.size.x) || cell.y >= u32(params.size.y)) { return; }
 
-  let m = mouseAspectRatio();
   // calculate a black hole with the mouse to apply to the trailmap
-  let bh =  1. - smoothstep( 0., .2, (length((m * params.size) - vec2<f32>(cell.xy)) / params.size.x * 2.) ) ;
+  let bh =  1. - smoothstep( 0., .2, (length((sys.mouse.xy * params.size) - vec2<f32>(cell.xy)) / params.size.x * 2.) ) ;
 
   // we apply a gaussian blur to simulate diffusion of the trailmap values
-  let value = conv3x3(K_GAUSSIAN_BLUR, vec2u(cell.xy), vec2u(params.size.xy)) ; 
+  let value = conv3x3(K_GAUSSIAN_BLUR, cell.xy, vec2u(params.size.xy)) ; 
   let previous = trailMapA[ cell.x + cell.y * u32(params.size.x) ].y; // previous pixel occupancy by particle
   trailMapB[ cell.x + cell.y * u32(params.size.x) ] = vec2(saturate(value * params.evaporation - bh), previous);
 }
 
 
 fn sense(pos: vec2<f32>, angle: f32) -> f32 {
-  let sensor = (vec2<f32>(cos(angle), sin(angle)) * params.sd) / (params.size * .5);
+  let sensor = (vec2<f32>(cos(angle), sin(angle)) * params.sd) / params.size;
   let index = vec2<u32>( floor( ((pos + sensor + 1.) * .5) * (params.size))) % vec2<u32>(params.size);
   return trailMapA[ index.y * u32(params.size.x) + index.x ].x;
 }
@@ -94,7 +97,7 @@ fn computeAgents(@builtin(global_invocation_id) id : vec3<u32>) {
     var pos = agent.pos;
 
     let angle = atan2(dir.y, dir.x);
-    
+
     let sf = sense(pos, angle);
     let sl = sense(pos, angle + params.sa );
     let sr = sense(pos, angle - params.sa ) ;
@@ -124,21 +127,20 @@ fn computeAgents(@builtin(global_invocation_id) id : vec3<u32>) {
       turn = vec2<f32>(dir.yx) * p * turnSpeed;
     }
 
-    // update velocity and position      
-    let vel = normalize(dir + turn) / (params.size * .5);
+    // update velocity and position
+    // pos goes from -1 to 1 which means that we have distance = 2.
+    // if we want to move 1 pixel we need to divide by the half the size of the simulation to get the correct maximum velocity
+    // but we must choose the minimum size to avoid horizontal or vertical being different ratios
+    let vel = normalize(dir + turn) / (min(params.size.x, params.size.y) * .5);
     agents[i].vel = vel;
     pos += vel;
     
-    //wrap around boundary condition
-    if (pos.x < -1.0) { pos.x += 2.0; }
-    if (pos.x > 1.0) { pos.x -= 2.0; }
-    if (pos.y < -1.0) { pos.y += 2.0; }
-    if (pos.y > 1.0) { pos.y -= 2.0; }
+    //wrap around boundary condition [-1,1]
+    pos = fract( (pos + 1.) * .5) * 2. - 1.;
 
-
-    let next = vec2<u32>( floor( (pos + 1.)  * params.size * .5) );
-    let current = vec2<u32>( floor( (agents[i].pos + 1.)  * params.size * .5) );
-
+    // calculate the grid indexes for the current and next position
+    let next = vec2<u32>( floor( (pos + 1.)  * .5 * params.size ) );
+    let current = vec2<u32>( floor( (agents[i].pos + 1.)  * .5 * params.size) );
 
     let nextPos = trailMapA[ next.y * u32(params.size.x) + next.x ];
     // if the next position is free move to it, only one particle per pixel.
@@ -167,16 +169,10 @@ fn conv3x3( kernel: array<f32,9>, cell: vec2<u32>, size: vec2<u32>) -> f32 {
     for(var i = 0u; i < 9u; i++) {
         let offset =  (vec2u( (i / 3u) - 1u , (i % 3u) - 1u ) + cell + size) % size;
         // the  buffer can't be passed into the function
-        acc += kernel[i] * trailMapA[offset.y * size.y + offset.x].x;
+        acc += kernel[i] * trailMapA[offset.y * size.x + offset.x].x;
     } 
     
     return acc;
-}
-
-fn mouseAspectRatio() -> vec2<f32> {
-    // scale mouse by aspect ratio. We crop on the short side, so we must compensate for mouse coordinates
-    let half = select( vec2((1. - sys.aspect.x) * .5, 0.), vec2(0.,(1. - sys.aspect.y) * .5), sys.aspect.x > sys.aspect.y);
-    return half + (sys.mouse.xy * sys.aspect);
 }
 
 // random number between 0 and 1 with 3 seeds and 3 dimensions

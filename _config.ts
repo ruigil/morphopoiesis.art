@@ -12,6 +12,7 @@ import sitemap from "lume/plugins/sitemap.ts";
 import feed from "lume/plugins/feed.ts";
 //import pagefind from "lume/plugins/pagefind.ts";
 import transformImages from "lume/plugins/transform_images.ts";
+import relativeUrls from "lume/plugins/relative_urls.ts";
 
 // config
 const site = lume({
@@ -39,6 +40,7 @@ site.use(metas());
 site.use(katex());
 site.use(codeHighlight());
 //site.use(pagefind());
+site.use(relativeUrls());
 site.use(transformImages());
 site.use(feed({
   output: ["/notes.rss", "/notes.json"],
@@ -58,9 +60,9 @@ site.use(esbuild({
   options: {
     sourcemap: true,     
     bundle: true,
-    splitting: true,
+    splitting: false,
     format: "esm",
-    minify: false,
+    minify: true,
     keepNames: true,
     tsconfigRaw:'{ "compilerOptions": { "experimentalDecorators" : true } }',
     platform: "browser",
