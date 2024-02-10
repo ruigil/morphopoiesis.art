@@ -47,7 +47,7 @@
       "tags": ["physarum","particles","fields","mouse","network"],
       "license" : "cc-by",
       "sketch" : true,
-      "debug" : true
+      "debug" : false
     },
     {
       "id" : "boids",
@@ -67,7 +67,7 @@
       "tags": ["cellular automata","reaction diffusion", "mouse"],
       "license" : "cc-by",
       "sketch" : true,
-      "debug" : true
+      "debug" : false
     },
     {
       "id" : "gol",
@@ -77,7 +77,7 @@
       "tags": ["cellular automata", "life", "mouse"],
       "license" : "cc-by",
       "sketch" : true,
-      "debug" : true
+      "debug" : false
     },
     {
       "id": "colorIFS",
