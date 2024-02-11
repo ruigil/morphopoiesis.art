@@ -11,7 +11,7 @@ export const physarum = async (wgsl:string, json:string) => {
 
         const aspect = { x: size.x / Math.min(size.x, size.y), y: size.y / Math.min(size.x, size.y) }
 
-        const agents = Array(numAgents).fill({}).map(() => {
+        const agents = Array.from({ length: numAgents }, () => {
             const angle = Math.random() * Math.PI * 2;
             const radius = { x: Math.random() * (.2/aspect.x) , y: Math.random() * (.2/aspect.y) };
             return {

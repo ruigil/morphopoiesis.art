@@ -41,8 +41,9 @@ fn vertMain( input: VertexInput) -> VertexOutput {
   
     let i = f32(input.instance); 
     let cell = vec2f(i % params.size.x, floor(i / params.size.x) );
-    let state = iceA[input.instance];
 
+    let state = iceA[input.instance];
+    
     let cellSize = 2. / params.size.xy ;
     // The cell(0,0) is a the top left corner of the screen.
     // The cell(uni.size.x,uni.size.y) is a the bottom right corner of the screen.
@@ -76,46 +77,47 @@ fn computeDrops(@builtin(global_invocation_id) id : vec3<u32>) {
     // keep the simulation in the range [0,size]
     if (i >= u32(params.drops) ) { return; }
 
+    // get the current water drop
     let drop = drops[i];
     var dir = normalize(drop.vel);
     var pos = drop.pos;
 
-    let angle = atan2(dir.y, dir.x);
-
-    // let's make the drops turn a random bit
+    // let's make the water drops turn in a random brownian motion
     let rnd = rnd33(vec3u(i, u32(sys.time), u32(sys.time * 100.)));
     var turn = vec2<f32>(cos( rnd.x * 6.28), sin( rnd.y * 6.28));
 
-    // update velocity and position
+    // calculate the new velocity and position
     // pos goes from -1 to 1 which means that we have distance = 2.
+    // the maximum velocity is 1 pixel per frame, because we need consistency in the interaction with the ice grid
     // if we want to move 1 pixel we need to divide by the half the size of the simulation to get the correct maximum velocity
     // but we must choose the minimum size to avoid horizontal or vertical being different ratios
+    // in summary we have to map [-1,1] to [0,size] while keeping the aspect ratio
     let vel = normalize(dir + turn) / (min(params.size.x, params.size.y) * .5);
-    drops[i].vel = vel;
     pos += vel;
     
-    //wrap around boundary condition [-1,1]
+    //wrap position around boundary condition [-1,1]
     pos = fract( (pos + 1.) * .5) * 2. - 1.;
 
-    let m = (sys.mouse.xy * 2.  - 1.) * sys.aspect;
     // calculate a melting radius with the mouse to apply to the ice
-    let melt = 1. - smoothstep( 0., 0.2,  length( m  - vec2<f32>(drop.pos * sys.aspect) ) );
+    // map the mouse position to [-1,1] and calculate the distance from the drop position, and correct for aspect ratio
+    let melt = 1. - smoothstep( 0., 0.3,  length( ((sys.mouse.xy * 2.  - 1.)  - vec2<f32>(drop.pos)) * sys.aspect ) );
 
-    // current drop position in the ice structure
-    let current = vec2<u32>( floor( ((drop.pos + 1.) * .5) * (params.size)));
+    // current index in the ice structure for the current water drop position
+    let current = vec2<u32>( floor( ((drop.pos + 1.) * .5) * params.size));
     
-    // if we are in the melting radius we melt the ice and move the drop
+    // if we are in the melting radius, melt the frzuen water drops and make them move
     if (melt > 0.) {
         // the melting radius is a probability, so we use a random number to decide if we melt the ice
         let rnd = rnd33(vec3u(u32(sys.time*50.), u32(sys.time * 100.), i));
         // melt the ice and move the drop
         if (rnd.z  < melt ) {
           iceB[ current.y * u32(params.size.x) + current.x ] = 0.;
+          drops[i].vel = vel;
           drops[i].pos = pos;
         }
     } else {
       // else we count frozen neighbours in the ice grid structure
-      var acc = 0.; // accumulator
+      var acc = 0.; // accumulator for the height neighbours of the current drop
       let size = vec2u(params.size);
       for(var i = 0u; i < 9u; i++) {
           let offset =  (vec2u( (i / 3u) - 1u , (i % 3u) - 1u ) + current + size) % size;
@@ -125,12 +127,12 @@ fn computeDrops(@builtin(global_invocation_id) id : vec3<u32>) {
       // if the drop has a frozen neighbour, it freezes too
         iceB[ current.y * size.x + current.x ] = 1.;
       } else {
-      // otherwise it moves 
+        // otherwise it moves 
         drops[i].pos = pos;
+        drops[i].vel = vel;
       }
     }
 }
-
 
 // random number between 0 and 1 with 3 seeds and 3 dimensions
 fn rnd33( seed: vec3u) -> vec3f {

@@ -7,10 +7,10 @@ export const boids = async (wgsl:string, json:string) => {
 
     const spec = ():PSpec => {
         const numBoids = 2000;
-        const boids = Array(numBoids).fill({}).map( (e,i) => ({
+        const boids = Array.from({ length: numBoids }, (e,i) => ({
             pos: [2 * Math.random() - 1, 2 * Math.random() - 1],
             vel: [2 * Math.random() - 1, 2 * Math.random() - 1],
-            pha: 2 * Math.PI * Math.random() 
+            pha: 2 * Math.PI * Math.random()
         }));
 
         return {

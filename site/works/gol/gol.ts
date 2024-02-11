@@ -6,11 +6,9 @@ export const gol = async (wgsl:string, json:string) => {
     const code = await loadWGSL(wgsl);
     const defs = await loadJSON(json);
 
-
     const spec = (w:number,h:number): PSpec => {
         const size = scaleAspect(w,h,128);
-        console.log("size" , size);
-        const current = Array(size.x*size.y).fill(0).map(() => Math.random() > 0.9 ? 1 : 0);
+        const current = Array.from({ length: size.x*size.y }, () => Math.random() > 0.9 ? 1 : 0);
 
         return {
             code: code,

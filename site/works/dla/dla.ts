@@ -6,15 +6,16 @@ export const dla = async (wgsl:string,json:string) => {
     const defs = await loadJSON(json);
 
     const spec = (w:number,h:number):PSpec => {
-        const numParticles = 40000;
+        const numWaterDrops = 70000;
         const size = scaleAspect(w,h,512);
 
-        const particles = Array(numParticles).fill({}).map(() => ({
+        // initialize the water drops with random positions and velocities
+        const waterDrops = Array.from({ length: numWaterDrops }, () => ({
             pos: [2 * Math.random() - 1, 2 * Math.random() - 1],
             vel: [2 * Math.random() - 1, 2 * Math.random() - 1],
         }))
         // initialize the ice with a few nucleation points
-        const ice = Array(size.x * size.y).fill(0).map(() => Math.random() < 0.00001 ? 1 : 0);
+        const ice = Array.from({ length: size.x * size.y }, () => Math.random() < 0.00003 ? 1 : 0);
 
         return {
             code: code,
@@ -29,21 +30,21 @@ export const dla = async (wgsl:string,json:string) => {
             uniforms: {
                 params: {
                     size: [size.x, size.y],
-                    drops: numParticles,
-                    fcolor: [0,255,255],
-                    bcolor: [0,0,0]
+                    drops: numWaterDrops,
+                    fcolor: [0,196,255],
+                    bcolor: [0,0,16]
                 }
             },
             storages: [
-                { name: "drops", size: numParticles , data: particles} ,
+                { name: "drops", size: numWaterDrops , data: waterDrops},
                 { name: "iceA", size: size.x * size.y, data: ice} ,
                 { name: "iceB", size: size.x * size.y, data: ice } 
             ],
             computes: [
                 { name: "computeIce", workgroups: [Math.ceil(size.x / 8), Math.ceil(size.y / 8), 1] },
-                { name: "computeDrops", workgroups: [Math.ceil(numParticles / 64), 1, 1] }
+                { name: "computeDrops", workgroups: [Math.ceil(numWaterDrops / 64), 1, 1] }
             ],
-            computeGroupCount: 5,
+            computeGroupCount: 16,
             bindings: [ [0,1,2,3,4], [0,1,3,2,4] ]
         }
     }
