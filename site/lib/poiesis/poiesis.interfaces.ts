@@ -83,6 +83,21 @@ export interface BufferView {
     update: (buffer: ArrayBuffer) => void;
 }
 
+export interface BufferInfo {
+    name: string,
+    type: string,
+    size: number,
+    group: number,
+    binding: number,
+    access: string,
+    offset: number,
+    isArray: boolean,
+    isStruct: boolean,
+    arrayCount: number,
+    arrayStride: number,
+    members: Record<string,BufferInfo>
+}
+
 export interface BufferListener {
     onRead: (buffer: Array<BufferView>) => void;
 }
@@ -93,8 +108,22 @@ export interface VAttr {
     instances?: number;
 }
 
+export interface Definitions {
+    uniforms: Record<string,BufferInfo>;
+    storages: Record<string,BufferInfo>;
+    samplers: Array<{ name:string, group: number, binding: number}>;
+    textures: Array<{ name:string, group: number, binding: number}>;
+    entries: {
+        vertex: { inputs: Array<{ name:string, location:number, type:string, size:number}>, name:string },
+        fragment: { name:string },
+        computes: Array<{ name:string }>
+    };
+    bindGroupLength: number;
+}
+
 export interface PSpec {
     code: string;
+    defs: Definitions;
     uniforms?: any;
     geometry?: { vertex: VAttr, instance?: VAttr };
     storages?: Array<{ name: string, size: number, data?: Array<any>, read?:boolean, vertex?:boolean, }>;
@@ -104,7 +133,6 @@ export interface PSpec {
     computeGroupCount?: number;
     clearColor?: { r:number, g:number, b:number, a:number}
     bindings?: Array<Array<number>>;
-    defs?: any;
 }
 
 

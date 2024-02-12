@@ -15,10 +15,10 @@ import {
     BufferView,
     ComputeGroupPipeline,
     Controls,
-    FPSListener
+    FPSListener,
+    BufferInfo
 } from "./poiesis.interfaces.ts";
-import { MemberInfo} from "./wgsl-reflect/index.ts";
-import { square} from "./utils.ts";
+import { square } from "./utils.ts";
 
 
 export class PContext {
@@ -60,8 +60,7 @@ export class PContext {
     build( spec : (w:number,h:number) => PSpec ): PContext {
 
         
-        const makeBufferView = (defs:any, size: number = 1): BufferView => {
-        
+        const makeBufferView = (defs:BufferInfo, size: number = 1): BufferView => {
             const buffer = defs.isArray ? new ArrayBuffer(defs.arrayStride * size) : new ArrayBuffer(defs.size);
         
             const ArrayType = (type:string) => {
@@ -72,90 +71,68 @@ export class PContext {
                 }
                 return Uint8Array;
             }
-        
-            const makeView = (isArray:boolean, isStruct: boolean, members:MemberInfo, offset: number, arrayStride:number, arraySize: number, byteSize: number, type: string) => {
-        
-                if (isArray) {
-                    return (new Array(arraySize)).fill(0).map( (e, i):any => makeView(
-                        false, 
-                        isStruct, 
-                        members, 
-                        (i * arrayStride) + offset, // must accumulate offset for arrays in structs
-                        arrayStride, 
-                        arraySize, 
-                        arrayStride, // arrayStride corresponds to the byteSize of the array elements 
-                        type
-                    ));
-                }
-                 else if (isStruct) {
-                    const result:any = {}
-                    for (const [key, value] of Object.entries(members)) {
-                        result[key] = makeView(
-                            value.isArray, 
-                            value.isStruct, 
-                            value.members, 
-                            value.offset + offset,  
-                            value.arrayStride, 
-                            value.arrayCount, 
-                            value.size, 
-                            value.type
-                        );
-                    }    
-                    return result;
+
+            const makeView = (def:BufferInfo):any => {
+                if (def.isArray) {
+                    return Array.from({ length:def.arrayCount },(e:BufferInfo, i:number ) => makeView({
+                        ...def,
+                        isArray: false,
+                        offset: (i * def.arrayStride) + def.offset, // must accumulate offset for arrays in structs
+                        size: def.arrayStride // arrayStride corresponds to the byteSize of the array elements
+                    }));
+                } else if (def.isStruct) {
+                    return Object.fromEntries(
+                        Object.entries(def.members).map( ([key,value]) => 
+                            [key, makeView({ ...value, offset: value.offset + def.offset })] 
+                        )
+                    );
                 } else {
-                    const AT = ArrayType(type);
-                    return new AT(buffer, offset, byteSize / AT.BYTES_PER_ELEMENT);
+                    const AT = ArrayType(def.type);
+                    return new AT(buffer, def.offset, def.size / AT.BYTES_PER_ELEMENT);
                 }
             }
-            // make a view of the buffer, with the definitions passed in
-            const view = makeView(
-                defs.isArray,
-                defs.isStruct,
-                defs.members,
-                0, // starting offset
-                defs.arrayStride, 
-                defs.arrayCount !=0 ? defs.arrayCount : size, // must specify size for dynamic arrays
-                defs.size, // byteSize
-                defs.type
-            );
-                
-            const getViewValue = (isArray:boolean, isStruct: boolean, members: MemberInfo, view:any, size: number) => {
-                if (isArray) {
-                    return (new Array(size)).fill(0).map( (e, i):any => getViewValue(false, isStruct, members, view[i], size));
-                } else if (isStruct) {
-                    const result:any = {}
-                    for (const [key, value] of Object.entries(members)) {
-                        result[key] = getViewValue(value.isArray, value.isStruct, value.members, view[key], value.arrayCount);
-                    }    
-                    return result;
+        
+
+            const getViewValue = (defs:BufferInfo, view:any, size: number):any => {
+                if (defs.isArray) {
+                    return Array.from( {length: size }, (e, i):any => getViewValue({...defs, isArray:false}, view[i], size));
+                } else if (defs.isStruct) {
+                    return Object.fromEntries(
+                        Object.entries(defs.members).map( ([key,value]) => 
+                            [key, getViewValue(value, view[key], value.arrayCount)] 
+                        )
+                    )
                 } else {
                     return view.length > 1 ? Array.from(view) : view[0];
                 }
             }
-        
-            const setViewValue = (isArray:boolean, isStruct: boolean, members: MemberInfo, view:any, size: number, data:any):any => {
-                if (isArray) {
-                    (new Array(size)).fill(0).map( (e, i):any => { if (data && data[i]) setViewValue(false, isStruct, members, view[i], size, data[i] ) } );
-                } else if (isStruct) {
-                    for (const [key, value] of Object.entries(members)) {
-                        if (data[key]) setViewValue(value.isArray, value.isStruct, value.members, view[key], value.arrayCount, data[key]);
-                    }  
+
+            const setViewValue = (defs:BufferInfo, view:any, size: number, data:any) => {
+                if (defs.isArray) {
+                    Array.from({ length: size }, (e, i):any => { if (data && data[i]) setViewValue({...defs, isArray: false}, view[i], size, data[i] ) } );
+                } else if (defs.isStruct) {
+                    Object.entries(defs.members).map( ([key,value]) => {
+                        if (data[key]) setViewValue(value, view[key], value.arrayCount, data[key]);
+                    });
                 } else {
                     data && view.length > 1 ? view.set(data) : view.set([data]);
                 }
             }
-        
+                
             const updateBuffer = (src: ArrayBuffer) => {
                 new Uint8Array(buffer).set(new Uint8Array(src));
             }
-        
+
+            // must specify size for dynamic arrays
+            const view = makeView({...defs, offset: 0, arrayCount: defs.arrayCount !=0 ? defs.arrayCount : size });
+
             return {
                 name: defs.name,
                 buffer: buffer,
-                set: (data:any) => setViewValue(defs.isArray, defs.isStruct, defs.members, view, size, data),
-                get: () => getViewValue(defs.isArray, defs.isStruct, defs.members, view, size),
+                set: (data:any) => setViewValue(defs, view, size, data),
+                get: () => getViewValue(defs, view, size),
                 update: (buffer: ArrayBuffer) => updateBuffer(buffer)
-            };
+            } as BufferView;
         }
 
         const createShaderModule = (spec: PSpec) => {
@@ -172,21 +149,22 @@ export class PContext {
             const buffersLayout:GPUVertexBufferLayout[] = [];
 
             // iterate over the inputs of the vertex shader and create the vertex buffer layout with the attributes passed as parameters
-            const makeLayout = ( step: GPUVertexStepMode, attrs: Array<string> ):GPUVertexBufferLayout => {
+            const makeLayout = ( step: GPUVertexStepMode, attrs: Array<string> ): GPUVertexBufferLayout => {
                 
-                // only does float32 and uint32
-                const type = (format:string,name:string) => `${(format == 'f32' ? 'float32' : 'uint32')}${ name == 'vec2' ? 'x2' : name == 'vec3' ? 'x3' : name == 'vec4' ? 'x4' : ''}`;
+                const format = (type:string,size:number) => {
+                    return `${(type == 'f32' ? 'float32' : 'u32' ? 'uint32' : 'int32' )}x${ size/4 }`
+                };
                 
                 // assume only one vertex shader in the module
-                const inputs = spec.defs.reflect.entry?.vertex[0].inputs;
+                const inputs = spec.defs.entries.vertex.inputs;
                 let stride = 0;
-                const vattrs = inputs.filter( (i:any) => attrs.some( a => a === i.name) && i.locationType === 'location').map( (i:any): GPUVertexAttribute => {                
+                const vattrs = inputs.filter( (i:any) => attrs.includes(i.name) ).map( (i:any): GPUVertexAttribute => {                
                     const attr = {
                         shaderLocation: i.location,
                         offset: stride,
-                        format: type(i.type.format.name, i.type.name) as GPUVertexFormat,
+                        format: format(i.type, i.size) as GPUVertexFormat,
                     } 
-                    stride += (i.type.name == 'vec2' ? 2 : i.type.name == 'vec3' ? 3 : i.type.name == 'vec4' ? 4 : 1) * 4;
+                    stride += i.size;
                     return attr;                    
                 });
                 if (vattrs.length == 0) throw new Error(`Vertex attributes ${attrs} not found`);
@@ -211,8 +189,13 @@ export class PContext {
             let instancesBuffer = undefined;
             if (spec.geometry && spec.geometry.instance) {
                 buffersLayout.push(makeLayout("instance",spec.geometry?.instance.attributes))
-                // if there is data create the vertex buffer
+                // the instance data is separate from the vertex data
+                // the process iterates each vertex, for every instance
+                // we can specify data for each vertex or for each instance.
                 if (spec.geometry.instance.data) {
+                    // TODO: this is expecting an array buffer format and the rest of the spec is expecting a json object
+                    // this is only for instance initialization data, because if we want to change the instance data we must do that
+                    // in a compute shader with vertexStorage and a ping pong mechanism
                     const vertices = new Float32Array(spec.geometry && spec.geometry.instance.data )
 
                     instancesBuffer = this.state.device.createBuffer({
@@ -225,11 +208,10 @@ export class PContext {
             }
 
             const instancesCount = spec.geometry && (spec.geometry.vertex.instances || spec.geometry.instance?.instances || 1);
-            //console.log("buffers layouts",buffersLayout);
-            //console.log(instancesCount);
+
             return {
                 vertexBuffer: vertexBuffer,
-                vertexCount: vertices.length / 2, // only works for the square?
+                vertexCount: vertices.length / 2, // only works for 2d?
                 vertexBufferLayout: buffersLayout,
                 instances: instancesCount,
                 instanceBuffer: instancesBuffer
@@ -241,29 +223,27 @@ export class PContext {
             const uniforms = spec.uniforms || {};
             const uniRessource:Array<Uniform> = [];
 
-            for (const [key, value] of Object.entries(spec.defs.bindings as Record<string,any>)) {
-                if (value.category === "uniform") {
-                    const uniformDef = value;
-                    const uniformView = makeBufferView(uniformDef);
-                    if (uniforms[key]) {
-                        uniformView.set(uniforms[key]);
-                    }
-
-                    const uniformBuffer = this.state.device.createBuffer({
-                        label: "uniforms",
-                        size: uniformView.buffer.byteLength,
-                        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-                    });
-                    this.state.device.queue.writeBuffer(uniformBuffer, 0, uniformView.buffer);
-    
-                    uniRessource.push({
-                        name: uniformDef.name,
-                        view: uniformView,
-                        resource: { buffer: uniformBuffer },
-                        binding: uniformDef.binding,
-                        type: "uniform"
-                    })
+            for (const [key, value] of Object.entries(spec.defs.uniforms as Record<string,BufferInfo>)) {
+                const uniformDef = value;
+                const uniformView = makeBufferView(uniformDef);
+                if (uniforms[key]) {
+                    uniformView.set(uniforms[key]);
                 }
+
+                const uniformBuffer = this.state.device.createBuffer({
+                    label: "uniforms",
+                    size: uniformView.buffer.byteLength,
+                    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+                });
+                this.state.device.queue.writeBuffer(uniformBuffer, 0, uniformView.buffer);
+
+                uniRessource.push({
+                    name: uniformDef.name,
+                    view: uniformView,
+                    resource: { buffer: uniformBuffer },
+                    binding: uniformDef.binding,
+                    type: "uniform"
+                })
             };
 
             return uniRessource
@@ -278,47 +258,45 @@ export class PContext {
                 return spec.storages ? spec.storages.find((element) => element.name === name) : undefined;
             }
 
-            for (const [key,value] of Object.entries(spec.defs.bindings as Record<string,any>)) {
-                if (value.category === "storage") {
-                    const storageDef = value;
-                    const storageSpec = storage(key);
-                    if (!storageSpec) throw new Error(`Storage spec for ${key} not found`);
-                    const storageView = makeBufferView(storageDef,storageSpec.size);
-                    const storageBuffer = this.state.device.createBuffer({
-                        label: `${storageDef.name} storage buffer`,
-                        size: storageView.buffer.byteLength, // number of bytes to allocate
-                        usage:  GPUBufferUsage.STORAGE | 
-                                GPUBufferUsage.COPY_DST | 
-                                (storageSpec.read ? GPUBufferUsage.COPY_SRC : 0) | 
-                                (storageSpec.vertex ? GPUBufferUsage.VERTEX : 0),
-                    });
-                    // if the buffer is marked as read, then we allocate a staging buffer to read the data
-                    if (storageSpec.read) {
-                        readStorage.push({
-                            srcBuffer: storageBuffer,
-                            dstBuffer: this.state.device.createBuffer({
-                                label: `${storageSpec.name} read buffer`,
-                                size: storageView.buffer.byteLength,
-                                usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
-                            }),
-                            view: storageView
-                        });
-                    }
-                    // if the storage buffer is marked as vertex, then we add it to the vertex storages
-                    if (storageSpec.vertex) {
-                        vertexStorage.push({ buffer: storageBuffer });
-                    }
-
-                    if (storageSpec.data) {
-                        storageView.set(storageSpec.data);
-                    }
-                    this.state.device.queue.writeBuffer(storageBuffer, 0, storageView.buffer);
-                    stateStorage.push({
-                        binding: storageDef.binding,
-                        resource: { buffer: storageBuffer },
-                        type: storageDef.access === "read_write" ? "storage" : "read-only-storage"  
+            for (const [key,value] of Object.entries(spec.defs.storages)) {
+                const storageDef = value;
+                const storageSpec = storage(key);
+                if (!storageSpec) throw new Error(`Storage spec for ${key} not found`);
+                const storageView = makeBufferView(storageDef,storageSpec.size);
+                const storageBuffer = this.state.device.createBuffer({
+                    label: `${storageDef.name} storage buffer`,
+                    size: storageView.buffer.byteLength, // number of bytes to allocate
+                    usage:  GPUBufferUsage.STORAGE | 
+                            GPUBufferUsage.COPY_DST | 
+                            (storageSpec.read ? GPUBufferUsage.COPY_SRC : 0) | 
+                            (storageSpec.vertex ? GPUBufferUsage.VERTEX : 0),
+                });
+                // if the buffer is marked as read, then we allocate a staging buffer to read the data
+                if (storageSpec.read) {
+                    readStorage.push({
+                        srcBuffer: storageBuffer,
+                        dstBuffer: this.state.device.createBuffer({
+                            label: `${storageSpec.name} read buffer`,
+                            size: storageView.buffer.byteLength,
+                            usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
+                        }),
+                        view: storageView
                     });
                 }
+                // if the storage buffer is marked as vertex, then we add it to the vertex storages
+                if (storageSpec.vertex) {
+                    vertexStorage.push({ buffer: storageBuffer });
+                }
+
+                if (storageSpec.data) {
+                    storageView.set(storageSpec.data);
+                }
+                this.state.device.queue.writeBuffer(storageBuffer, 0, storageView.buffer);
+                stateStorage.push({
+                    binding: storageDef.binding,
+                    resource: { buffer: storageBuffer },
+                    type: storageDef.access === "read_write" ? "storage" : "read-only-storage"  
+                });
             }
 
             return {
@@ -329,17 +307,16 @@ export class PContext {
         }
 
         const createSamplers = (spec: PSpec) => {
-
             // TODO: add sampler spec
-            const samplers = spec.defs.reflect.samplers.map((element:any,i:any):Resource => ({
-                binding: element.binding,
+            const samplers = spec.defs.samplers.map( sd => ({
+                binding: sd.binding,
                 resource: this.state.device.createSampler({
-                    label: element.name,
+                    label: sd.name,
                     magFilter: 'linear',
                     minFilter: 'linear',
                 }),
                 type: 'sampler'
-            }));
+            }) as Resource);
             return samplers;
         }
 
@@ -363,19 +340,19 @@ export class PContext {
                 return texture.createView( { format: "rgba8unorm" , label: l});
             }
 
-            const textures = spec.defs.reflect.textures.map((element:any,i:any): Texture => {
-                const tex = spec.textures ? spec.textures.find( e => e.name === element.node.name) : undefined;
-                if (!tex) throw new Error(`Texture spec for ${element.node.name} is undefined`);
-                if (!tex.data) throw new Error(`Texture data for ${element.node.name} is undefined`);
+            const textures = spec.defs.textures.map( td => {
+                const tex = spec.textures ? spec.textures.find( e => e.name === td.name) : undefined;
+                if (!tex) throw new Error(`Texture spec for ${td.name} is undefined`);
+                if (!tex.data) throw new Error(`Texture data for ${td.name} is undefined`);
                 const resource:Texture = tex.data instanceof HTMLVideoElement ? 
                     { 
-                        binding: element.binding,
+                        binding: td.binding,
                         resource: this.state.device.importExternalTexture({ source : tex.data }),
                         type: 'external_texture',
                         video: tex.data
                     }:
                     { 
-                        binding: element.binding,
+                        binding: td.binding,
                         resource: texture(tex.data, tex.storage ? 'storage_texture': 'texture'),
                         type: tex.storage ? 'storage_texture': 'texture'
                     };
@@ -388,47 +365,47 @@ export class PContext {
         const createBindGroupLayout = (resources: Resource[]) => {
             const entries:Array<GPUBindGroupLayoutEntry> = [];
 
-            resources.forEach((element,i) => {
-                switch (element.type) {
+            resources.forEach( res => {
+                switch (res.type) {
                     case "uniform": 
                         entries.push({ 
-                            binding: element.binding,
+                            binding: res.binding,
                             visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE, 
-                            buffer: { type: element.type }
+                            buffer: { type: res.type }
                         }); break;;
                     case "storage": 
                         entries.push({ 
-                            binding: element.binding,
+                            binding: res.binding,
                             visibility: GPUShaderStage.COMPUTE, 
-                            buffer: { type: element.type }
+                            buffer: { type: res.type }
                         }); break;;
                     case "read-only-storage": 
                         entries.push({ 
-                            binding: element.binding,
+                            binding: res.binding,
                             visibility: GPUShaderStage.VERTEX | GPUShaderStage.COMPUTE, 
-                            buffer: { type: element.type }
+                            buffer: { type: res.type }
                         }); break;;
                     case "sampler": 
                         entries.push({ 
-                            binding: element.binding,
+                            binding: res.binding,
                             visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE, 
                             sampler: { type: "filtering" }
                         }); break;;
                     case "texture":
                         entries.push({ 
-                            binding: element.binding,
+                            binding: res.binding,
                             visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE, 
                             texture: { viewDimension: "2d" }
                         }); break;;
                     case "storage_texture":
                         entries.push({ 
-                            binding: element.binding,
+                            binding: res.binding,
                             visibility: GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE, 
                             storageTexture: { viewDimension: "2d", format: "rgba8unorm" }
                         }); break;;
                     case "external_texture": 
                         entries.push({ 
-                            binding: element.binding,
+                            binding: res.binding,
                             visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE, 
                             externalTexture: { viewDimension: "2d" }
                         }); break;;
@@ -450,8 +427,8 @@ export class PContext {
             // only have a single bind group for now
             const resbinding = new Array(spec.defs.bindGroupLength);
     
-            resources.forEach((element: Resource) => {
-                resbinding[element.binding] = element.resource;
+            resources.forEach( res => {
+                resbinding[res.binding] = res.resource;
             });
     
             // the definition of bindgroups in the spec doesnt have to match the order of the resources
@@ -526,8 +503,8 @@ export class PContext {
 
             const compute = (name: string)  => spec.computes ? spec.computes.find( e => e.name === name) : undefined;
 
-            for( let i = 0; i< spec.defs.reflect.entry!.compute.length; i++) {
-                const entryPoint = spec.defs.reflect.entry?.compute[i].node.name;
+            for( let i = 0; i< spec.defs.entries.computes.length; i++) {
+                const entryPoint = spec.defs.entries.computes[i].name;
                 const c = compute(entryPoint);
                 if (!c) throw new Error(`Spec for compute ${entryPoint} not found!`);
 
@@ -554,16 +531,11 @@ export class PContext {
         }
 
         const createRenderPipeline = (shaderModule: GPUShaderModule, pipelineLayout:GPUPipelineLayout, spec: PSpec) => {            
-            const render = 
-                spec.defs.reflect.entry?.vertex && 
-                spec.defs.reflect.entry?.fragment && 
-                spec.defs.reflect.entry?.vertex.length > 0 && 
-                spec.defs.reflect.entry?.fragment.length > 0;  
+                 
+            if ( !spec.defs.entries.vertex || !spec.defs.entries.fragment) return undefined;
 
-            if (!render) return undefined;
-
-            const vertexEntryPoint = spec.defs.reflect.entry?.vertex[0].node.name;
-            const fragmentEntryPoint = spec.defs.reflect.entry?.fragment[0].node.name;
+            const vertexEntryPoint = spec.defs.entries.vertex.name;
+            const fragmentEntryPoint = spec.defs.entries.fragment.name;
 
             return this.state.device.createRenderPipeline({
                 label: "Render pipeline",
@@ -666,7 +638,7 @@ export class PContext {
                 if (geometry?.vertexBuffer) pass.setVertexBuffer(0, geometry.vertexBuffer);
     
                 // we must always have two vertex buffers when instancing from storage, because
-                // you cant' have a writing and reading storage vertex at the same time.
+                // you cant' have a writing and reading storage vertex at the same time in the vertex shader
                 if (storages && storages.vertexStorages.length > 0) {
                     pass.setVertexBuffer(1, storages.vertexStorages[bindGroup(frame)].buffer)
                 } else if (geometry?.instanceBuffer) {
