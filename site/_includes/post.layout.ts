@@ -10,6 +10,7 @@ export default (data: Lume.Data, helpers: Lume.Helpers) => {
     </div>
     <main class="container spacing flex flex-col flex-grow h-full gap-8 mx-auto" data-pagefind-body>
     <div class="max-w-4xl mx-auto">
+      <span class="text-small text-gray-500">On <time datetime="${helpers.date(data.date)}">${helpers.date(data.date)}</time>, ${ data.readingInfo.words } words, ${ data.readingInfo.minutes } min read</span>
       ${data.content}
       <div class="py-4 flex flex-wrap gap-4 items-center">
         <sl-icon class="text-3xl" name="tags"></sl-icon>

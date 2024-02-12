@@ -28,6 +28,7 @@ const sketchContent = async (shader: any, data: Lume.Data) => {
     <div id="error" class="full-window"></div>
     ${ shader.debug ? info : '' }
     <canvas id="canvas" class="full-window"></canvas>
+    
     <style>
     .full-window {
         position: fixed;

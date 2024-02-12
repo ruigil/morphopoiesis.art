@@ -40,8 +40,8 @@ const toolbar = ({ search, metas, url }: Lume.Data) => {
     <nav class="navbar-container">
         <div class="navbar">
             <a href="/" class="navbar-logo" aria-label="Return home">
-                <img src="/assets/img/svg/morphopoiesis.svg" width="40" height="40" alt="morphopoiesis logo"/>
-                <span class="text-2xl">${metas?.site}</span>
+                <img src="/assets/img/svg/morphopoiesis.svg" width="50" height="50" alt="morphopoiesis logo"/>
+                <span class="text-3xl">${metas?.site}</span>
             </a>
 
             <ul class="navbar-menu">

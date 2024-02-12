@@ -6,12 +6,23 @@ const script = (shader: any, data: Lume.Data) => {
 
   document.addEventListener('DOMContentLoaded', async (event)  => {
     const canvas = document.querySelector("#canvas");
-
-      ${ shader.debug ?
-        `const fpsSmall = document.querySelector("#fps");
-        const debug = document.querySelector("#debug");
-        ` : ''
+    
+    // Add keypress event listener
+    document.addEventListener('keypress', function(event) {
+      if (event.key === 's') { 
+        let dataUrl = canvas.toDataURL('image/png');
+        let link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = '${shader.id}.png';
+        link.click();
       }
+    });
+
+    ${ shader.debug ?
+    ` const fpsSmall = document.querySelector("#fps");
+      const debug = document.querySelector("#debug");
+        ` : ''
+    }
 
       const context = await PContext.init(canvas);
       const spec = await ${shader.id}('./${shader.id}.wgsl','./${shader.id}.json');

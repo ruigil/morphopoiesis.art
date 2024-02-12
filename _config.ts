@@ -10,9 +10,9 @@ import metas from "lume/plugins/metas.ts";
 import codeHighlight from "lume/plugins/code_highlight.ts";
 import sitemap from "lume/plugins/sitemap.ts";
 import feed from "lume/plugins/feed.ts";
-import pagefind from "lume/plugins/pagefind.ts";
 import transformImages from "lume/plugins/transform_images.ts";
 import relativeUrls from "lume/plugins/relative_urls.ts";
+import readInfo from "lume/plugins/reading_info.ts";
 
 // config
 const site = lume({
@@ -39,7 +39,7 @@ site.use(postcss());
 site.use(metas());
 site.use(katex());
 site.use(codeHighlight());
-//site.use(pagefind());
+site.use(readInfo());
 site.use(relativeUrls());
 site.use(transformImages());
 site.use(feed({
