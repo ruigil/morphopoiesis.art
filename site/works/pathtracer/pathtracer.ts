@@ -6,10 +6,11 @@ export const pathtracer = async (wgsl:string, json:string) => {
     const code = await loadWGSL(wgsl);
     const defs = await loadJSON(json);
 
-    const spec =  async (w:number, h: number):Promise<PSpec> => {
-        const size = scaleAspect(w,h,256); 
-        const empty = new ImageData(size.x, size.y);
-        const emptyBitmap = await createImageBitmap(empty);
+    const size = {x : 512, y: 512 } 
+    const empty = new ImageData(size.x, size.y);
+    const emptyBitmap = await createImageBitmap(empty);
+
+    const spec =  (w:number, h: number):PSpec => {
 
         return {
             code: code,
@@ -29,5 +30,5 @@ export const pathtracer = async (wgsl:string, json:string) => {
         }
     }
 
-    return await spec;
+    return spec;
 }
