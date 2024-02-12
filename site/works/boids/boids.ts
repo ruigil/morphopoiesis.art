@@ -5,6 +5,8 @@ export const boids = async (wgsl:string, json:string) => {
     const code = await loadWGSL(wgsl);
     const defs = await loadJSON(json);
 
+    console.log("defs", defs)
+
     const spec = ():PSpec => {
         const numBoids = 2000;
         const boids = Array.from({ length: numBoids }, (e,i) => ({
@@ -43,7 +45,7 @@ export const boids = async (wgsl:string, json:string) => {
             computes: [
                 { name: "computeMain", workgroups:  [Math.ceil(numBoids / 64), 1, 1] },
             ],
-            bindings: [ [0,4,1,2,3], [0,4,2,1,3] ]
+            bindings: [ [0,4,1,2], [0,4,2,1] ]
         }
     }
 
