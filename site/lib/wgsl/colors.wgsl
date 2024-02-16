@@ -21,3 +21,8 @@ fn toLinear(sRGB:vec3<f32>) -> vec3<f32>{
 
     return vec3(mix(higher, lower, vec3<f32>(cutoff)));
 }
+
+// cheap pallette from https://www.shadertoy.com/view/ll2GD3
+fn pal(domain: f32, frequency: vec3f, phase: vec3f) -> vec3f {
+  return vec3f(0.5) + vec3f(0.5) * cos(6.2830 * (frequency * domain + phase));
+}
