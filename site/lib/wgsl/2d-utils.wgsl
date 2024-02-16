@@ -38,3 +38,25 @@ fn rot2(a: f32) -> mat2x2f { return mat2x2(cos(a),sin(a),-sin(a),cos(a)); }
 //@inversion------------------------------------------------------------------------------------------
 // circle inversion
 fn inversion(uv: vec2f, r:f32) -> vec2f { return (r*r*uv)/vec2(dot(uv,uv)); }
+//@modpolar-------------------------------------------------------------------------------------------
+// returns the reference frame in modular polar form, with a start angle
+fn modpolar(uv: vec2f, n: f32, start: f32) -> vec2f { let angle = atan2(uv.y,uv.x) - start; return uv * rot2( (angle % (6.283 / n)) - angle); }
+//@poly-----------------------------------------------------------------------------------------------
+// generic 'n' side polygon, contained in the circle of radius
+fn poly(uv: vec2f, r : f32, n:f32) -> f32 {  return length(uv) * cos(((atan2(uv.y, -uv.x)+ 3.14)  % (6.28 / n)) - (3.14 / n)) - r; }
+//@rays-----------------------------------------------------------------------------------------------
+// define sdf for angular pattern of 'n' rays around the reference frame. 
+fn rays(uv:vec2f , n: f32) -> f32 { return ((atan2(uv.y,uv.x)+3.14) % (6.283 / n) ) - (3.14 / n); }
+//@spiral---------------------------------------------------------------------------------------------
+// accepts uv as the reference frame and the rotating factor [0.,1.] b, and the thickness of the spiral s
+fn spiral(uv:vec2f, b:f32,  s: f32) -> f32 {
+    let l = length(uv);
+    let a = atan2(uv.y,-uv.x);
+    
+    let n = select(0.,((log(l)/b) - a) / 6.284, l != 0.);
+    
+    let l1 = exp( b * (a + floor(n) * 6.284));
+    let l2 = exp( b * (a + ceil(n) * 6.284));
+    
+    return min( abs(l1 - l) , abs(l2 - l)  ) - s;
+}
