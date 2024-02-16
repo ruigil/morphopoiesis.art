@@ -1,6 +1,4 @@
-// This work is licensed under CC BY 4.0 
-// https://creativecommons.org/licenses/by/4.0/
-
+// variation of: https://glslsandbox.com/e#29611.0
 struct Sys {
     time: f32,
     frame: u32,
