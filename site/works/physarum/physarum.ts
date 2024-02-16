@@ -1,9 +1,6 @@
-import { PSpec, loadWGSL, loadJSON, square, scaleAspect } from "../../lib/poiesis/index.ts";
+import { PSpec, Definitions, square, scaleAspect } from "../../lib/poiesis/index.ts";
 
-export const physarum = async (wgsl:string, json:string) => {
-
-    const code = await loadWGSL(wgsl);
-    const defs = await loadJSON(json);
+export const physarum = async (code:string, defs:Definitions) => {
 
     const spec = (w:number,h:number):PSpec => {
         const numAgents = 10000;

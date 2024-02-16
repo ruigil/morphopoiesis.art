@@ -1,10 +1,6 @@
-import { PSpec, loadWGSL, loadJSON } from "../../lib/poiesis/index.ts";
-import { scaleAspect } from "../../lib/poiesis/utils.ts";
+import { PSpec, Definitions } from "../../lib/poiesis/index.ts";
 
-export const pathtracer = async (wgsl:string, json:string) => {
-
-    const code = await loadWGSL(wgsl);
-    const defs = await loadJSON(json);
+export const pathtracer = async (code:string, defs:Definitions) => {
 
     const size = {x : 512, y: 512 } 
     const empty = new ImageData(size.x, size.y);

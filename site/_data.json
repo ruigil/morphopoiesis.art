@@ -11,6 +11,28 @@
   },
   "shaders": [
     {
+      "id" : "inversion",
+      "title": "Inversion",
+      "description": "A circle inversion",
+      "image": "/assets/img/inversion",
+      "tags": ["inversion","fractal"],
+      "license" : "cc-by-nc-nd",
+      "sketch" : false,
+      "debug" : true,
+      "fx": true
+    },
+    {
+      "id" : "ifx",
+      "title": "IFX",
+      "description": "A simple iterative fractal explorer",
+      "image": "/assets/img/ifx",
+      "tags": ["ifs","fractal"],
+      "license" : "cc-by-nc-nd",
+      "sketch" : false,
+      "debug" : true,
+      "fx": true
+    },
+    {
       "id" : "pathtracer",
       "title": "Path Tracer",
       "description": "A simple path tracer",

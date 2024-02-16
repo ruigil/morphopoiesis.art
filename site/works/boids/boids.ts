@@ -1,11 +1,6 @@
-import { PSpec, loadWGSL, loadJSON, triangle } from "../../lib/poiesis/index.ts";
+import { PSpec, Definitions, triangle } from "../../lib/poiesis/index.ts";
 
-export const boids = async (wgsl:string, json:string) => {
-
-    const code = await loadWGSL(wgsl);
-    const defs = await loadJSON(json);
-
-    console.log("defs", defs)
+export const boids = async (code:string, defs:Definitions) => {
 
     const spec = ():PSpec => {
         const numBoids = 2000;

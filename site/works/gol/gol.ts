@@ -1,10 +1,7 @@
-import { PSpec, loadWGSL, loadJSON, square, scaleAspect } from "../../lib/poiesis/index.ts";
+import { PSpec, Definitions, square, scaleAspect } from "../../lib/poiesis/index.ts";
 
 
-export const gol = async (wgsl:string, json:string) => {
-
-    const code = await loadWGSL(wgsl);
-    const defs = await loadJSON(json);
+export const gol = async (code:string, defs:Definitions) => {
 
     const spec = (w:number,h:number): PSpec => {
         const size = scaleAspect(w,h,128);

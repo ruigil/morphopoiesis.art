@@ -42,6 +42,7 @@ const sketchContent = async (shader: any, data: Lume.Data) => {
         flex-direction: column;
     }
     </style>
+    ${ shader.fx ? '<script src="./fxhash.min.js"></script>' : '' }
     <script type="module" src="index.js"></script>
   `;
 }

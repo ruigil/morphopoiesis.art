@@ -23,9 +23,13 @@ const script = (shader: any, data: Lume.Data) => {
       const debug = document.querySelector("#debug");
         ` : ''
     }
-
       const context = await PContext.init(canvas);
-      const spec = await ${shader.id}('./${shader.id}.wgsl','./${shader.id}.json');
+      const fx = ('$fx' in window) ? $fx : undefined;
+    
+      const code = await (await fetch('./${shader.id}.wgsl')).text();
+      const defs = await (await fetch('./${shader.id}.json')).json();
+  
+      const spec = await ${shader.id}(code,defs, fx);
 
       const observer = new ResizeObserver(async (entries) => {
         canvas.width = entries[0].target.clientWidth * devicePixelRatio;

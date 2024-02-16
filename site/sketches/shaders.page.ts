@@ -65,7 +65,9 @@ const shaderContent = async (shader: any, data: Lume.Data) => {
         import { ${shader.id} } from '../../works/${shader.id}/${shader.id}.js';
         
         document.addEventListener('DOMContentLoaded', async (event)  => {
-            player( await ${shader.id}('../../works/${shader.id}/${shader.id}.wgsl','../../works/${shader.id}/${shader.id}.json') );
+          const code = await (await fetch('../../works/${shader.id}/${shader.id}.wgsl')).text();
+          const defs = await (await fetch('../../works/${shader.id}/${shader.id}.json')).json();
+          player( await ${shader.id}(code,defs) );
         });
     </script>
   `;
