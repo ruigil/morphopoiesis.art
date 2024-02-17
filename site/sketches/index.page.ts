@@ -25,7 +25,7 @@ export default ({ shaders, comp }: Lume.Data ) : string => {
                 <sl-card class="card-overview  w-96">
                     <a slot="image" href="./${shader.id}">
                         <img
-                            src="${shader.image}.webp"
+                            src="${shader.image}-medium.webp"
                             alt="${shader.description}"
                         />
                     </a>
