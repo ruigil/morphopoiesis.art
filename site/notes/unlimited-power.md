@@ -2,8 +2,8 @@
 title: Unlimited Power
 layout: post.layout.ts
 type: post
-header: /assets/img/color-ifs
-date: 2023-08-01
+header: /works/colorIFS/colorIFS
+date: Git created
 tags:
     - WebGPU
     - Computation

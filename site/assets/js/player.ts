@@ -1,5 +1,5 @@
-import { PSpec } from "../../lib/poiesis/poiesis.interfaces.ts";
-import { PContext } from "../../lib/poiesis/poiesis.ts";
+import { PSpec } from "../../works/libs/poiesis/poiesis.interfaces.ts";
+import { PContext } from "../../works/libs/poiesis/poiesis.ts";
 
 export const player = async (spec: (w:number,h:number) => PSpec, unis?: any, delta?: number) => {
 

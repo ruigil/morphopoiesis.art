@@ -30,9 +30,33 @@ fn hsv(h: f32, s: f32, v: f32) -> vec3f {
 @fragment
 fn fragmentMain(@builtin(position) coord: vec4f) -> @location(0) vec4f {
     let uv = normCoord(coord.xy, sys.resolution);
+	//vec2  r = iResolution.xy, p = w - r*.5;
+	
+    let d = length(uv); 
+    var c= 1.;
+    let x = pow(d, .1);
+    let y = atan2(uv.x, -uv.y) / 6.28;
+	
+	for (var i = 0.; i < 2.; i += 1.0) {
+		c = min(c, length(fract(vec2f(x - sys.mouse.x * i , fract(y + i * .0625) ) * vec2f(10.,8.) ) * 2. - 1.));
+    }    
 
-    let r = fill(circle(uv,.5),false) * fill(rect(inversion(uv, .5) - sys.mouse.xy , vec2f(0.5,0.5)), false);
-    return vec4f(vec3f(r), 1.0);
+	let f = vec4f(d + 10. * c * d * d * (.6 - d));
+    //return vec4f( d + 10. * c * d * d * (.6 - d));
+    //return vec4f(c);
+    return vec4f(rose(uv , vec2(20.,5.), 3.) * smoothstep(1., 0.6, d)); 
+}
+
+
+
+fn rose(uv: vec2f, s: vec2f, n: f32) -> f32 {
+    var c = 1.;
+    let r = pow(length(uv), .1);
+    let a = atan2(uv.x, -uv.y) / 6.28;
+	for (var i = 0.; i < n; i += 1.0) {
+		c = min(c, length(fract(vec2f(r  - sys.mouse.x * i, fract(a + i * ( 1./ (s.y * (i + 1.)) ) ) ) * s ) * 2. - 1.));
+    }    
+    return c;
 }
 
 //@normCoord-----------------------------------------------------------------------------------------
@@ -60,6 +84,34 @@ fn circle(uv: vec2f, r: f32) -> f32 { return length(uv)-r; }
 
 // circle inversion, r is the radius of the circle for inversion
 fn inversion(uv: vec2f, r:f32) -> vec2f { return (r*r*uv)/vec2(dot(uv,uv)); }
+
+// 2d rotation matrix, angle in radians
+fn rot2(a: f32) -> mat2x2f { return mat2x2(cos(a),sin(a),-sin(a),cos(a)); }
+//@modpolar-------------------------------------------------------------------------------------------
+// returns the reference frame in modular polar form, the plane is mapped tto a sector align with the positive x axis
+// assumes a normalized uv  bottom left is [-1,-1] and top right is [1,1]
+fn modpolar(uv: vec2f, n: f32) -> vec2f { let angle = atan2(-uv.y,uv.x); let hm = (6.283/(n*2.)); return uv*rot2((angle + (6.283/n) - (hm*2.) + 3.1415) % (6.283/n) - angle - hm); }
+
+
+// generic 'n' side polygon, contained in the circle of radius
+fn poly(uv: vec2f, r : f32, n:f32) -> f32 {  return length(uv) * cos(((atan2(uv.y, -uv.x)+ 3.14)  % (6.28 / n)) - (3.14 / n)) - r; }
+
+// define sdf for angular pattern of rays around the reference frame. 
+fn rays(uv:vec2f , n: f32) -> f32 { return ((atan2(uv.y,uv.x)+3.14) % (6.283 / n) ) - (3.14 / n); }
+
+// 
+// accepts uv as the reference frame and the rotating factor [0.,1.] b, and the thickness of the spiral s
+fn spiral(uv:vec2f, b:f32,  s: f32) -> f32 {
+    let l = length(uv);
+    let a = atan2(uv.y,-uv.x);
+    
+    let n = select(0.,((log(l)/b) - a) / 6.283, l != 0.);
+    
+    let l1 = exp( b * (a + floor(n) * 6.284));
+    let l2 = exp( b * (a + ceil(n) * 6.284));
+    
+    return min( abs(l1 - l) , abs(l2 - l)  ) - s;
+}
 
 
 /*

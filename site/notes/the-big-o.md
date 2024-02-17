@@ -2,7 +2,7 @@
 title: The Big-O
 layout: post.layout.ts
 type: post
-header: /assets/img/boids
+header: /works/boids/boids
 date: Git Created
 tags:
     - Boids

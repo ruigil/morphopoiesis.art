@@ -2,7 +2,7 @@ const script = (shader: any, data: Lume.Data) => {
 
   return `
   import { ${shader.id} } from './${shader.id}/${shader.id}.ts';
-  import { PContext } from '../lib/poiesis/index.ts';
+  import { PContext } from './libs/poiesis/index.ts';
 
   document.addEventListener('DOMContentLoaded', async (event)  => {
     const canvas = document.querySelector("#canvas");

@@ -2,7 +2,7 @@
 title: Slime Intelligence
 layout: post.layout.ts
 type: post
-header: /assets/img/physarum
+header: /works/physarum/physarum
 date: Git Created
 tags:
     - Physarum

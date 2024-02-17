@@ -3,7 +3,7 @@ title: Art, as a new epistemology
 layout: post.layout.ts
 type: post
 header: /assets/img/treeoflife
-date: 2023-07-31
+date: Git Created
 featured: true
 tags:
     - Emergence

@@ -1,5 +1,5 @@
 
-import { PSpec, PContext, loadJSON, loadWGSL, square, scaleAspect } from "../../lib/poiesis/index.ts";
+import { PSpec, PContext, loadJSON, loadWGSL, square, scaleAspect } from "../../works/libs/poiesis/index.ts";
 
 
 const frontpage = async () => {

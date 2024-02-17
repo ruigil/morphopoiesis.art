@@ -2,7 +2,6 @@ export const title = "404 Not found";
 import { html } from "./lib/utilities.ts";
 
 export const layout = "about.layout.ts";
-export const url = "/404.html"
 
 export default ({ comp, featured, metas, search }: Lume.Data, helpers: Lume.Helpers): string => {
 

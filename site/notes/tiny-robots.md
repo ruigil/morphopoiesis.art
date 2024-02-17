@@ -2,7 +2,7 @@
 title: Tiny robots
 layout: post.layout.ts
 type: post
-header: /assets/img/gol
+header: /works/gol/gol
 date: Git Created
 tags:
     - WebGPU
