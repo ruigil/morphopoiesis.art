@@ -92,6 +92,12 @@ export default ( data : Lume.Data, helpers: Lume.Helpers) => {
       <head>
         <title>${data.title}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        
+        <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/ico/apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/ico/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/ico/favicon-16x16.png">
+        <link rel="icon" type="image/ico" href="/assets/img/ico/favicon.ico">
+
         <link rel="stylesheet" href="/assets/css/styles.css" />
         <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.5.2/cdn/shoelace-autoloader.js"></script>
         <!-- Google tag (gtag.js) -->

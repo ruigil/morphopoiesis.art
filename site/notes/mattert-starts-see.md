@@ -26,8 +26,8 @@ In [crystal formation](https://en.wikipedia.org/wiki/Crystallization) there is s
 
 There is a simple model of crystal formation called [diffusion-limited aggregation](https://en.wikipedia.org/wiki/Diffusion-limited_aggregation) that allows to create beautiful fractal structures like the example below.
 
-![DLA](/assets/img/dla_cluster-big.webp)
+![DLA](/assets/img/dla_cluster.jpg)
 
 Here is an implementation of the model in the GPU.
 
-[![DLA](/assets/img/dla-big.webp)](/sketches/dla/)
+[![DLA](/works/dla/dla-big.webp)](/sketches/dla/)

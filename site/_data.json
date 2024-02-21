@@ -20,38 +20,6 @@
     "lang": "en",
     "generator": true
   },
-  "transformImages": [
-    {
-      "resize": [
-        256,
-        256
-      ],
-      "suffix": "-small",
-      "format": [
-        "webp"
-      ]
-    },
-    {
-      "resize": [
-        512,
-        512
-      ],
-      "suffix": "-medium",
-      "format": [
-        "webp"
-      ]
-    },
-    {
-      "resize": [
-        1024,
-        1024
-      ],
-      "suffix": "-big",
-      "format": [
-        "webp"
-      ]
-    }
-  ],
   "shaders": [
     {
       "id": "ligrowth",

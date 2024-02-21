@@ -41,4 +41,4 @@ It's written in [WGSL](https://www.w3.org/TR/WGSL/), an it's a little program th
 
 Here [try it](/sketches/colorIFS/), you can play with your mouse.
 
-[![ColorIFS](/assets/img/color-ifs-big.webp)](/sketches/colorIFS/)
+[![ColorIFS](/works/colorIFS/colorIFS-big.webp)](/sketches/colorIFS/)

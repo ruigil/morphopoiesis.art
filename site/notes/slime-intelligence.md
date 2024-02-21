@@ -26,7 +26,7 @@ In this [paper](https://uwe-repository.worktribe.com/output/980579) the author m
 
 The rules of the system are pretty simple. Agent can only see in front of them with a certain distance and angle and move where the concentration of chemicals is bigger. Each time they move, they deposit a quantity of chemical. The field keeps track of the concentration of the chemical while diffusing and evaporating it over time. [Sage Jenson](https://cargocollective.com/sagejenson/physarum) gives a good visual explanation of the rules.
 
-![physarum rules](/assets/img/physarum-rules-big.webp)
+![physarum rules](/assets/img/physarum-rules.jpg)
 
 This concept of agents interacting with each other through a medium is not new, it's called [stigmergy](https://en.wikipedia.org/wiki/Stigmergy) and dates back to the 1960's. It was coined by a biologist analysing termites. In computer science it's also known as the [ant colony optimization algorithm](https://en.wikipedia.org/wiki/Ant_colony_optimization_algorithms) where ants (particles) interact with pheromones chemicals (fields).
 
@@ -34,4 +34,4 @@ What is remarkable about this algorithm is that although the basic rules are sim
 
 Here is an [implementation](/sketches/physarum/) on WebGPU. You can play with your mouse to create a black hole in the chemical field and stopping agents from interacting, but you will notice that the transport network they form is pretty resilient.
 
-[![physarum](/assets/img/physarum-big.webp)](/sketches/physarum/)
+[![physarum](/works/physarum/physarum-big.webp)](/sketches/physarum/)
