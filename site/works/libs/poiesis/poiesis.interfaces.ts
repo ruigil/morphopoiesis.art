@@ -145,5 +145,5 @@ export interface Controls {
 
 // listener for the fps
 export interface FPSListener {
-    onFPS: (fps: { fps: string, time: string}) => void;
+    onFPS: (fps: { fps: string, time: string, frame: number}) => void;
 }

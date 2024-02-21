@@ -1,4 +1,4 @@
-/// <reference types="./webgpu.d.ts" />
+// <reference types="./webgpu.d.ts" />
 import { 
     BufferListener,
     Geometry, 
@@ -57,9 +57,8 @@ export class PContext {
         this.state = {...state};
     }
     
-    build( spec : (w:number,h:number) => PSpec ): PContext {
+    build( spec : PSpec ): PContext {
 
-        
         const makeBufferView = (defs:BufferInfo, size: number = 1): BufferView => {
             const buffer = defs.isArray ? new ArrayBuffer(defs.arrayStride * size) : new ArrayBuffer(defs.size);
         
@@ -556,9 +555,9 @@ export class PContext {
         }
 
 
-        const wgslSpec = spec(this.state.canvas.width, this.state.canvas.height);
+        //const wgslSpec = spec(this.state.canvas.width, this.state.canvas.height);
         //console.log(wgslSpec)
-
+        const wgslSpec = spec;
         const shaderModule = createShaderModule(wgslSpec);
         const geometry = createGeometry(wgslSpec);
         const uniforms = createUniforms(wgslSpec);
@@ -588,21 +587,15 @@ export class PContext {
             },
             clearColor: wgslSpec.clearColor || {r:0,g:0,b:0,a:1},
             wgslSpec: wgslSpec,
-            spec: spec,
         });
     }
 
     addBufferListener( listener: BufferListener ) {        
-        const bls = this.state.bufferListeners ? [...this.state.bufferListeners, listener] : [listener];
         
         return new PContext({
             ...this.state,
-            bufferListeners: bls
+            bufferListeners: [listener]
         });
-    }
-
-    reset() {
-        this.state =  this.build(this.state.spec!).state;
     }
 
     async frame(frame: number, unis?: any) {
@@ -691,7 +684,7 @@ export class PContext {
                 await Promise.all(buffers.map( buff => buff.dstBuffer.mapAsync(GPUMapMode.READ)))
                 bufferListeners.forEach((listener) => {
                     const data = buffers.map(s=> {
-                        s.view.update(s.dstBuffer!.getMappedRange());
+                        s.view.update(s.dstBuffer.getMappedRange());
                         return s.view;
                     });
                     listener.onRead( data );
@@ -711,7 +704,7 @@ export class PContext {
 
     }
 
-
+/*
     animate(unis?:any, controls?: Controls, fpsListener?: FPSListener) {
         let frame = 0;
         let intid = 0;
@@ -756,12 +749,12 @@ export class PContext {
                 frame = 0;
                 elapsed = 0;
                 idle = 0;
-                this.reset();
+                //this.reset();
                 start = performance.now();
             }
     
             if (crtl.play && !intid) {
-                intid = setInterval(() => fps(), 1000);
+                intid = setInterval(() => fps(), 200);
             }
     
             if (!crtl.play && intid) {
@@ -795,6 +788,6 @@ export class PContext {
     
         requestAnimationFrame(render);
     }
-    
+*/    
 }
 

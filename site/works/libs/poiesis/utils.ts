@@ -1,3 +1,5 @@
+import { BufferListener, Controls, FPSListener, PSpec } from "./poiesis.interfaces.ts";
+import { PContext } from "./poiesis.ts";
 
 export const square = (x: number) => {
     return [
@@ -76,55 +78,78 @@ export const loadWebcam = async () => {
     return { video: video, settings: videoSettings, capabilities: capabilities };
 }
 
-/*
-export const draw = (gpuContext: WebGPUContext, unis?:any, controls?: Controls, fpsListener?: FPSListener) => {
+export const animate = async (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasElement, unis: any, fpsListener?: FPSListener, bufferListener?: BufferListener ) => {
     let frame = 0;
     let intid = 0;
     let elapsed = 0;
     let idle = 0;
-    let context = gpuContext;
     let start = performance.now();
+    let context:PContext = await PContext.init(canvas);
 
-    const canvas = gpuContext.getCanvas();
-    const crtl = controls || { play: true, reset: false, delta: 0 };
+    const crtl = { play: true, reset: false, stop: false, delta: 0 };
 
-    const mouse: Array<number> = [0,0];
+    const mouse: Array<number> = [0,0,0,0];
     const resolution: Array<number> = [0,0];
     const aspectRatio: Array<number> = [1,1];
-
-    const observer = new ResizeObserver((entries) => {
-        canvas.width = entries[0].target.clientWidth * devicePixelRatio;
-        canvas.height = entries[0].target.clientWidth * devicePixelRatio;
-        //this.state.canvas.width = entries[0].devicePixelContentBoxSize[0].inlineSize;
-        //this.state.canvas.height = entries[0].devicePixelContentBoxSize[0].blockSize;
-        resolution[0] = entries[0].target.clientWidth;
-        resolution[1] = entries[0].target.clientHeight;
-        const factor = resolution[0] > resolution[1] ? resolution[0] : resolution[1];
-        aspectRatio[0] = resolution[0] / factor;
-        aspectRatio[1] = resolution[1] / factor;
-    });
-
-    observer.observe(canvas)
+    
     canvas.addEventListener('mousemove', (event:MouseEvent) => {
-        mouse[0] = event.offsetX/canvas.clientWidth;
-        mouse[1] = event.offsetY/canvas.clientHeight;
+        mouse[2] = mouse[0]; // last position x
+        mouse[3] = mouse[1]; // last position y
+        let rect = canvas.getBoundingClientRect();
+        mouse[0] = (event.clientX - rect.left) / rect.width;
+        mouse[1] = (event.clientY - rect.top) / rect.height;
+    });
+    canvas.addEventListener('touchmove', (event:TouchEvent) => {
+        mouse[2] = mouse[0]; // last position x
+        mouse[3] = mouse[1]; // last position y
+        const touch = event.touches[0];
+        let rect = canvas.getBoundingClientRect();
+        mouse[0] = (touch.clientX - rect.left) / rect.width;
+        mouse[1] = (touch.clientY - rect.top) / rect.height;
     });
 
     const fps = () => {
-        fpsListener && fpsListener.onFPS({ fps: (frame / elapsed).toFixed(2), time: elapsed.toFixed(1)} );
+        fpsListener && fpsListener.onFPS({ fps: (frame / elapsed).toFixed(2), time: elapsed.toFixed(1), frame: frame } );
     }
 
-    const render = async () => {
-        if (crtl.reset) {
-            frame = 0;
-            elapsed = 0;
-            idle = 0;
-            context = context.reset();
-            start = performance.now();
+    const reset = () => {
+        frame = 0;
+        elapsed = 0;
+        idle = 0;
+        start = performance.now();
+        context = context.build( spec(canvas.width, canvas.height) )
+        if (bufferListener) {
+            context = context.addBufferListener(bufferListener);
         }
+    }
+
+    const canvasResize = (entries: ResizeObserverEntry[]) => {
+        canvas.width = entries[0].target.clientWidth * devicePixelRatio;
+        canvas.height = entries[0].target.clientHeight * devicePixelRatio;
+        resolution[0] = canvas.width;
+        resolution[1] = canvas.height;
+        const factor = resolution[0] < resolution[1] ? resolution[0] : resolution[1];
+        aspectRatio[0] = resolution[0] / factor;
+        aspectRatio[1] = resolution[1] / factor;
+
+        try {
+          reset();
+        } catch (err) {
+            console.log(err);
+            document.querySelector("#error")!.innerHTML = `
+            <span>Sorry, but there was an error with your WebGPU context. <br/>  
+            WebGPU is a new standard for graphics on the web.<br/>
+            The standard is currently implemented only <a href='https://caniuse.com/webgpu'>on certain browsers</a>.<br/>" +
+            For the full experience please use a supported browser. <br/>" +
+            <span style='color:red;'>${err}</span><span/>`;
+        }
+    }
+
+    const observer = new ResizeObserver( canvasResize ).observe(canvas);
+    const render = async () => {
 
         if (crtl.play && !intid) {
-            intid = setInterval(() => fps(), 1000);
+            intid = setInterval(() => fps(), 200);
         }
 
         if (!crtl.play && intid) {
@@ -132,10 +157,10 @@ export const draw = (gpuContext: WebGPUContext, unis?:any, controls?: Controls, 
             intid = 0;
         }
 
-        if ( crtl.play || crtl.reset ) {
-            if (crtl.reset) crtl.reset = false; 
+        if ( crtl.play  ) {
+            elapsed = ((performance.now() - start) / 1000) - idle;
     
-            context.frame(frame, { 
+            const f = await context.frame(frame, { 
                 sys: { 
                     frame: frame, 
                     time: elapsed, 
@@ -144,19 +169,23 @@ export const draw = (gpuContext: WebGPUContext, unis?:any, controls?: Controls, 
                     aspect: aspectRatio 
                 }, ...unis });
 
-            elapsed = ((performance.now() - start) / 1000) - idle;
-
             frame++;        
 
         } else {
             idle = ((performance.now()- start)/1000) - elapsed;
         }
 
-        if (crtl.delta != 0) setTimeout(()=>requestAnimationFrame(render),crtl.delta);
-        else requestAnimationFrame(render);
+        if (!crtl.stop) {
+            if (crtl.delta != 0) setTimeout(()=>requestAnimationFrame(render), crtl.delta);
+            else requestAnimationFrame(render);
+        }
     }
 
-    requestAnimationFrame(render);
+    return {
+        start: () => { crtl.play = true; crtl.stop = false; requestAnimationFrame(render) },
+        togglePlayPause: () => { crtl.play = !crtl.play; },
+        stop: () => { crtl.stop = true; },
+        reset: () => { reset() },
+        delay: (delta: number) => { crtl.delta = delta; },
+    }
 }
-
-*/
