@@ -51,6 +51,7 @@ const shaderContent = async (shader: any, data: Lume.Data) => {
         <sl-icon-button id="play"  name="pause" label="Play/Pause"></sl-icon-button>
         <sl-icon-button id="reset" name="rewind" label="Reset"></sl-icon-button>
         <div class="flex grow"></div>
+        <sl-icon-button id="cam" name="camera" label="screenshot"></sl-icon-button>
         <sl-icon-button id="full" name="fullscreen" label="full"></sl-icon-button>
         <small id="fps">0 fps</small>          
       </div>
@@ -60,16 +61,7 @@ const shaderContent = async (shader: any, data: Lume.Data) => {
     <hr>
       ${related(shader, data)}
     </div> 
-    <script type="module" defer>
-        import { player } from '../../assets/js/player.js';
-        import { ${shader.id} } from '../../works/${shader.id}/${shader.id}.js';
-        
-        document.addEventListener('DOMContentLoaded', async (event)  => {
-          const code = await (await fetch('../../works/${shader.id}/${shader.id}.wgsl')).text();
-          const defs = await (await fetch('../../works/${shader.id}/${shader.id}.json')).json();
-          player( await ${shader.id}(code,defs) );
-        });
-    </script>
+    <script type="module" src="index.js" defer></script>
   `;
 }
 
