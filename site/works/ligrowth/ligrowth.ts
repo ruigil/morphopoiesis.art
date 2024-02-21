@@ -1,5 +1,5 @@
 
-import { PSpec, Definitions, scaleAspect, square } from "../libs/poiesis/index.ts";
+import { PSpec, Definitions, scaleAspect, square } from "../../lib/poiesis/index.ts";
 
 
 export const ligrowth = async (code: string,defs: Definitions, fx:any ) => {

@@ -1,5 +1,5 @@
 
-import { loadJSON, loadWGSL, animate } from "./works/libs/poiesis/index.ts";
+import { loadJSON, loadWGSL, animate } from "./lib/poiesis/index.ts";
 import { ligrowth } from "./works/ligrowth/ligrowth.ts";
 
 

@@ -53,7 +53,34 @@ const toolbar = ({ search, metas, url }: Lume.Data) => {
         </div>
 
     </nav>
-    <script type="module" src="/assets/js/toolbar.js"></script>
+    <script type="module">
+      document.addEventListener('DOMContentLoaded', event => {
+
+        const root = document.querySelector('body');
+
+        const currentTheme = () => {
+          const currentMode = window.matchMedia("(prefers-color-scheme: dark)").matches.toString();
+          return (localStorage.getItem("dark-theme") || currentMode) === "true"; // true = "dark", false = "light"
+        }
+
+        const themeIcon = document.querySelector('#theme-icon');
+
+        themeIcon.addEventListener('click', event => {
+          event.preventDefault();
+          const storedTheme = currentTheme();
+          const theme = !storedTheme;
+          root.classList.toggle("sl-theme-dark");
+          themeIcon.setAttribute('name', theme ? "moon" : "sun");
+          localStorage.setItem("dark-theme", theme.toString());
+        });
+
+        const theme = currentTheme();
+
+        themeIcon.setAttribute('name', theme ? "moon" : "sun");
+
+        theme ? root.classList.add("sl-theme-dark") : root.classList.remove("sl-theme-dark");
+      });      
+    </script>
   `;
 }
 
@@ -66,7 +93,6 @@ export default ( data : Lume.Data, helpers: Lume.Helpers) => {
         <title>${data.title}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="stylesheet" href="/assets/css/styles.css" />
-        <link rel="stylesheet" href="/assets/css/components.css" />
         <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.5.2/cdn/shoelace-autoloader.js"></script>
         <!-- Google tag (gtag.js) -->
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-H0PZ82W0E9"></script>

@@ -1,7 +1,7 @@
 const script = (shader: any, data: Lume.Data) => {
     
     return /*ts*/ `
-        import { animate } from '../works/libs/poiesis/index.ts';
+        import { animate } from '../lib/poiesis/index.ts';
         import { ${shader.id} } from '../works/${shader.id}/${shader.id}.ts';
 
         document.addEventListener('DOMContentLoaded', async (event)  => {

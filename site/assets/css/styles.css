@@ -1,9 +1,6 @@
-@import '../../lib/css/server/light.css';
 
-@import '../../lib/css/server/dark.css';
+@import '../../lib/css/includes.css';
 
-@import '../../lib/css/server/highlight.css';
-@import '../../lib/css/server/katex.css';
 
 @tailwind base;
 @tailwind components;

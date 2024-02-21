@@ -1,4 +1,4 @@
-import { PSpec, Definitions, triangle } from "../libs/poiesis/index.ts";
+import { PSpec, Definitions, triangle } from "../../lib/poiesis/index.ts";
 
 export const boids = async (code:string, defs:Definitions) => {
 

@@ -1,4 +1,4 @@
-import { PSpec, Definitions, square, scaleAspect } from "../libs/poiesis/index.ts";
+import { PSpec, Definitions, square, scaleAspect } from "../../lib/poiesis/index.ts";
 
 export const gol = async (code:string, defs:Definitions) => {
 

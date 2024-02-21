@@ -1,4 +1,3 @@
-import { context } from "https://deno.land/x/esbuild@v0.19.11/mod.js";
 
 const script = (shader: any, data: Lume.Data) => {
 
@@ -81,8 +80,8 @@ const script = (shader: any, data: Lume.Data) => {
 
   return /*ts*/ `
     import { ${shader.id} } from './${shader.id}/${shader.id}.ts';
-    import { animate } from './libs/poiesis/index.ts';
-    import { Pane } from './libs/tweakpane/tweakpane-4.0.3.min.js';
+    import { animate } from '../lib/poiesis/index.ts';
+    import { Pane } from '../lib/tweakpane/tweakpane-4.0.3.min.js';
 
     document.addEventListener('DOMContentLoaded', async (event)  => {
       const canvas = document.querySelector("#canvas");

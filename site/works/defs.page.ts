@@ -1,5 +1,5 @@
-import { ArrayType, MemberInfo, TemplateType, Type, WgslReflect } from "./libs/poiesis/wgsl-reflect/index.ts";
-import { Definitions } from "./libs/poiesis/index.ts";
+import { ArrayType, MemberInfo, TemplateType, Type, WgslReflect } from "../lib/poiesis/wgsl-reflect/index.ts";
+import { Definitions } from "../lib/poiesis/index.ts";
 
 const reflect = async (shader: any, data: Lume.Data) => {
 
