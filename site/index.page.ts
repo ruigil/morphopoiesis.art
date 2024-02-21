@@ -76,6 +76,6 @@ export default ({ search }: Lume.Data, helpers: Lume.Helpers): string => {
         z-index: 5;
       }
     </style>
-    <script type="module" src="./assets/js/index.js" defer></script>
+    <script type="module" src="index.js" defer></script>
   `;
 };
