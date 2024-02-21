@@ -5,129 +5,205 @@
     "twitter": "@morphopoiesis",
     "url": "https://morphopoiesis.art/",
     "icon": "https://morphopoiesis.art/assets/img/svg/morphopoeisis.svg",
-    "keywords": ["morpho","poiesis","generative","art","emergence","information","computation","algorithms","webgpu","wgsl"],
+    "keywords": [
+      "morpho",
+      "poiesis",
+      "generative",
+      "art",
+      "emergence",
+      "information",
+      "computation",
+      "algorithms",
+      "webgpu",
+      "wgsl"
+    ],
     "lang": "en",
-    "generator": true  
+    "generator": true
   },
   "transformImages": [
     {
-      "resize": [256, 256],
+      "resize": [
+        256,
+        256
+      ],
       "suffix": "-small",
-      "format": ["webp"]
+      "format": [
+        "webp"
+      ]
     },
     {
-      "resize": [512, 512],
+      "resize": [
+        512,
+        512
+      ],
       "suffix": "-medium",
-      "format": ["webp"]
+      "format": [
+        "webp"
+      ]
     },
     {
-      "resize": [1024, 1024],
+      "resize": [
+        1024,
+        1024
+      ],
       "suffix": "-big",
-      "format": ["webp"]
+      "format": [
+        "webp"
+      ]
     }
   ],
   "shaders": [
     {
-      "id" : "inversion",
+      "id": "ligrowth",
+      "title": "Limits to Growth",
+      "description": "This is an exploration of the limits to growth, with a diffuse limited aggregation algorithm, inspired by the book of the same name by Donella H. Meadows, Dennis L. Meadows, Jørgen Randers, and William W. Behrens III. ",
+      "image": "",
+      "tags": [],
+      "license": "cc-by",
+      "sketch": false,
+      "debug": true
+    },
+    {
+      "id": "inversion",
       "title": "Inversion",
       "description": "A circle inversion",
       "image": "/works/inversion/inversion",
-      "tags": ["inversion","fractal"],
-      "license" : "cc-by-nc-nd",
-      "sketch" : false,
-      "debug" : true,
+      "tags": [
+        "inversion",
+        "fractal"
+      ],
+      "license": "cc-by-nc-nd",
+      "sketch": false,
+      "debug": true,
       "fx": true
     },
     {
-      "id" : "ifx",
+      "id": "ifx",
       "title": "IFX",
       "description": "A simple iterative fractal explorer",
       "image": "/works/ifx/ifx",
-      "tags": ["ifs","fractal"],
-      "license" : "cc-by-nc-nd",
-      "sketch" : false,
-      "debug" : true,
+      "tags": [
+        "ifs",
+        "fractal"
+      ],
+      "license": "cc-by-nc-nd",
+      "sketch": false,
+      "debug": true,
       "fx": true
     },
     {
-      "id" : "pathtracer",
+      "id": "pathtracer",
       "title": "Path Tracer",
       "description": "A simple path tracer",
       "image": "/works/pathtracer/pathtracer",
-      "tags": ["pathtracer","raymarching"],
-      "license" : "cc-by",
-      "sketch" : false,
-      "debug" : true
+      "tags": [
+        "pathtracer",
+        "raymarching"
+      ],
+      "license": "cc-by",
+      "sketch": false,
+      "debug": true
     },
     {
-      "id" : "fluid",
+      "id": "fluid",
       "title": "Fluid",
       "description": "Fluid simulator. You can play with your mouse to add color.",
       "image": "/works/fluid/fluid",
-      "tags": ["fluid","fields","mouse"],
-      "license" : "cc-by",
-      "sketch" : true,
-      "debug" : false
+      "tags": [
+        "fluid",
+        "fields",
+        "mouse"
+      ],
+      "license": "cc-by",
+      "sketch": true,
+      "debug": false
     },
     {
-      "id" : "dla",
+      "id": "dla",
       "title": "DLA",
       "description": "Diffuse Limited Aggregation, to create an Ice structure. You can play with your mouse to melt the ice.",
       "image": "/works/dla/dla",
-      "tags": ["dla","particles","fields","mouse"],
-      "license" : "cc-by",
-      "sketch" : true,
-      "debug" : false
+      "tags": [
+        "dla",
+        "particles",
+        "fields",
+        "mouse"
+      ],
+      "license": "cc-by",
+      "sketch": true,
+      "debug": false
     },
     {
-      "id" : "physarum",
+      "id": "physarum",
       "title": "Physarum",
       "description": "A slime mold building a transport network. You can play with your mouse to erase the chemical field.",
       "image": "/works/physarum/physarum",
-      "tags": ["physarum","particles","fields","mouse","network"],
-      "license" : "cc-by",
-      "sketch" : true,
-      "debug" : false
+      "tags": [
+        "physarum",
+        "particles",
+        "fields",
+        "mouse",
+        "network"
+      ],
+      "license": "cc-by",
+      "sketch": true,
+      "debug": true
     },
     {
-      "id" : "boids",
+      "id": "boids",
       "title": "Boids",
       "description": "Android birds trying to sync their movement and blinking. You can play with your mouse to attract them.",
       "image": "/works/boids/boids",
-      "tags": ["boids","particles","mouse"],
-      "license" : "cc-by",
-      "sketch" : true,
-      "debug" : false
+      "tags": [
+        "boids",
+        "particles",
+        "mouse"
+      ],
+      "license": "cc-by",
+      "sketch": true,
+      "debug": false
     },
     {
-      "id" : "rd",
+      "id": "rd",
       "title": "Reaction Diffusion",
       "description": "Move your mouse to explore the generation of different patterns.",
       "image": "/works/rd/rd",
-      "tags": ["cellular automata","reaction diffusion", "mouse"],
-      "license" : "cc-by",
-      "sketch" : true,
-      "debug" : false
+      "tags": [
+        "cellular automata",
+        "reaction diffusion",
+        "mouse"
+      ],
+      "license": "cc-by",
+      "sketch": true,
+      "debug": false
     },
     {
-      "id" : "gol",
+      "id": "gol",
       "title": "Game of Life",
       "description": "Conway's Game of Life",
       "image": "/works/gol/gol",
-      "tags": ["cellular automata", "life", "mouse"],
-      "license" : "cc-by",
-      "sketch" : true,
-      "debug" : false
+      "tags": [
+        "cellular automata",
+        "life",
+        "mouse"
+      ],
+      "license": "cc-by",
+      "sketch": true,
+      "debug": true
     },
     {
       "id": "colorIFS",
       "title": "Color IFS",
       "description": "A simple colorized IFS fractal",
       "image": "/works/colorIFS/colorIFS",
-      "tags": ["fractal", "ifs","mouse"],
-      "license" : "cc-by-nc-nd",
-      "sketch" : true,
-      "debug" : false
+      "tags": [
+        "fractal",
+        "ifs",
+        "mouse"
+      ],
+      "license": "cc-by-nc-nd",
+      "sketch": true,
+      "debug": false
     }
   ]
 }
