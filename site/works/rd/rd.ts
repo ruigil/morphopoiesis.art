@@ -4,7 +4,7 @@ export const rd = async (code:string, defs:Definitions) => {
 
     const spec =  (w:number,h:number) : PSpec => {
         const size = scaleAspect(w,h,512);
-        const current = Array(size.x * size.y).fill([0,0]).map((v,i) => [ 1 , (Math.random() > 0.001 ? 0 : 1) ] );
+        const current = Array.from( { length: size.x * size.y } , (v,i) => [ 1 , (Math.random() > 0.001 ? 0 : 1) ] );
 
         return {
             code: code,

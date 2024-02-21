@@ -5,6 +5,7 @@ export const gol = async (code:string, defs:Definitions) => {
     const spec = (w:number,h:number): PSpec => {
         const size = scaleAspect(w,h,128);
         const current = Array.from({ length: size.x*size.y }, () => Math.random() > 0.9 ? 1 : 0);
+        console.log("gol spec",current)
 
         return {
             code: code,
