@@ -26,7 +26,6 @@ const site = lume({
 
 // assets
 site.ignore("/lib");
-site.ignore("/works/libs");
 site.copy("/assets/img/svg");
 site.copy([".wgsl"]);
 
