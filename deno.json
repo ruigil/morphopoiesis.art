@@ -10,9 +10,10 @@
     ]    
   },
   "tasks": {
-    "lume": "echo \"import 'lume/cli.ts'\" | deno run --allow-read --unstable -A -",
+    "lume": "echo \"import 'lume/cli.ts'\" | deno run --allow-read  -A -",
     "build": "deno task lume",
-    "serve": "deno task lume -s"
+    "serve": "deno task lume -s",
+    "create": "deno run --allow-write --allow-read create.ts"
   },
   "imports": {
     "lume/": "https://deno.land/x/lume@v2.0.3/"
