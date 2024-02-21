@@ -1,58 +1,110 @@
+import { context } from "https://deno.land/x/esbuild@v0.19.11/mod.js";
+
 const script = (shader: any, data: Lume.Data) => {
 
-  return `
-  import { ${shader.id} } from './${shader.id}/${shader.id}.ts';
-  import { PContext } from './libs/poiesis/index.ts';
+  const saveScreenshot = (id: string) => {
+    return /* ts */ `
+      // Add keypress event listener
+      document.addEventListener('keypress', function(event) {
+        if (event.key === 's') { 
+          let dataUrl = canvas.toDataURL('image/png');
+          let link = document.createElement('a');
+          link.href = dataUrl;
+          link.download = ${ id }.png;
+          link.click();
+        }
+      });
+    `
+  }
 
-  document.addEventListener('DOMContentLoaded', async (event)  => {
-    const canvas = document.querySelector("#canvas");
-    
-    // Add keypress event listener
-    document.addEventListener('keypress', function(event) {
-      if (event.key === 's') { 
-        let dataUrl = canvas.toDataURL('image/png');
-        let link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = '${shader.id}.png';
-        link.click();
-      }
-    });
+  const tweakPane = () => {
+    return /* ts */ `
+      const PARAMS = {
+        name: '${shader.title}',
+        fps: '',
+        frame: 0,
+        elapsed: '',
+        debug: '',
+        color: '#ff0055',
+        delay: 0
+      };
+      
+      const pane = new Pane();
+      
+      pane.addBinding(PARAMS, 'name', { readonly: true });
+      pane.addBinding(PARAMS, 'fps', { readonly: true });
+      pane.addBinding(PARAMS, 'frame', { readonly: true });
+      pane.addBinding(PARAMS, 'elapsed', { readonly: true });
+      pane.addBinding(PARAMS, 'debug', {
+        readonly: true,
+        multiline: true,
+        rows: 10,
+      });
+      const unis = pane.addFolder({
+        title: 'Uniforms',
+      });
+      unis.addBinding(PARAMS, 'color');
+      const crtl = pane.addFolder({
+        title: 'Controls',
+      });
 
-    ${ shader.debug ?
-    ` const fpsSmall = document.querySelector("#fps");
-      const debug = document.querySelector("#debug");
-        ` : ''
-    }
-      const context = await PContext.init(canvas);
+      const pp = crtl.addButton({
+        title: 'pause',
+        label: 'Play/Pause',   // optional
+      });
+      const reset = crtl.addButton({
+        title: 'reset',
+        label: 'Reset',   // optional
+      });
+      const delay = crtl.addBinding(PARAMS, 'delay', { readonly: false });
+      delay.on('change', (ev) => {
+        console.log('changed: ' + JSON.stringify(ev.value));
+        anim.delay(ev.value);
+      });
+
+      pp.on('click', () => {
+        if (pp.title === 'pause') { pp.title = 'play'; } else { pp.title = 'pause'; }
+        anim.togglePlayPause();
+      });
+      reset.on('click', () => {
+        anim.reset();
+      });
+    `
+  }
+
+  const listeners = () => {
+    return /* ts */ `
+      const fpsListener = (fps) => { PARAMS.fps = fps.fps + " fps"; PARAMS.elapsed = fps.time; PARAMS.frame = fps.frame};
+      const bufferListener = (view) => { PARAMS.debug =  JSON.stringify(view[0].get(),null,4) } ;
+    `
+  }
+
+  return /*ts*/ `
+    import { ${shader.id} } from './${shader.id}/${shader.id}.ts';
+    import { animate } from './libs/poiesis/index.ts';
+    import { Pane } from './libs/tweakpane/tweakpane-4.0.3.min.js';
+
+    document.addEventListener('DOMContentLoaded', async (event)  => {
+      const canvas = document.querySelector("#canvas");
+      
+      ${ shader.debug && tweakPane()  }
+
+      ${ saveScreenshot(shader.id) }
+
       const fx = ('$fx' in window) ? $fx : undefined;
     
       const code = await (await fetch('./${shader.id}.wgsl')).text();
       const defs = await (await fetch('./${shader.id}.json')).json();
-  
+
       const spec = await ${shader.id}(code,defs, fx);
+      ${ shader.debug && listeners()  }
 
-      const observer = new ResizeObserver(async (entries) => {
-        canvas.width = entries[0].target.clientWidth * devicePixelRatio;
-        canvas.height = entries[0].target.clientHeight * devicePixelRatio;
+      const anim = await animate(spec, canvas, {} ${ shader.debug ?  ', { onFPS: fpsListener }, { onRead: bufferListener }' : '' } );
+      anim.start();
 
-        try {
-          ${ shader.debug ? 
-            'context.build(spec).addBufferListener({onRead: (view) => { debug.textContent =  JSON.stringify(view[0].get(),null,4) }}).animate({},undefined,{ onFPS: (fps) => { fpsSmall.textContent = fps.fps + " fps" } });':
-            'context.build(spec).animate({});'
-          }
-        } catch (err) {
-          const error = document.querySelector("#error") ;
-          error.innerHTML = "<span>Sorry, but there was an error with your WebGPU context. <br/> " + 
-          "WebGPU is a new standard for graphics on the web.<br/>" +
-          "The standard is currently implemented only <a href='https://caniuse.com/webgpu'>on certain browsers</a>.<br/>" +
-          "For the full experience please use a supported browser. <br/>" +
-          "<span style='color:red;'>" + err + "</span><span/>";
-        }
-      });
-
-      observer.observe(canvas)            
     });`
 }
+
 
 export default function* (data: Lume.Data) {
 
