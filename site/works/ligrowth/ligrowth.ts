@@ -23,31 +23,24 @@ export const ligrowth = async (code: string,defs: Definitions, fx:any ) => {
         //const ice = Array.from({ length: size.x * size.y }, () => Math.random() < 0.003 ? 1 : 0);
         // initialization is done in the shader, because of 2d utils libs
         const ice = Array.from({ length: size.x * size.y }, (_,i:number) =>  0);
-        const stringToSeed = (str:string) => {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-              let char = str.charCodeAt(i);
-              hash = ((hash << 5) - hash) + char;
-              hash |= 0;  // Convert to 32bit integer
-            }
-            return hash;
-        }
           
         const seededRandom = (count: number) => {
-        console.log("fxhash --- ",fx.hash)
-        let seed = stringToSeed(fx.hash);
-        const rand = [];
-        for (let i = 0; i < count; i++) {
-            let x = Math.sin(seed++) * 10000;
-            rand.push(x - Math.floor(x));
-            seed++;
-        }
-        rand[3] = Math.floor(rand[3] * 9);
-        return rand;
+            const rand = Array.from({ length: count }, () => fx.rand());
+            rand[3] = Math.floor(rand[3] * 9);
+            return rand;
         }
         
         let mode = fx ? seededRandom(4) : [.4,.2,.1,3];
-          
+        
+        const unipane = { 
+            phase: {
+                x: mode[0],
+                y: mode[1],
+                z: mode[2]
+            },
+            object: mode[3]
+        }
+
         return {
             code: code,
             defs: defs,
@@ -77,7 +70,8 @@ export const ligrowth = async (code: string,defs: Definitions, fx:any ) => {
                 { name: "computeDrops", workgroups: [Math.ceil(numWaterDrops / 64), 1, 1] },
             ],
             computeGroupCount: 16,
-            bindings: [ [0,1,2,3,4,5], [0,1,3,2,4,5] ]
+            bindings: [ [0,1,2,3,4,5], [0,1,3,2,4,5] ],
+            debugpane: { get: () => unipane, map: (u:any) =>  ({ params: { mode: [ u.phase.x, u.phase.y, u.phase.z, u.object] }}) }
         }
     }
 

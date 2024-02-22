@@ -133,6 +133,7 @@ export interface PSpec {
     computeGroupCount?: number;
     clearColor?: { r:number, g:number, b:number, a:number}
     bindings?: Array<Array<number>>;
+    debugpane?: any;
 }
 
 

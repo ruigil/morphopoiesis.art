@@ -16,17 +16,26 @@ const script = (shader: any, data: Lume.Data) => {
     `
   }
 
-  const tweakPane = () => {
+  const fillParam = () => {
     return /* ts */ `
+      //console.log(spec(canvas.width, canvas.height).debugpane.get())
+      let specdebug = spec(canvas.width, canvas.height).debugpane;
+      const su = specdebug.get();
+      const uniforms = specdebug.map(su);
       const PARAMS = {
         name: '${shader.title}',
         fps: '',
         frame: 0,
         elapsed: '',
         debug: '',
-        color: '#ff0055',
-        delay: 0
+        delay: 0,
+        ...su
       };
+    `
+  }
+
+  const tweakPane = () => {
+    return /* ts */ `
       
       const pane = new Pane();
       
@@ -42,7 +51,15 @@ const script = (shader: any, data: Lume.Data) => {
       const unis = pane.addFolder({
         title: 'Uniforms',
       });
-      unis.addBinding(PARAMS, 'color');
+      for (let key in su) {
+        const u = unis.addBinding(PARAMS, key, { readonly: false });
+        u.on('change', (ev) => {
+          const mu = specdebug.map({...su, [key]: ev.value });
+          for (let mukey in mu) {
+            uniforms[mukey] = mu[mukey];
+          }
+        });
+      }
       const crtl = pane.addFolder({
         title: 'Controls',
       });
@@ -57,7 +74,6 @@ const script = (shader: any, data: Lume.Data) => {
       });
       const delay = crtl.addBinding(PARAMS, 'delay', { readonly: false });
       delay.on('change', (ev) => {
-        console.log('changed: ' + JSON.stringify(ev.value));
         anim.delay(ev.value);
       });
 
@@ -66,6 +82,15 @@ const script = (shader: any, data: Lume.Data) => {
         anim.togglePlayPause();
       });
       reset.on('click', () => {
+        specdebug = spec(canvas.width, canvas.height).debugpane;
+        const su = specdebug.get();
+        for (let sukey in su) {
+          PARAMS[sukey] = su[sukey];
+        }
+        const mu = specdebug.map(su);
+        for (let mukey in mu) {
+          uniforms[mukey] = mu[mukey];
+        }
         anim.reset();
       });
     `
@@ -86,7 +111,6 @@ const script = (shader: any, data: Lume.Data) => {
     document.addEventListener('DOMContentLoaded', async (event)  => {
       const canvas = document.querySelector("#canvas");
       
-      ${ shader.debug && tweakPane()  }
 
       ${ saveScreenshot(shader.id) }
 
@@ -96,9 +120,12 @@ const script = (shader: any, data: Lume.Data) => {
       const defs = await (await fetch('./${shader.id}.json')).json();
 
       const spec = await ${shader.id}(code,defs, fx);
-      ${ shader.debug && listeners()  }
 
-      const anim = await animate(spec, canvas, {} ${ shader.debug ?  ', { onFPS: fpsListener }, { onRead: bufferListener }' : '' } );
+      ${ shader.debug && fillParam() }
+      ${ shader.debug && tweakPane() }
+      ${ shader.debug && listeners() }
+
+      const anim = await animate(spec, canvas, uniforms ${ shader.debug ?  ', { onFPS: fpsListener }, { onRead: bufferListener }' : '' } );
       anim.start();
 
     });`

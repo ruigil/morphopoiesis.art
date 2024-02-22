@@ -29,7 +29,7 @@
       "tags": [],
       "license": "cc-by-nc-nd",
       "sketch": false,
-      "debug": false,
+      "debug": true,
       "fx": true
     },
     {
