@@ -29,7 +29,8 @@
       "tags": [],
       "license": "cc-by",
       "sketch": false,
-      "debug": true
+      "debug": false,
+      "fx": true
     },
     {
       "id": "inversion",

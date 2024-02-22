@@ -14,11 +14,11 @@ const featureShader = async () => {
 
   const color = isDark() ? {
     params: {
-      mode: [1,.1,0]
+      mode: [.4,.2,.1,3]
     }
   } : {
     params: {
-      mode: [0,1,0]
+      mode: [0,0,0,3]
     }
   };
 
@@ -27,9 +27,9 @@ const featureShader = async () => {
       if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
         let dark = (mutation.target as HTMLBodyElement).classList.contains('sl-theme-dark');
         if (dark) {
-          color.params.mode = [1,.1,0];
+          color.params.mode = [.4,.2,.1,3];
         } else {
-          color.params.mode = [0,1,0];
+          color.params.mode = [0,0,0,3];
         }
       }
     });

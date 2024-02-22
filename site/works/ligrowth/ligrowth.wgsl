@@ -1,3 +1,6 @@
+// This work is licensed under CC BY NC ND 4.0 
+// https://creativecommons.org/licenses/by-nc-nd/4.0/
+
 struct Sys {
     time: f32,
     resolution: vec2<f32>,
@@ -9,7 +12,7 @@ struct Sys {
 struct SimParams {
   size: vec2<f32>,
   drops: f32,
-  mode: vec3<f32>
+  mode: vec4<f32>
 }
 
 struct Agent {
@@ -53,8 +56,6 @@ fn vertMain( input: VertexInput) -> VertexOutput {
      
     // multisample the state to reduce aliasing
     let state = (c1 + c2 + c3 + c4) / 4.0;
-
-    //let state = iceA[input.instance];
     
     let cellSize = 2. / params.size.xy ;
     // The cell(0,0) is a the top left corner of the screen.
@@ -75,25 +76,18 @@ fn fragMain(input : VertexOutput) -> @location(0) vec4<f32> {
     let uv = normCoord(input.pos.xy, sys.resolution);
     let drop = timeToColor( fract(input.state ) );
     let m = ((vec2f(sys.mouse.x,1. - sys.mouse.y)  * 2. - 1.) * sys.aspect) - uv;
-    let back =  length(uv * params.mode.y) * timeToColor(0.) * (1. + perlinNoise(vec2f(uv.xy*params.size)) - .5) * smoothstep(0.,0.3, length( m ));
+    let back =  length(uv * select(.1, 1., params.mode.x == 0.) ) * timeToColor(0.) * (1. + perlinNoise(vec2f(uv.xy*params.size)) - .5) * smoothstep(0.,0.3, length( m ));
     
-
-    //return vec4f( vec3f( select(.0,1., abs(circle(uv, .2) ) - .01 < 0.)), 1.);
-
-    return vec4f(mix(back, drop, ceil(input.state) * (1. - circle(input.uv, 1.))  ), 1.);
+    return vec4f(mix(back, drop, ceil(input.state)   ), 1.);
 }
-
 
 
 
 @compute @workgroup_size(8,8)
 fn computeIce(@builtin(global_invocation_id) cell : vec3<u32>) {
-      // keep the simulation in the range [0,size]
     if (cell.x >= u32(params.size.x) || cell.y >= u32(params.size.y)) { return; }
-    //debug.debug = 0.;
-    //debug.mouse = sys.mouse;
 
-    iceB[cell.y * u32(params.size.x) + cell.x] = iceA[cell.y * u32(params.size.x) + cell.x];
+    iceB[ cell.y * u32(params.size.x) + cell.x ] = iceA[cell.y * u32(params.size.x) + cell.x];
 }
 
 @compute @workgroup_size(64)
@@ -132,7 +126,7 @@ fn computeDrops(@builtin(global_invocation_id) id : vec3<u32>) {
 
     // current index in the ice structure for the current water drop position
     let current = vec2<u32>( floor( ((drop.pos + 1.) * .5) * params.size));
-    
+
     // if we are in the melting radius, melt the frzuen water drops and make them move
     if (melt > 0.) {
         // the melting radius is a probability, so we use a random number to decide if we melt the ice
@@ -154,7 +148,7 @@ fn computeDrops(@builtin(global_invocation_id) id : vec3<u32>) {
       if (acc > 0.) {
         let rnd = hash2(vec2u(u32(sys.time*50. + pos.x), u32(sys.time * 1000.  + pos.y)));
       // if the drop has a frozen neighbour, it freezes too
-        if (iceA[ current.y * size.x + current.x ] == 0) { iceB[ current.y * size.x + current.x ] =  fract(sys.time * 4.); };
+        if (iceA[ current.y * size.x + current.x ] == 0) { iceB[ current.y * size.x + current.x ] =  fract(sys.time ); };
       } else {
         // otherwise it moves 
         drops[i].pos = pos;
@@ -169,15 +163,33 @@ fn initializeSeeds(@builtin(global_invocation_id) cell : vec3<u32>) {
       // keep the simulation in the range [0,size]
     if (cell.x >= u32(params.size.x) || cell.y >= u32(params.size.y) || sys.frame > 0. ) { return; }
 
-    let uv = normCoord(vec2f(cell.xy), params.size);
-    debug.debug = sys.time;
-    debug.mouse = vec4f(uv, 0., 1.);
-
-    iceB[cell.y * u32(params.size.x) + cell.x] = select(0.,select(.0,1., (abs(circle(uv, .5) ) - .01 < 0.)), hash2(vec2u(cell.x, cell.y)).x > .7);
+    var uv = normCoord(vec2f(cell.xy), params.size);
+    uv *= rot2(params.mode.y * 6.283);
+    var figure = 0.;
+    if (params.mode.w == 0.) {
+        figure = devil(uv*1.5);
+    } else if params.mode.w == 1. {
+        figure = magician(uv);
+    } else if params.mode.w == 2. {
+        figure = stroke(rect(uv, vec2f(.5,.5)), .05, true);
+    } else if params.mode.w == 3. {
+        figure = stroke(circle(uv, .5), .01, true);
+    } else if params.mode.w == 4. {
+        figure = stroke(hex(uv), .01, true);
+    } else if params.mode.w == 5. {
+        figure = stroke(tri(uv*2.), .01,  true);
+    } else if params.mode.w == 6. {
+        figure = stroke(poly(uv, .5, 5.), .01, true);
+    } else if params.mode.w == 7. {
+        figure = stroke(star5(uv*2.), .05, true);
+    } else if (params.mode.w == 8.) {
+        figure = fill(perlinNoise((uv + 3.)*3.),  true);
+    } 
+    iceB[cell.y * u32(params.size.x) + cell.x] = select(0.,figure ,hash2(vec2u(cell.x, cell.y)).x > .7);
 }
 
 fn timeToColor(time: f32) -> vec3<f32> {
-    return select(pal( time,vec3(1.,1.,1.), vec3f(.0,0.,0.)), pal( time,vec3(1.,1.,1.), vec3f(.4,.2,.1)) , params.mode.x == 1.);
+    return pal( time,vec3(1.,1.,1.), vec3f(params.mode.x,params.mode.y,params.mode.z));
 }
 
 fn getIndex(cell : vec2<f32>) -> u32 { 
@@ -187,8 +199,53 @@ fn getIndex(cell : vec2<f32>) -> u32 {
 
 // cheap pallette from https://www.shadertoy.com/view/ll2GD3
 fn pal(domain: f32, frequency: vec3f, phase: vec3f) -> vec3f {
-  return vec3f(0.5) + vec3f(0.5) * cos(6.2830 * (frequency * domain + phase));
+  return vec3f(0.5) + vec3f(0.5) * cos(6.2830 * (frequency * domain + phase ));
 }
+
+fn magician(uv: vec2f) -> f32 { 
+    var r = uv ;
+
+    // this is the magic, a horizontal flip modulated by the sign of the vertical axis
+    // the sign function return 1,-1 or 0 to represent the sign of the variable.
+    r = vec2f(r.x * sign(r.y), r.y);
+
+    let f = 
+        stroke( circle( r - vec2f(.25,.0), .5), .01, true) * 
+        stroke( circle( r + vec2f(.25,.0), .5), .08, false) + 
+        stroke( circle( r + vec2f(.25,.0), .5), .01, true);
+        
+    return f;
+}
+
+// to model a star5, we use a symmetric line around the horizontal axis
+// with 36 * 2. degrees and replicate the domain in the circle with 'modpolar' 5. times.
+fn star5(r: vec2f) -> f32 {
+    let s = modpolar(r , 5.);
+    return dot( vec2f(s.x, abs(s.y) ), vec2f(.309,.951) ) - .5;
+}
+
+//@rot2-----------------------------------------------------------------------------------------------
+// 2d rotation matrix, angle in radians
+fn rot2(a: f32) -> mat2x2f { return mat2x2(cos(a),sin(a),-sin(a),cos(a)); }
+
+fn devil(uv: vec2f) -> f32 { 
+    var r = uv ;
+    r *= rot2(radians(54.));
+    let s = star5(r * 2.);
+    
+    let f = 
+        stroke(circle(r ,.85), .05, true) *
+        stroke(s, .5, false) + 
+        stroke(s, .1, true);
+
+    return f;
+}
+//@ssaa----------------------------------------------------------------------------------------------
+// smoothstep antialias with fwidth
+fn ssaa(v: f32) -> f32 { return smoothstep(.0,.01,v); }
+//@stroke--------------------------------------------------------------------------------------------
+// stroke an sdf 'd', with a width 'w', and a fill 'f' 
+fn stroke(d : f32, w: f32, f: bool) -> f32 {  return abs(ssaa(abs(d)-w*.5) - f32(f)); }
 
 //@rect----------------------------------------------------------------------------------------------
 // a signed distance function for a rectangle 's' is size
@@ -206,6 +263,13 @@ fn tri(uv: vec2f) -> f32 { return max(abs(uv.x) * .866 + uv.y * .5, -uv.y) - .57
 //@poly-----------------------------------------------------------------------------------------------
 // generic 'n' side polygon, contained in the circle of radius
 fn poly(uv: vec2f, r : f32, n:f32) -> f32 {  return length(uv) * cos(((atan2(uv.y, -uv.x)+ 3.14)  % (6.28 / n)) - (3.14 / n)) - r; }
+//@modpolar-------------------------------------------------------------------------------------------
+// returns the reference frame in modular polar form, the plane is mapped tto a sector align with the positive x axis
+// assumes a normalized uv  bottom left is [-1,-1] and top right is [1,1]
+fn modpolar(uv: vec2f, n: f32) -> vec2f { let angle = atan2(-uv.y,uv.x); let hm = (6.283/(n*2.)); return uv*rot2((angle + (hm*2.) + 3.1415) % (6.283/n) - angle - hm); }
+//@fill----------------------------------------------------------------------------------------------
+// fills an sdf 'd', and a fill 'f'. false for the fill means inverse 
+fn fill(d: f32, f: bool) -> f32 { return abs(ssaa(d) - f32(f)); }
 
 /*************************************************************************************************
  * Mark Jarzynski and Marc Olano, Hash Functions for GPU Rendering, 
@@ -242,6 +306,12 @@ fn hash2( seed: vec2u) -> vec2f {
     return vec2f( vec2f(pcg2d(seed)) * (1. / f32(0xffffffffu)) ) ;
 }
 
+// 2D and 3D hash functions
+fn hash3( seed: vec3u) -> vec3f {
+    return vec3f( vec3f(pcg3d(seed)) * (1. / f32(0xffffffffu)) ) ;
+}
+
+
 // random unit vector in 2d
 fn rndNorm2d( p: vec2u ) -> vec2f {
     return normalize(  hash2( p )  - .5 );
@@ -274,4 +344,21 @@ fn valueNoise(p: vec2f) -> f32 {
     let o = vec2u(0,1);
     return mix( mix( hash2( c + o.xx ).x, hash2( c + o.yx ).x, u.x),
                 mix( hash2( c + o.xy ).x, hash2( c + o.yy ).x, u.x), u.y);
+}
+
+fn pcg3d(pv:vec3u) -> vec3u {
+
+    var v = pv * 1664525u + 1013904223u;
+
+    v.x += v.y*v.z;
+    v.y += v.z*v.x;
+    v.z += v.x*v.y;
+
+    v ^= v >> vec3u(16u);
+
+    v.x += v.y*v.z;
+    v.y += v.z*v.x;
+    v.z += v.x*v.y;
+
+    return v;
 }

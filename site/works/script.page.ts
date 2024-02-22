@@ -9,7 +9,7 @@ const script = (shader: any, data: Lume.Data) => {
           let dataUrl = canvas.toDataURL('image/png');
           let link = document.createElement('a');
           link.href = dataUrl;
-          link.download = ${ id }.png;
+          link.download = '${ id }.png';
           link.click();
         }
       });
