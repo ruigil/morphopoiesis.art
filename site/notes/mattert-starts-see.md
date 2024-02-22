@@ -2,7 +2,7 @@
 title: Matter starts to see...
 layout: post.layout.ts
 type: post
-header: /works/dla/dla
+header: /shaders/sketches/dla/dla
 date: Git Created
 tags:
     - DLA
@@ -30,4 +30,4 @@ There is a simple model of crystal formation called [diffusion-limited aggregati
 
 Here is an implementation of the model in the GPU.
 
-[![DLA](/works/dla/dla-big.webp)](/sketches/dla/)
+[![DLA](/shaders/sketches/dla/dla-big.webp)](/sketches/dla/)

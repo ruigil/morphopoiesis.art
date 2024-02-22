@@ -1,7 +1,7 @@
 {
   "metas": {
     "site": "morphopoiesis",
-    "description": "Morphopoiesis is a blog about the intersection of art, science, and technology.",
+    "description": "Morphopoiesis is a notebook about the intersection of art, science, and technology.",
     "twitter": "@morphopoiesis",
     "url": "https://morphopoiesis.art/",
     "icon": "https://morphopoiesis.art/assets/img/svg/morphopoeisis.svg",
@@ -23,10 +23,10 @@
   "shaders": [
     {
       "id": "ligrowth",
+      "path": "art/ligrowth",
       "title": "Limits to Growth",
       "description": "This is an exploration of the limits to growth, with a diffuse limited aggregation algorithm, inspired by the book of the same name by Donella H. Meadows, Dennis L. Meadows, Jørgen Randers, and William W. Behrens III. ",
-      "image": "",
-      "tags": [],
+      "tags": ["dla","palette","2d"],
       "license": "cc-by-nc-nd",
       "sketch": false,
       "debug": true,
@@ -34,9 +34,9 @@
     },
     {
       "id": "inversion",
+      "path": "draft/inversion",
       "title": "Inversion",
       "description": "A circle inversion",
-      "image": "/works/inversion/inversion",
       "tags": [
         "inversion",
         "fractal"
@@ -48,9 +48,9 @@
     },
     {
       "id": "ifx",
+      "path": "draft/ifx",
       "title": "IFX",
       "description": "A simple iterative fractal explorer",
-      "image": "/works/ifx/ifx",
       "tags": [
         "ifs",
         "fractal"
@@ -62,9 +62,9 @@
     },
     {
       "id": "pathtracer",
+      "path": "draft/pathtracer",
       "title": "Path Tracer",
       "description": "A simple path tracer",
-      "image": "/works/pathtracer/pathtracer",
       "tags": [
         "pathtracer",
         "raymarching"
@@ -75,9 +75,9 @@
     },
     {
       "id": "fluid",
+      "path": "sketches/fluid",
       "title": "Fluid",
       "description": "Fluid simulator. You can play with your mouse to add color.",
-      "image": "/works/fluid/fluid",
       "tags": [
         "fluid",
         "fields",
@@ -89,9 +89,9 @@
     },
     {
       "id": "dla",
+      "path": "sketches/dla",
       "title": "DLA",
       "description": "Diffuse Limited Aggregation, to create an Ice structure. You can play with your mouse to melt the ice.",
-      "image": "/works/dla/dla",
       "tags": [
         "dla",
         "particles",
@@ -104,9 +104,9 @@
     },
     {
       "id": "physarum",
+      "path": "sketches/physarum",
       "title": "Physarum",
       "description": "A slime mold building a transport network. You can play with your mouse to erase the chemical field.",
-      "image": "/works/physarum/physarum",
       "tags": [
         "physarum",
         "particles",
@@ -120,9 +120,9 @@
     },
     {
       "id": "boids",
+      "path": "sketches/boids",
       "title": "Boids",
       "description": "Android birds trying to sync their movement and blinking. You can play with your mouse to attract them.",
-      "image": "/works/boids/boids",
       "tags": [
         "boids",
         "particles",
@@ -134,9 +134,9 @@
     },
     {
       "id": "rd",
+      "path": "sketches/rd",
       "title": "Reaction Diffusion",
       "description": "Move your mouse to explore the generation of different patterns.",
-      "image": "/works/rd/rd",
       "tags": [
         "cellular automata",
         "reaction diffusion",
@@ -148,9 +148,9 @@
     },
     {
       "id": "gol",
+      "path": "sketches/gol",
       "title": "Game of Life",
       "description": "Conway's Game of Life",
-      "image": "/works/gol/gol",
       "tags": [
         "cellular automata",
         "life",
@@ -162,9 +162,9 @@
     },
     {
       "id": "colorIFS",
+      "path": "sketches/colorIFS",
       "title": "Color IFS",
       "description": "A simple colorized IFS fractal",
-      "image": "/works/colorIFS/colorIFS",
       "tags": [
         "fractal",
         "ifs",

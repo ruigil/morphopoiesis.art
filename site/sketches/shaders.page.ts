@@ -20,8 +20,8 @@ const related = (shader: any, data: Lume.Data) => {
 
 const shaderContent = async (shader: any, data: Lume.Data) => {
 
-  const wgslCode = await Deno.readTextFile(`./site/works/${shader.id}/${shader.id}.wgsl`);
-  const tsCode = await Deno.readTextFile(`./site/works/${shader.id}/${shader.id}.ts`);
+  const wgslCode = await Deno.readTextFile(`./site/shaders/${shader.path}/${shader.id}.wgsl`);
+  const tsCode = await Deno.readTextFile(`./site/shaders/${shader.path}/${shader.id}.ts`);
   const htmlWgsl = hljs.highlight(wgslCode, { language: 'rust' }).value
   const htmlTs = hljs.highlight(tsCode, { language: 'typescript' }).value
 
@@ -68,11 +68,13 @@ const shaderContent = async (shader: any, data: Lume.Data) => {
 export default function* (data: Lume.Data) {
 
   for (const s of data.shaders) {
-    yield {
-      url: `./${s.id}/`,
-      title: s.title,
-      description: s.description,
-      content: shaderContent(s, data),
+    if (s.sketch) {
+      yield {
+        url: `./${s.id}/`,
+        title: s.title,
+        description: s.description,
+        content: shaderContent(s, data),
+      } 
     };
   }
 }

@@ -2,7 +2,7 @@
 title: The leopard spots
 layout: post.layout.ts
 type: post
-header: /works/rd/rd
+header: /shaders/sketches/rd/rd
 date: Git Created
 tags:
     - Turing
@@ -28,7 +28,7 @@ I think this is the path to generating form. The ability to design dynamical sys
 
 Here is a little [example](/sketches/reaction-diffusion/) of a reaction diffusion system. The screen is divided in 9 parts, that you can explore with your mouse. Each part is a different pattern generated with the same system.
 
-[![reaction diffusion](/works/rd/rd-big.webp)](/sketches/reaction-diffusion/)
+[![reaction diffusion](/shaders/sketches/rd/rd-big.webp)](/sketches/reaction-diffusion/)
 
 
 

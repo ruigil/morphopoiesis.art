@@ -1,6 +1,6 @@
 
 import { loadJSON, loadWGSL, animate } from "./lib/poiesis/index.ts";
-import { ligrowth } from "./works/ligrowth/ligrowth.ts";
+import { ligrowth } from "./shaders/art/ligrowth/ligrowth.ts";
 
 
 const featureShader = async () => {
@@ -37,8 +37,8 @@ const featureShader = async () => {
 
   observer.observe(body!, { attributes: true });
 
-  const code = await loadWGSL(`./works/ligrowth/ligrowth.wgsl`);
-  const defs = await loadJSON(`./works/ligrowth/ligrowth.json`);
+  const code = await loadWGSL(`./shaders/art/ligrowth/ligrowth.wgsl`);
+  const defs = await loadJSON(`./shaders/art/ligrowth/ligrowth.json`);
   const spec = await ligrowth(code,defs, undefined);
 
   const canvas = document.querySelector("#canvas") as HTMLCanvasElement;

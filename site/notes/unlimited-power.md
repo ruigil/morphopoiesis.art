@@ -2,7 +2,7 @@
 title: Unlimited Power
 layout: post.layout.ts
 type: post
-header: /works/colorIFS/colorIFS
+header: /shaders/sketches/colorIFS/colorIFS
 date: Git created
 tags:
     - WebGPU
@@ -41,4 +41,4 @@ It's written in [WGSL](https://www.w3.org/TR/WGSL/), an it's a little program th
 
 Here [try it](/sketches/colorIFS/), you can play with your mouse.
 
-[![ColorIFS](/works/colorIFS/colorIFS-big.webp)](/sketches/colorIFS/)
+[![ColorIFS](/shaders/sketches/colorIFS/colorIFS-big.webp)](/sketches/colorIFS/)

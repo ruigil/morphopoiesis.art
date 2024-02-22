@@ -2,7 +2,7 @@
 title: The Big-O
 layout: post.layout.ts
 type: post
-header: /works/boids/boids
+header: /shaders/sketches/boids/boids
 date: Git Created
 tags:
     - Boids
@@ -28,5 +28,5 @@ Cellular automata model the world as *fields* while Boids model the world as *pa
 
 Here is an [implementation](/sketches/boids/) of the Boids algorithm on the GPU. They try to synchronize their movement and velocity but also their blinking phase with their neighbours. The algorithm works a little bit like heat dissipation, where they try to average out their properties with their neighbours and values tend to converge overtime, but instead of maximum entropy, a global coordination emerges and they create flocking and blinking patterns. 
 
-[![boids](/works/boids/boids-big.webp)](/sketches/boids/)
+[![boids](/shaders/sketches/boids/boids-big.webp)](/sketches/boids/)
 

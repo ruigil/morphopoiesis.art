@@ -2,7 +2,7 @@
 title: Tiny robots
 layout: post.layout.ts
 type: post
-header: /works/gol/gol
+header: /shaders/sketches/gol/gol
 date: Git Created
 tags:
     - WebGPU
@@ -24,4 +24,4 @@ Let pause briefly for the implications of this. This system is a simple iterativ
 
 Here is a the Game of Life [implemented](/sketches/gol/) with WebGPU.
 
-[![GOL](/works/gol/gol-big.webp)](/sketches/gol/)
+[![GOL](/shaders/sketches/gol/gol-big.webp)](/sketches/gol/)
