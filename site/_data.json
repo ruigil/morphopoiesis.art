@@ -27,7 +27,7 @@
       "description": "This is an exploration of the limits to growth, with a diffuse limited aggregation algorithm, inspired by the book of the same name by Donella H. Meadows, Dennis L. Meadows, Jørgen Randers, and William W. Behrens III. ",
       "image": "",
       "tags": [],
-      "license": "cc-by",
+      "license": "cc-by-nc-nd",
       "sketch": false,
       "debug": false,
       "fx": true
