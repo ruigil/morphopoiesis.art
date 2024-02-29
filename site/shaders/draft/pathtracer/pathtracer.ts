@@ -2,7 +2,7 @@ import { PSpec, Definitions } from "../../../lib/poiesis/index.ts";
 
 export const pathtracer = async (code:string, defs:Definitions) => {
 
-    const size = {x : 512, y: 512 } 
+    const size = {x : 1024, y: 1024 } 
     const empty = new ImageData(size.x, size.y);
     const emptyBitmap = await createImageBitmap(empty);
 
