@@ -54,8 +54,7 @@ const script = (shader: any, data: Lume.Data) => {
             const fpsListener = (fps) => { fpsSmall.textContent = fps.fps + " fps"};
 
             const spec = await ${shader.id}(code,defs);
-
-            const anim = await animate(spec, canvas, {} , { onFPS: fpsListener } );
+            const anim = animate(spec, canvas, undefined , { onFPS: fpsListener } );
             anim.start();
 
         });
