@@ -2,7 +2,7 @@
 import { PSpec, Definitions, scaleAspect, square } from "../../../lib/poiesis/index.ts";
 
 
-export const ligrowth = async (code: string,defs: Definitions, fx:any ) => {
+export const ligrowth = (code: string,defs: Definitions, fx:any ) => {
 
     const spec = (w:number,h:number):PSpec => {
         const numWaterDrops = 40000;
@@ -50,13 +50,13 @@ export const ligrowth = async (code: string,defs: Definitions, fx:any ) => {
                     instances: size.x * size.y    
                 }
             },
-            uniforms: {
+            uniforms: () => ({
                 params: {
                     size: [size.x, size.y],
                     drops: numWaterDrops,
                     mode: mode
                 }
-            },
+            }),
             storages: [
                 { name: "drops", size: numWaterDrops , data: waterDrops},
                 { name: "iceA", size: size.x * size.y, data: ice} ,

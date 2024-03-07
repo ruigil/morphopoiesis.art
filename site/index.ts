@@ -42,7 +42,7 @@ const featureShader = async () => {
   const spec = await ligrowth(code,defs, undefined);
 
   const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
-  const anim = await animate(spec, canvas, color);
+  const anim = animate(spec, canvas, color);
   anim.start();
 
 }

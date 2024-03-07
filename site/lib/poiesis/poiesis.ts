@@ -219,7 +219,7 @@ export class PContext {
 
         const createUniforms = (spec: PSpec) : Uniform[] => {
 
-            const uniforms = spec.uniforms || {};
+            const uniforms = spec.uniforms ? spec.uniforms(0) : {};
             const uniRessource:Array<Uniform> = [];
 
             for (const [key, value] of Object.entries(spec.defs.uniforms as Record<string,BufferInfo>)) {
@@ -615,6 +615,27 @@ export class PContext {
          
         const submitCommands = () => {
             const encoder = device.createCommandEncoder();
+            // compute pipelines
+            if (pipelines?.compute) {
+                const computePass = encoder.beginComputePass();
+
+                for( let cg = 0; cg < pipelines.compute.computeGroupCount; cg++) {
+                    const bg = bindGroup(frame + cg)
+
+                    for (let c = 0; c < pipelines.compute.computeGroup.length; c++) {
+                        const compute = pipelines.compute.computeGroup[c];
+                        computePass.setPipeline(compute.pipeline);
+
+                        for (let i = 0; i < compute.instances ; i++) {
+                            const g = bindGroup(bg + i )
+                            computePass.setBindGroup(0, pipelines.bindings(g));
+                            computePass.dispatchWorkgroups(...compute.workgroups);
+                        }
+                    }    
+                }
+
+                computePass.end();    
+            }
 
             // render pipeline
             if (pipelines?.render) {
@@ -644,28 +665,6 @@ export class PContext {
                 pass.end();    
             }
     
-            // compute pipelines
-            if (pipelines?.compute) {
-                const computePass = encoder.beginComputePass();
-
-                for( let cg = 0; cg < pipelines.compute.computeGroupCount; cg++) {
-                    const bg = bindGroup(frame + cg)
-
-                    for (let c = 0; c < pipelines.compute.computeGroup.length; c++) {
-                        const compute = pipelines.compute.computeGroup[c];
-                        computePass.setPipeline(compute.pipeline);
-
-                        for (let i = 0; i < compute.instances ; i++) {
-                            const g = bindGroup(bg + i )
-                            computePass.setBindGroup(0, pipelines.bindings(g));
-                            computePass.dispatchWorkgroups(...compute.workgroups);
-                        }
-                    }    
-                }
-
-                computePass.end();    
-            }
-            
             // copy read buffers
             if (storages && storages.readStorages.length > 0) {
                 storages.readStorages.forEach((storage) => {
@@ -696,98 +695,12 @@ export class PContext {
         // update uniforms
         setUniforms(unis);
 
-        // read buffers into staging buffers
-        await readBuffers();
-
         // submit commands
         submitCommands();
 
+        // read buffers into staging buffers
+        await readBuffers();
     }
 
-/*
-    animate(unis?:any, controls?: Controls, fpsListener?: FPSListener) {
-        let frame = 0;
-        let intid = 0;
-        let elapsed = 0;
-        let idle = 0;
-        let start = performance.now();
-    
-        const canvas = this.state.canvas;
-        const crtl = controls || { play: true, reset: false, delta: 0 };
-    
-        const mouse: Array<number> = [0,0,0,0];
-        const resolution: Array<number> = [0,0];
-        const aspectRatio: Array<number> = [1,1];
-        resolution[0] = canvas.width;
-        resolution[1] = canvas.height;
-        const factor = resolution[0] < resolution[1] ? resolution[0] : resolution[1];
-        aspectRatio[0] = resolution[0] / factor;
-        aspectRatio[1] = resolution[1] / factor;
-    
-        canvas.addEventListener('mousemove', (event:MouseEvent) => {
-            mouse[2] = mouse[0]; // last position x
-            mouse[3] = mouse[1]; // last position y
-            let rect = canvas.getBoundingClientRect();
-            mouse[0] = (event.clientX - rect.left) / rect.width;
-            mouse[1] = (event.clientY - rect.top) / rect.height;
-        });
-        canvas.addEventListener('touchmove', (event:TouchEvent) => {
-            mouse[2] = mouse[0]; // last position x
-            mouse[3] = mouse[1]; // last position y
-            const touch = event.touches[0];
-            let rect = canvas.getBoundingClientRect();
-            mouse[0] = (touch.clientX - rect.left) / rect.width;
-            mouse[1] = (touch.clientY - rect.top) / rect.height;
-        });
-    
-        const fps = () => {
-            fpsListener && fpsListener.onFPS({ fps: (frame / elapsed).toFixed(2), time: elapsed.toFixed(1)} );
-        }
-    
-        const render = async () => {
-            if (crtl.reset) {
-                frame = 0;
-                elapsed = 0;
-                idle = 0;
-                //this.reset();
-                start = performance.now();
-            }
-    
-            if (crtl.play && !intid) {
-                intid = setInterval(() => fps(), 200);
-            }
-    
-            if (!crtl.play && intid) {
-                clearInterval(intid);
-                intid = 0;
-            }
-    
-            if ( crtl.play || crtl.reset ) {
-                if (crtl.reset) crtl.reset = false; 
-        
-                await this.frame(frame, { 
-                    sys: { 
-                        frame: frame, 
-                        time: elapsed, 
-                        mouse: mouse, 
-                        resolution: resolution,
-                        aspect: aspectRatio 
-                    }, ...unis });
-    
-                elapsed = ((performance.now() - start) / 1000) - idle;
-    
-                frame++;        
-    
-            } else {
-                idle = ((performance.now()- start)/1000) - elapsed;
-            }
-    
-            if (crtl.delta != 0) setTimeout(()=>requestAnimationFrame(render), crtl.delta);
-            else requestAnimationFrame(render);
-        }
-    
-        requestAnimationFrame(render);
-    }
-*/    
 }
 

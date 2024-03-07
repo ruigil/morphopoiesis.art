@@ -127,7 +127,7 @@ const script = (shader: any, data: Lume.Data) => {
       ${ shader.debug && tweakPane() }
       ${ shader.debug && listeners() }
 
-      const anim = await animate(spec, canvas, ${ shader.debug ?  'uniforms, { onFPS: fpsListener }, { onRead: bufferListener }' : '{}' } );
+      const anim = animate(spec, canvas, ${ shader.debug ?  'uniforms, { onFPS: fpsListener }, { onRead: bufferListener }' : '{}' } );
       anim.start();
 
     });`

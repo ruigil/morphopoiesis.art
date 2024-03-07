@@ -1,6 +1,6 @@
 import { PSpec, Definitions, square, scaleAspect } from "../../../lib/poiesis/index.ts";
 
-export const physarum = async (code:string, defs:Definitions) => {
+export const physarum = (code:string, defs:Definitions) => {
 
     const spec = (w:number,h:number):PSpec => {
         const numAgents = 10000;
@@ -27,7 +27,7 @@ export const physarum = async (code:string, defs:Definitions) => {
                     instances: size.x * size.y
                 }
             },
-            uniforms: {
+            uniforms: () => ({
                 params: {
                     size: [size.x, size.y],
                     agents: numAgents,
@@ -35,7 +35,7 @@ export const physarum = async (code:string, defs:Definitions) => {
                     sd: 40.,
                     evaporation: .995,
                 }
-            },
+            }),
             storages: [
                 { name: "agents", size: numAgents , data: agents} ,
                 { name: "trailMapA", size: size.x * size.y } ,

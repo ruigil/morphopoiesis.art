@@ -1,6 +1,6 @@
 import { PSpec, Definitions, square, scaleAspect } from "../../../lib/poiesis/index.ts";
 
-export const dla = async (code:string,defs:Definitions) => {
+export const dla = (code:string,defs:Definitions) => {
 
     const spec = (w:number,h:number):PSpec => {
         const numWaterDrops = 70000;
@@ -24,14 +24,14 @@ export const dla = async (code:string,defs:Definitions) => {
                     instances: size.x * size.y    
                 }
             },
-            uniforms: {
+            uniforms: () => ({
                 params: {
                     size: [size.x, size.y],
                     drops: numWaterDrops,
                     fcolor: [0,196,255],
                     bcolor: [0,0,16]
                 }
-            },
+            }),
             storages: [
                 { name: "drops", size: numWaterDrops , data: waterDrops},
                 { name: "iceA", size: size.x * size.y, data: ice} ,

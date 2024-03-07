@@ -27,12 +27,12 @@ export const fluid = async (code:string, defs:Definitions) => {
                     instances: size.x * size.y    
                 }
             },
-            uniforms: {
+            uniforms: () => ({
                 sim: {
                     size: [size.x, size.y],
                     dt: 1. / 60.
                 }
-            },
+            }),
             storages: [
                 { name: "fluidA", size: size.x * size.y, data: fluid },
                 { name: "fluidB", size: size.x * size.y, data: fluid },

@@ -78,62 +78,63 @@ export const loadWebcam = async () => {
     return { video: video, settings: videoSettings, capabilities: capabilities };
 }
 
-export const animate = async (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasElement, unis: any, fpsListener?: FPSListener, bufferListener?: BufferListener ) => {
+export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasElement, unis?: Record<string,any>, fpsListener?: FPSListener, bufferListener?: BufferListener ) => {
     let frame = 0;
     let intid = 0;
     let elapsed = 0;
     let idle = 0;
     let start = performance.now();
-    let context:PContext = await PContext.init(canvas);
+    let context:PContext | null = null;
+    let s: PSpec | null = null;
+    let requestId = 0;
 
-    const crtl = { play: true, reset: false, stop: false, delta: 0 };
+    const crtl = { play: false, delta: 0 };
 
     const mouse: Array<number> = [0,0,0,0];
     const resolution: Array<number> = [0,0];
     const aspectRatio: Array<number> = [1,1];
+
+    const updateMouse = (x:number,y:number) => {
+        mouse[2] = mouse[0]; // last position x
+        mouse[3] = mouse[1]; // last position y
+        let rect = canvas.getBoundingClientRect();
+        mouse[0] = (x - rect.left) / rect.width;
+        mouse[1] = (y - rect.top) / rect.height;
+    }
     
-    canvas.addEventListener('mousemove', (event:MouseEvent) => {
-        mouse[2] = mouse[0]; // last position x
-        mouse[3] = mouse[1]; // last position y
-        let rect = canvas.getBoundingClientRect();
-        mouse[0] = (event.clientX - rect.left) / rect.width;
-        mouse[1] = (event.clientY - rect.top) / rect.height;
-    });
-    canvas.addEventListener('touchmove', (event:TouchEvent) => {
-        mouse[2] = mouse[0]; // last position x
-        mouse[3] = mouse[1]; // last position y
-        const touch = event.touches[0];
-        let rect = canvas.getBoundingClientRect();
-        mouse[0] = (touch.clientX - rect.left) / rect.width;
-        mouse[1] = (touch.clientY - rect.top) / rect.height;
-    });
+    canvas.addEventListener('mousemove', (event:MouseEvent) => updateMouse(event.clientX, event.clientY));
+    canvas.addEventListener('touchmove', (event:TouchEvent) => updateMouse(event.touches[0].clientX, event.touches[0].clientY));
 
     const fps = () => {
         fpsListener && fpsListener.onFPS({ fps: (frame / elapsed).toFixed(2), time: elapsed.toFixed(1), frame: frame } );
     }
 
-    const reset = () => {
+    const reset = async () => {
         frame = 0;
         elapsed = 0;
         idle = 0;
-        start = performance.now();
-        context = context.build( spec(canvas.width, canvas.height) )
+        if (context == null) context = await PContext.init(canvas);
+        cancelAnimationFrame(requestId);
+        s = spec(canvas.width, canvas.height);
+        context = context.build( s )
         if (bufferListener) {
             context = context.addBufferListener(bufferListener);
         }
+        requestId = requestAnimationFrame(render)
+        start = performance.now();
     }
 
-    const canvasResize = (entries: ResizeObserverEntry[]) => {
+    const canvasResize = async (entries: ResizeObserverEntry[]) => {
         canvas.width = entries[0].target.clientWidth * devicePixelRatio;
         canvas.height = entries[0].target.clientHeight * devicePixelRatio;
         resolution[0] = canvas.width;
-        resolution[1] = canvas.height;
+        resolution[1] = canvas.height; 
         const factor = resolution[0] < resolution[1] ? resolution[0] : resolution[1];
         aspectRatio[0] = resolution[0] / factor;
         aspectRatio[1] = resolution[1] / factor;
 
         try {
-            reset();
+            await reset();
         } catch (err) {
             console.log(err);
             const error = document.querySelector("#error") as HTMLDivElement;
@@ -141,7 +142,10 @@ export const animate = async (spec: (w:number,h:number) => PSpec, canvas: HTMLCa
         }
     }
 
-    const observer = new ResizeObserver( canvasResize ).observe(canvas);
+    const observer = new ResizeObserver( canvasResize );
+    observer.observe(canvas);
+
+
     const render = async () => {
 
         if (crtl.play && !intid) {
@@ -156,31 +160,30 @@ export const animate = async (spec: (w:number,h:number) => PSpec, canvas: HTMLCa
         if ( crtl.play  ) {
             elapsed = ((performance.now() - start) / 1000) - idle;
     
-            const f = await context.frame(frame, { 
+            await context!.frame(frame, { 
                 sys: { 
                     frame: frame, 
                     time: elapsed, 
                     mouse: mouse, 
                     resolution: resolution,
                     aspect: aspectRatio 
-                }, ...unis });
+                }, ...(s!.uniforms ? s!.uniforms(frame) : {}), ...unis });
 
-            frame++;        
+            // frame starts at 0, because binding groups start at 0
+            frame++;
 
         } else {
             idle = ((performance.now()- start)/1000) - elapsed;
         }
 
-        if (!crtl.stop) {
-            if (crtl.delta != 0) setTimeout(()=>requestAnimationFrame(render), crtl.delta);
-            else requestAnimationFrame(render);
-        }
+        if (crtl.delta != 0) setTimeout(()=> requestId = requestAnimationFrame(render), crtl.delta);
+        else requestId = requestAnimationFrame(render);
     }
 
     return {
-        start: () => { crtl.play = true; crtl.stop = false; requestAnimationFrame(render) },
+        start: () => { crtl.play = true; },
         togglePlayPause: () => { crtl.play = !crtl.play; },
-        stop: () => { crtl.stop = true; },
+        stop: () => { cancelAnimationFrame(requestId);  },
         reset: () => { reset() },
         delay: (delta: number) => { crtl.delta = delta; },
     }

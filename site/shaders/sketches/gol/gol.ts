@@ -4,8 +4,7 @@ export const gol = async (code:string, defs:Definitions) => {
 
     const spec = (w:number,h:number): PSpec => {
         const size = scaleAspect(w,h,128);
-        const current = Array.from({ length: size.x*size.y }, () => Math.random() > 0.9 ? 1 : 0);
-        console.log("gol spec",current)
+        const current = Array.from({ length: size.x*size.y }, () => Math.random() > 0.5 ? 1 : 0);
 
         return {
             code: code,
@@ -17,13 +16,13 @@ export const gol = async (code:string, defs:Definitions) => {
                     instances: size.x * size.y    
                 }
             },
-            uniforms: {
+            uniforms: () => ({
                 uni: {
                     size: [size.x, size.y],
                     fcolor: [0,0,0],
                     bcolor: [255,255,255]
                 }
-            },
+            }),
             storages: [
                 { name: "current", size: current.length, data: current } ,
                 { name: "next", size: current.length },

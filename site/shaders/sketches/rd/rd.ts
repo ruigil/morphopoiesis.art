@@ -1,6 +1,6 @@
 import { PSpec, Definitions, square, scaleAspect } from "../../../lib/poiesis/index.ts";
 
-export const rd = async (code:string, defs:Definitions) => {
+export const rd = (code:string, defs:Definitions) => {
 
     const spec =  (w:number,h:number) : PSpec => {
         const size = scaleAspect(w,h,512);
@@ -16,11 +16,11 @@ export const rd = async (code:string, defs:Definitions) => {
                     instances: size.x * size.y    
                 }
             },
-            uniforms: {
+            uniforms: () => ({
                 uni: {
                     size: [size.x, size.y]
                 }
-            },
+            }),
             storages: [
                 { name: "current", size: size.x * size.y, data: current } ,
                 { name: "next", size: size.x * size.y}

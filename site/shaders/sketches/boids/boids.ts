@@ -1,6 +1,6 @@
 import { PSpec, Definitions, triangle } from "../../../lib/poiesis/index.ts";
 
-export const boids = async (code:string, defs:Definitions) => {
+export const boids = (code:string, defs:Definitions) => {
 
     const spec = ():PSpec => {
         const numBoids = 2000;
@@ -23,7 +23,7 @@ export const boids = async (code:string, defs:Definitions) => {
                     instances: numBoids
                 }
             },
-            uniforms: {
+            uniforms: () => ({
                 params: {
                     boids: numBoids,
                     deltaT: .01,
@@ -32,7 +32,7 @@ export const boids = async (code:string, defs:Definitions) => {
                     // separation, cohesion, alignment
                     distances: [2., 4., 6., 1.] // boid size is 1.
                 }
-            },
+            }),
             storages: [
                 { name: "particlesA", size: numBoids , data: boids, vertex: true} ,
                 { name: "particlesB", size: numBoids , vertex: true} 

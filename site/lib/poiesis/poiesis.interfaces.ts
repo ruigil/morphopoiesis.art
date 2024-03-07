@@ -124,7 +124,7 @@ export interface Definitions {
 export interface PSpec {
     code: string;
     defs: Definitions;
-    uniforms?: any;
+    uniforms?: (f:number) => Record<string,any>;
     geometry?: { vertex: VAttr, instance?: VAttr };
     storages?: Array<{ name: string, size: number, data?: Array<any>, read?:boolean, vertex?:boolean, }>;
     samplers?: Array<{ name : string, magFilter: string, minFilter: string }>;
