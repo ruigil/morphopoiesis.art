@@ -43,13 +43,15 @@ const script = (shader: any, data: Lume.Data) => {
       pane.addBinding(PARAMS, 'fps', { readonly: true });
       pane.addBinding(PARAMS, 'frame', { readonly: true });
       pane.addBinding(PARAMS, 'elapsed', { readonly: true });
-      pane.addBinding(PARAMS, 'debug', {
+      const d = pane.addFolder({ title: 'Debug', expanded: false});
+      d.addBinding(PARAMS, 'debug', {
         readonly: true,
         multiline: true,
-        rows: 10,
+        rows: 30,
       });
       const unis = pane.addFolder({
         title: 'Uniforms',
+        expanded: false,
       });
       for (let key in su) {
         const u = unis.addBinding(PARAMS, key, { readonly: false });

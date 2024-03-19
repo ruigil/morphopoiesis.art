@@ -13,13 +13,16 @@ fn tosRGB(linearRGB: vec3f) -> vec3f {
     return vec3<f32>(mix(higher, lower, vec3<f32>(cutoff)));
 }
 
-// Converts a color from sRGB gamma to linear light gamma
-fn toLinear(sRGB:vec3<f32>) -> vec3<f32>{
-    let cutoff = vec3<bool>(sRGB.x < 0.0031308, sRGB.y < 0.0031308, sRGB.z < 0.0031308);
-    let higher = pow((sRGB.rgb + vec3(0.055))/vec3(1.055), vec3(2.4));
-    let lower = sRGB.rgb/vec3(12.92);
-
-    return vec3(mix(higher, lower, vec3<f32>(cutoff)));
+fn linearToSRGB(rgb: vec3f) -> vec3f {
+    let c = clamp(rgb, vec3(0.0), vec3(1.0));
+ 
+    return mix( pow(c, vec3f(1.0 / 2.4)) * 1.055 - 0.055, c * 12.92, vec3f(c < vec3(0.0031308) ) );
+}
+ 
+fn sRGBToLinear(rgb: vec3f) -> vec3f {
+    let c = clamp(rgb, vec3(0.0), vec3(1.0));
+ 
+    return mix( pow(((c + 0.055) / 1.055), vec3(2.4)), c / 12.92, vec3f(c < vec3(0.04045) ) );
 }
 
 // cheap pallette from https://www.shadertoy.com/view/ll2GD3

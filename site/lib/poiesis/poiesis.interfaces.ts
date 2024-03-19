@@ -1,7 +1,5 @@
 export interface PoiesisState {
-    canvas: HTMLCanvasElement;
     context: GPUCanvasContext;
-    adapter: GPUAdapter;
     device: GPUDevice;
     geometry?: Geometry;
     uniforms?: Array<Uniform>;
@@ -84,18 +82,18 @@ export interface BufferView {
 }
 
 export interface BufferInfo {
-    name: string,
-    type: string,
-    size: number,
-    group: number,
-    binding: number,
-    access: string,
-    offset: number,
-    isArray: boolean,
-    isStruct: boolean,
-    arrayCount: number,
-    arrayStride: number,
-    members: Record<string,BufferInfo>
+    name: string;
+    type: string;
+    size: number;
+    group: number;
+    binding: number;
+    access: string;
+    offset: number;
+    isArray: boolean;
+    isStruct: boolean;
+    arrayCount: number;
+    arrayStride: number;
+    members: Record<string,BufferInfo>;
 }
 
 export interface BufferListener {
@@ -125,6 +123,7 @@ export interface PSpec {
     code: string;
     defs: Definitions;
     uniforms?: (f:number) => Record<string,any>;
+    mouse?: (x:number,y:number,frame:number) => void;
     geometry?: { vertex: VAttr, instance?: VAttr };
     storages?: Array<{ name: string, size: number, data?: Array<any>, read?:boolean, vertex?:boolean, }>;
     samplers?: Array<{ name : string, magFilter: string, minFilter: string }>;

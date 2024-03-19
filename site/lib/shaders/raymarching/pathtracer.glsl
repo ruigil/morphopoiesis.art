@@ -98,7 +98,7 @@ Material material(Ray ray, inout Hit hit) {
         float sn = hit.s>0. ? 1./1.52 : 1.52/1.;
         sn = (1.-sn) / (1.+sn);
         sn = sn*sn;
-        sn + (1.-sn)*pow( (1. - ctheta),5.);
+        sn += (1.-sn)*pow( (1. - ctheta),5.);
         
         // test if the ray is reflected or refracted
         if (sn * stheta  > 1. ) {

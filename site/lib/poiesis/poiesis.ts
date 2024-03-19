@@ -14,8 +14,6 @@ import {
     Texture,
     BufferView,
     ComputeGroupPipeline,
-    Controls,
-    FPSListener,
     BufferInfo
 } from "./poiesis.interfaces.ts";
 import { square } from "./utils.ts";
@@ -46,9 +44,7 @@ export class PContext {
 
 
         return new PContext({
-            canvas: canvas,
             context: context,
-            adapter: adapter,
             device: device
         })
     }
@@ -57,10 +53,10 @@ export class PContext {
         this.state = {...state};
     }
     
-    build( spec : PSpec ): PContext {
+    build( wgslSpec : PSpec ): PContext {
 
         const makeBufferView = (defs:BufferInfo, size: number = 1): BufferView => {
-            const buffer = defs.isArray ? new ArrayBuffer(defs.arrayStride * size) : new ArrayBuffer(defs.size);
+            const buffer = defs.isArray ? new ArrayBuffer(defs.arrayStride * size) :  new ArrayBuffer(defs.size);
         
             const ArrayType = (type:string) => {
                 switch (type) {
@@ -77,7 +73,7 @@ export class PContext {
                         ...def,
                         isArray: false,
                         offset: (i * def.arrayStride) + def.offset, // must accumulate offset for arrays in structs
-                        size: def.arrayStride // arrayStride corresponds to the byteSize of the array elements
+                        size: def.size // corresponds to the byteSize of the array elements
                     }));
                 } else if (def.isStruct) {
                     return Object.fromEntries(
@@ -219,7 +215,7 @@ export class PContext {
 
         const createUniforms = (spec: PSpec) : Uniform[] => {
 
-            const uniforms = spec.uniforms ? spec.uniforms(0) : {};
+            const uniforms = spec.uniforms ? spec.uniforms(0,[0,0,0,0]) : {};
             const uniRessource:Array<Uniform> = [];
 
             for (const [key, value] of Object.entries(spec.defs.uniforms as Record<string,BufferInfo>)) {
@@ -400,7 +396,7 @@ export class PContext {
                         entries.push({ 
                             binding: res.binding,
                             visibility: GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE, 
-                            storageTexture: { viewDimension: "2d", format: "rgba8unorm" }
+                            storageTexture: { viewDimension: "2d", format: "rgba8unorm" },
                         }); break;;
                     case "external_texture": 
                         entries.push({ 
@@ -444,8 +440,9 @@ export class PContext {
                 for (let j = 0; j < bindingsCount; j++) {
                     // if bindings are not defined, use the default order
                     const index = spec.bindings ? spec.bindings[i][j] : j;
+                    if (index == undefined) throw new Error(`Binding ${j} was not found in group ${i}. Check your bindings spec.`);
                     const res = resbinding[index];
-                    if (!res) throw new Error(`Binding ${index} defined in groups not found`);
+                    if (!res) throw new Error(`Binding ${index} defined in group ${i} not found`);
 
                     entries[i].push({
                         // we need to use the first group to define the bindings reference
@@ -554,10 +551,6 @@ export class PContext {
             });
         }
 
-
-        //const wgslSpec = spec(this.state.canvas.width, this.state.canvas.height);
-        //console.log(wgslSpec)
-        const wgslSpec = spec;
         const shaderModule = createShaderModule(wgslSpec);
         const geometry = createGeometry(wgslSpec);
         const uniforms = createUniforms(wgslSpec);
@@ -598,7 +591,7 @@ export class PContext {
         });
     }
 
-    async frame(frame: number, unis?: any) {
+    async frame(frame: number = 0, unis?: any) {
         const { bufferListeners, storages, device, uniforms, pipelines, geometry, context, clearColor, wgslSpec } = this.state;
 
         const bindGroup = (i:number) => wgslSpec!.bindings ? (i % wgslSpec!.bindings.length) : 0;
@@ -615,6 +608,7 @@ export class PContext {
          
         const submitCommands = () => {
             const encoder = device.createCommandEncoder();
+
             // compute pipelines
             if (pipelines?.compute) {
                 const computePass = encoder.beginComputePass();
@@ -664,7 +658,7 @@ export class PContext {
     
                 pass.end();    
             }
-    
+
             // copy read buffers
             if (storages && storages.readStorages.length > 0) {
                 storages.readStorages.forEach((storage) => {
@@ -680,6 +674,8 @@ export class PContext {
             if (bufferListeners) {
                 const buffers = storages?.readStorages || [];
                 if (buffers.length == 0) return;
+                // unmap pending maps if we are resseting 
+                //buffers.forEach(s => s.dstBuffer.unmap() );
                 await Promise.all(buffers.map( buff => buff.dstBuffer.mapAsync(GPUMapMode.READ)))
                 bufferListeners.forEach((listener) => {
                     const data = buffers.map(s=> {
@@ -700,6 +696,7 @@ export class PContext {
 
         // read buffers into staging buffers
         await readBuffers();
+
     }
 
 }

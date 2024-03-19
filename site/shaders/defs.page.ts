@@ -12,7 +12,6 @@ const reflect = async (shader: any, data: Lume.Data) => {
     if (type instanceof ArrayType) return sizeType(type.format, type.count);
     if (type instanceof TemplateType) return sizeType(type.format, type.name === 'vec4' ? 4 : type.name === 'vec3' ?  3 : type.name === 'vec2' ? 2 : 1 );
     // we assume only the primitives types u32, i32 and f32, so all 4 bytes 
-    //return type!.name === 'f32' ? size * 4 : size * 4;
     return size * 4;
   }
 
@@ -42,6 +41,8 @@ const reflect = async (shader: any, data: Lume.Data) => {
   .map( b => ({
     ...b,
     align: undefined,
+    size: (b.isArray) ? b.arrayStride : b.size,
+    arrayStride: (b.isArray) && (!b.isStruct) ? b.align : b.arrayStride, 
     members: members(b.members),
     type:  primitiveTypeName(b.type),
   }))

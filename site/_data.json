@@ -22,6 +22,21 @@
   },
   "shaders": [
     {
+      "id": "pathtracer",
+      "path": "sketches/pathtracer",
+      "title": "Path Tracer",
+      "description": "This is a simple path tracer, done with raymarching and sdf's, with several materials and depth of field.",
+      "tags": [
+        "pathtracing",
+        "raymarching",
+        "sdf"
+      ],
+      "license": "cc-by",
+      "sketch": true,
+      "debug": false,
+      "fx": false
+    },
+    {
       "id": "ligrowth",
       "path": "art/ligrowth",
       "title": "Limits to Growth",
