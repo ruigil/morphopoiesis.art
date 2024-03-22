@@ -4,14 +4,36 @@ fn hsv2rgb(c :vec3f) -> vec3f {
     return c.z * mix(k.xxx, clamp(p - k.xxx, vec3(0.0), vec3(1.0)), c.y);
 }
 
-// Converts a color from linear light gamma to sRGB gamma
-fn tosRGB(linearRGB: vec3f) -> vec3f {
-    let cutoff = vec3<bool>(linearRGB.x < 0.0031308, linearRGB.y < 0.0031308, linearRGB.z < 0.0031308);
-    let higher = vec3(1.055) * pow(linearRGB.rgb, vec3(1.0/2.4)) - vec3(0.055);
-    let lower = linearRGB.rgb * vec3(12.92);
-
-    return vec3<f32>(mix(higher, lower, vec3<f32>(cutoff)));
+// convert a rgb color to an hsv color
+fn rgb2hsv(c :vec3f) -> vec3f {
+    let k = vec3f(0.0, -1.0 / 3.0, 2.0 / 3.0);
+    let p = mix(vec3f(c.z, c.y, k.w), vec3f(c.y, c.z, k.x), step(c.z, c.y));
+    let q = mix(vec3f(p.x, p.y, p.z), vec3f(p.z, p.x, p.y), step(p.x, p.z));
+    let d = p.x - min(q.x, q.y);
+    let e = 1.0e-10;
+    return vec3f(abs(q.z + (q.y - q.x) / (6.0 * d + e)), d / (p.x + e), p.x);
 }
+
+// convert a rgb color to yuv
+fn rgb2yuv(c :vec3f) -> vec3f {
+    let y = dot(c, vec3f(0.299, 0.587, 0.114));
+    let u = dot(c, vec3f(-0.147, -0.289, 0.436));
+    let v = dot(c, vec3f(0.615, -0.515, -0.100));
+    return vec3f(y, u, v);
+}
+
+// convert a yuv color to rgb
+fn yuv2rgb(c :vec3f) -> vec3f {
+    let r = dot(c, vec3f(1.0, 0.000, 1.140));
+    let g = dot(c, vec3f(1.0, -0.395, -0.581));
+    let b = dot(c, vec3f(1.0, 2.032, 0.000));
+    return vec3f(r, g, b);
+}
+
+fn luminance(color: vec3<f32>) -> f32 {
+    return 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+}
+
 
 fn linearToSRGB(rgb: vec3f) -> vec3f {
     let c = clamp(rgb, vec3(0.0), vec3(1.0));
