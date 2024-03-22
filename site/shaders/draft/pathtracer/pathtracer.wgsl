@@ -9,8 +9,6 @@
 @group(0) @binding(4) var<storage, read_write> debug : Debug;
 @group(0) @binding(5) var<uniform> params: Params;
 @group(0) @binding(6) var<storage, read_write> samples: array<Sample>;
-@group(0) @binding(7) var motion: texture_2d<f32>;
-@group(0) @binding(8) var mbuffer: texture_storage_2d<rgba8unorm, write>;
 
 const PI = 3.1415926535897932384626433832795;
 const EPSILON = 0.001;
