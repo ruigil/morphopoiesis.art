@@ -131,6 +131,7 @@ const script = (shader: any, data: Lume.Data) => {
 
       const anim = animate(spec, canvas, ${ shader.debug ?  'uniforms, { onFPS: fpsListener }, { onRead: bufferListener }' : '{}' } );
       anim.start();
+      //anim.delay(1000);
 
     });`
 }
