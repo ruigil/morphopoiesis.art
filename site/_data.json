@@ -25,9 +25,10 @@
       "id": "pathtracer",
       "path": "sketches/pathtracer",
       "title": "Path Tracer",
-      "description": "This is a simple path tracer, done with raymarching and sdf's, with several materials and depth of field.",
+      "description": "A real-time path tracer, with motion blur, depth of field, adaptative denoise, and several materials. Still a bit noisy, but it's only 1 sample per pixel !",
       "tags": [
         "pathtracing",
+        "denoise",
         "raymarching",
         "sdf"
       ],
