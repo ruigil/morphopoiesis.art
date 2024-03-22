@@ -15,13 +15,13 @@ export const pathtracer = async (code:string, defs:Definitions) => {
         return {
             code: code,
             defs: defs,
-            uniforms: (f:number) => uniforms.params.clear > f ?  ({...uniforms, clear: 0}) : uniforms,
-            mouse: (x:number,y:number, frame:number) => {  uniforms.params.lookFrom = [(x*5)-2.5,1.5 + (y*2.5) - 1.25,4]; uniforms.params.clear = frame  },
+            uniforms: (f:number) => uniforms,
+            mouse: (x:number,y:number, frame:number) => {  uniforms.params.lookFrom = [(x*5)-2.5,1.5 + (y*2.5) - 1.25,4]; },
             storages: [
                 { name: "samples", size: size.x * size.y }
             ],
             textures: [
-                { name: "tex", data: emptyBitmap },
+                { name: "image", data: emptyBitmap },
                 { name: "buffer", data: emptyBitmap, storage: true }
             ],
             computes: [
@@ -29,7 +29,7 @@ export const pathtracer = async (code:string, defs:Definitions) => {
                 { name: "denoise", workgroups: [ Math.ceil(size.x / 8), Math.ceil(size.y / 8), 1] },
             ],
             computeGroupCount: 1,
-            bindings: [ [0,1,2,3,5,6], [0,1,3,2,5,6] ]
+            bindings: [ [0,1,2,3,5,6,7,8], [0,1,3,2,5,6,8,7] ]
         }
     }
 
