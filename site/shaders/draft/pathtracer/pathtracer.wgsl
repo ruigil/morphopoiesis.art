@@ -12,7 +12,7 @@
 
 const PI = 3.1415926535897932384626433832795;
 const EPSILON = 0.001;
-const MAXDIST = 1000.;
+const MAXDIST = 20.;
 
 // types
 struct Sys {
@@ -44,6 +44,7 @@ struct Material {
     diffuse: bool,
     roughness: f32,
     highlight: bool,
+    intensity: f32,
     scattered: Ray
 }
 struct Sample {
@@ -73,6 +74,8 @@ struct Debug {
     dieletric: f32,
     reflectance: f32,
 }
+// default diffuse material
+const defaultMaterial = Material(vec3(0.), false, false, false, true, 0., false, 0., Ray(vec3(0.), vec3(0.)));
 
 struct VertexOutput {
   @builtin(position) pos : vec4<f32>,
@@ -116,11 +119,11 @@ fn pathTracer(@builtin(global_invocation_id) cell : vec3<u32>) {
     var normal = vec3<f32>(0.);
 
     let nSamples = params.samples;
-    let pixelSize = vec3((2. / dims) * sys.aspect,0.);
+    let pixelSize = vec3((sys.aspect / dims  )  ,0.);
 
     for (var s=0u; s < nSamples; s++) {
-      let delta = (random() - .5) * pixelSize;
-      let sample = raySample( Ray(ray.origin + delta ,ray.direction), params.depth);
+      let delta = (random() - .5) * pixelSize  ;
+      let sample = raydiance( Ray(ray.origin + delta ,ray.direction), params.depth);
       color += sample.color;
       if (s == 0) { normal = sample.normal; };
     }
@@ -153,7 +156,6 @@ fn denoise(@builtin(global_invocation_id) cell : vec3<u32>) {
 
     let currentSample = samples[cell.x + cell.y * u32(dims.x)];
     
-
     for(var i = 0u; i < 25u; i++) {
         let offset =  ((vec2u( (i / 5u) - 2u , (i % 5u) - 2u ) + cell.xy) + dims) % dims;
         let sample = samples[offset.x + offset.y * dims.x];
@@ -178,16 +180,20 @@ fn denoise(@builtin(global_invocation_id) cell : vec3<u32>) {
     let currentColor = colorSum / weightSum;
 
     // if this is the first frame, we dont have a last color
-    if (sys.frame == 0u) { lastColor = vec4(currentColor,1.); }
+    if (sys.frame == 0u) { lastColor = vec4(currentSample.color,1.); }
 
 
     // using frame differences to calculate motion doesnt help to diferentiate between motion and noise.
     // but it's better than nothing.. :)
-    let motion = mix(vec3(1.) - lastColor.rgb, mix(lastColor.rgb,currentColor - cv,.1) , .5);
-    let tw = clamp( abs( luminance(motion) - .5 ) * 10., 0., 1.);
+    let motion = mix(vec3(1.) - lastColor.rgb, currentColor , .5);
+    let tw = .25 + clamp( smoothstep(0.2,0.9, abs( luminance(motion) )) , 0., .5);
 
-    textureStore(buffer, cell.xy, vec4( mix( lastColor.rgb, currentColor, .1 + tw) , cv ) );
-    textureStore(mbuffer, cell.xy, vec4( vec3f(motion) , 1. ));
+    //let line = u32(sys.mouse.x * 512.);
+
+    let finalColor = mix( lastColor.rgb, currentColor, tw );
+    //let finalColor = mix( lastColor.rgb, currentSample.color, 1./f32(sys.frame) );
+
+    textureStore(buffer, cell.xy, vec4( finalColor , 1. ) );
 }
 
 fn setCamera( screen: vec2<f32>, eye: vec3<f32>, lookAt: vec3<f32>, fov: vec2f ) -> Ray {
@@ -204,8 +210,6 @@ fn setCamera( screen: vec2<f32>, eye: vec3<f32>, lookAt: vec3<f32>, fov: vec2f )
     return Ray(lookFrom , normalize(vec3(screen * vec2(-1.,1.) * tan(fov / 2. ) , -1.) ) * mat3x3(rt,up,fw) );
 }
 
-// default diffuse material
-const defaultMaterial = Material(vec3(1.), false, false, false, true, 0., false, Ray(vec3(0.), vec3(0.)));
 
 // the main raymarching function to caculate intersections
 fn shootRay( ray: Ray ) -> Hit {
@@ -213,7 +217,7 @@ fn shootRay( ray: Ray ) -> Hit {
     var t = 0.;
     var d = 0.;
 
-    for(var i=0; i< 100; i++) {
+    for(var i=0; i< 140; i++) {
         // calculate the actual distance
         d = sceneSDF( p );
         // if we hit something break, the loop
@@ -229,66 +233,73 @@ fn shootRay( ray: Ray ) -> Hit {
 }
 
 // we sample the starting ray
-fn raySample(ray: Ray, depth: u32) -> Sample {
+fn raydiance(ray: Ray, depth: u32) -> Sample {
     var r = ray;
-    var attenuation = vec3(1.);
-    var accColor = vec3(0.);
+    var colorMask = vec3(1.);
+    var colorAccu = vec3(0.);
     var firstNormal = vec3(0.);
+    var distance = 0.;
 
     // bounce the ray until maximum depth an accumulate the color
     for(var b = 0u; b < depth; b++) {
         
         let hit = shootRay(r);
-        if (b == 0u) { firstNormal = hit.normal; }
+        distance += hit.distance;
 
-        // the attenuation is the albedo color of the material
-        attenuation *= hit.material.color;
-
+        //if (b == 0u) { firstNormal = hit.normal; }
+        
+        // the  albedo color of the material modulates the color mask
+        colorMask *= hit.material.color;
         // the scattered ray provided by the BRDF
-        r = hit.material.scattered;
-
-        // dielectric materials let the light pass trought, unless they reflect highights
-        // also if the material is not emissive, we accumulate the direct lighting
-        if (((hit.material.dielectric) && (hit.material.highlight)) || (!hit.material.emissive)) {
-            accColor += attenuation * directLighting(r.origin, hit.normal);
+        r = hit.material.scattered;     
+        
+        if (hit.material.emissive) {
+            colorAccu += colorMask * power(hit.normal, r.direction, hit.material.intensity, distance); break;
         } else {
-            // if we hit a light stop
-            accColor += attenuation; break;
+            // if material is diffuse we accumulate direct lighting attenuated by distance
+            // we can do that to diffuse materials because they accept radiance from all the semi hemisfere
+            // specular and dielectric materials only accept radiance from a very narrow cone along the reflected/refracted ray
+            if (hit.material.diffuse) {
+                colorAccu += colorMask * directLighting(r.origin, hit.normal, distance);
+            } 
         }
 
     }
 
-    return Sample(clamp(accColor, vec3(0.), vec3(1.)), firstNormal);
+    return Sample(clamp(colorAccu, vec3(0.), vec3(1.)), firstNormal);
+}
+
+fn power(normal: vec3f, direction: vec3f, intensity: f32, distance: f32) -> f32 {
+    return intensity * (pow(distance,-2.)) * dot(normal, direction);
 }
 
 // calculate the direct lighting for a hit
-fn directLighting(position: vec3<f32>, normal: vec3<f32>) -> vec3<f32> {
-    var lightColor = vec3<f32>(.0);
+fn directLighting(position: vec3<f32>, normal: vec3<f32>, distance: f32) -> f32 {
+    var lightPower = 0.;
     let light = sampleLights();
 
     // we trace a ray to see if this point is in shadow or not
     let shadowRay = Ray(position, normalize(light.point - position));
-
     // We avoid shooting parallel shadow rays to the light plane
-    if (dot(shadowRay.direction, normal) > 0.01) {  
+    if (dot(shadowRay.direction, normal) > 0.0) {  
         // test if the shadow ray hits something
         let shadowHit = shootRay(shadowRay) ;
         // did we hit the light?
         if (shadowHit.material.emissive) {
-            lightColor = (light.intensity)
-                * 1 / (pow(shadowHit.distance, 2.))
-                * shadowHit.material.color
-                * dot(normal, shadowRay.direction);
+            lightPower = power(normal, shadowRay.direction, shadowHit.material.intensity, shadowHit.distance + distance);
         }
     }
 
-    return lightColor;
+
+    return lightPower;
 }
 
 // here we choose a random light to sample
 fn sampleLights() -> Light {
+    //return Light(vec3(-10.,10.,-10.), 1.);
+    //return Light(vec3(0.,10.,0.), 100.);
     // we only have ine light, we return a random point on the light plane
-    return Light((randomCube(vec3(1.,0.,1.)) - vec3(.5,0.,.5) ) + vec3(-1.5,2.95,-1.5), 2.);
+    return Light( vec3(0.,4.,-1.5) + randomVec3() * vec3(.75,0.,.75) /* size / 2 */, 40.);
 }
 
 // The description of the scene using signed distance functions
@@ -303,42 +314,52 @@ fn sceneSDF( p: vec3<f32> ) -> f32 {
     d = min(d, light(p));
     d = min(d, cube(p));
     d = min(d, ball(p));
+    d = min(d, glass(p));
+    //d = min(d, sky(p));
     d = min(d, hat(p));
 
     return d;
 }
 
 fn light( p: vec3<f32> ) -> f32 {
-  return box(p - vec3(-1.5,2.95,-1.5) , vec3f(1.,.1,1.));
+  return box(p - vec3(0.,4.,-1.5) , vec3f(1.5,.1,1.5));
 }
 
 fn ground( p: vec3<f32> ) -> f32 {
-  return plane(p - vec3(0.,.0,.0) );
+  return plane(p, normalize(vec4(.0,1.0,0., 0.)) );
 }
 
 fn front( p: vec3<f32> ) -> f32 {
-  return plane(vec3(p.x,(p.z),p.y) - vec3(0.,-3.0,0.0) );
+  return plane(p, vec4(0.,.0,1.0, 4.) );
 }
 
 fn right( p: vec3<f32> ) -> f32 {
-  return plane(p.zxy - vec3(0., 3.0,0.0) );
+  return plane(p, vec4(-1., .0,0.0, 3.) );
 }
 
 fn left( p: vec3<f32> ) -> f32 {
-  return plane(p.zxy - vec3(0., -3.0,0.0) );
+  return plane(p, vec4(1.,0.,0.,3.) );
 }
 
 fn ceiling( p: vec3<f32> ) -> f32 {
-  return plane(p.xyz - vec3(0., 3.,0.0) );
+  return plane(p, vec4(0.,-1.,0.,4.) );
 }
 
 fn cube( p: vec3<f32> ) -> f32 {
-    return box( (p  - vec3( 1.5, 1., -2.0)) * rot3d(radians(sys.time * 20.), vec3(0.,1.,0.)) , vec3(1.,2.,1.) );
+    return box( (p  - vec3( 1.5, 1., -2.0)) * rot3d(radians(sys.time * 20.), vec3(0.,1.,0.)) , vec3(1.,3.,1.) );
 }
 fn ball( p: vec3<f32> ) -> f32 {
+    //let mov = 2. * abs(sin(sys.time));
+    let mov = 0.;
+    return sphere( p - vec3( -1.5,2. , -1.0) , .5 );
+}
+fn glass( p: vec3<f32> ) -> f32 {
     let mov = 2. * abs(sin(sys.time));
     //let mov = 0.;
-    return sphere( p - vec3( 0.,.5 + mov, 1.0) , .5 );
+    return sphere( p - vec3( 0,.5 + mov , 1.0) , .5 );
+}
+fn sky( p: vec3<f32> ) -> f32 {
+    return abs(sphere( p  - vec3( 0.,.0, .0), 20. ));
 }
 fn hat( p: vec3<f32> ) -> f32 {
     return cone( p - vec3( -1.5,.75, -1.0) , .5 , 1.5 );
@@ -349,6 +370,18 @@ fn getNormal(p : vec3<f32>) -> vec3<f32> {
 	return normalize(vec3( sceneSDF(p + e.xyy) - sceneSDF(p - e.xyy), sceneSDF(p + e.yxy) - sceneSDF(p - e.yxy), sceneSDF(p + e.yyx) - sceneSDF(p - e.yyx)));
 }
 
+fn createBasis(n: vec3<f32>) -> mat3x3<f32> {
+    let up = vec3<f32>(0.,1.,0.);
+    let right = normalize(cross(up, n));
+    let fwd = cross(n, right);
+    return mat3x3<f32>(right, n, fwd);
+}
+
+fn checkerboard(p: vec2<f32>) -> vec3<f32> {    
+    let f = abs(floor(p));
+    return mix( vec3(.6,.7,1.), vec3(.3,.4,.7), (( f.x + f.y ) % 2.));
+}
+
 // materials function to calculate the different BRDFs 
 fn material( ray: Ray, hit: Hit ) -> Material {
 
@@ -357,38 +390,67 @@ fn material( ray: Ray, hit: Hit ) -> Material {
 
     // check the object we hit and set the material properties
     let pos = hit.position;
+    if (ground(pos) < EPSILON) {
+        var p : vec3<f32>;
+        if (dot(hit.normal,vec3(0.,1.,0.)) <  1.) {
+           let basis = createBasis(hit.normal);
+            p = (pos - 4.) * basis;
+            //let p = pos;
+        } else {
+            p = pos;
+        }
+        m.color = checkerboard(p.xz);
+        //m.color = vec3(.5);
+        m.diffuse = true;
+    } 
     if (cube(pos) < EPSILON) {
-        m.color = vec3<f32>(1.0,0.2,0.1);
+        m.color = vec3<f32>(.9,0.2,0.);
         m.metalness = true;
         m.diffuse = false;
-        m.roughness = 0.0;
-    } else
+        m.roughness = 0.01;
+    } 
     if (ball(pos) < EPSILON) {
+        m.color = vec3<f32>(1.,1.,.5);
+        m.dielectric = false;
+        m.diffuse = false;
+        m.metalness = true;
+    } 
+    if (glass(pos) < EPSILON) {
         m.color = vec3<f32>(1.,1.,1.);
         m.dielectric = true;
         m.diffuse = false;
-    } else
-    if (hat(pos) < EPSILON) {
-        m.color = vec3<f32>(.2,1.,0.3);
-    } else
+        m.metalness = false;
+    } 
+    
     if (ceiling(pos) < EPSILON) {
-        m.color = vec3<f32>(.5);
-    } else
+        m.color = vec3<f32>(1.);
+    }
+    if (front(pos) < EPSILON) {
+        m.color = vec3<f32>(1.);
+    }
+
     if (right(pos) < EPSILON) {
         m.color = vec3<f32>(.1,.7,.1);
-    } else
+    }
+
     if (left(pos) < EPSILON) {
         m.color = vec3<f32>(.7,.1,0.1);
-    } else
-    if (ground(pos) < EPSILON) {
-        let p = pos * 10.;
-        let f = abs(floor(p*.1));
-        m.color = vec3(.6,.7,1.) - (vec3(.3) * (( f.x + f.z) % 2.));
-    } else
+    }
+    if (hat(pos) < EPSILON) {
+        m.color = vec3<f32>(.2,1.,0.3);
+    } 
+    
     if (light(pos) < EPSILON) {
         m.color = vec3<f32>(1.,1.,1.);
         m.emissive = true;
+        m.intensity = 70.;
     }
+    /* 
+    if (sky(pos) < EPSILON) {
+        let c = dot(normalize(hit.position), normalize(vec3( cos(sys.time),cos(1.52 + sys.time),sin(sys.time))));
+        m.color =  mix( vec3(.0,.05,.1), vec3(1.,.7,.2), max( pow(c,70.), .0)); 
+        m.emissive = true;
+    }*/
 
     // different materials
 
@@ -438,10 +500,10 @@ fn sphere(p : vec3<f32>, radius: f32) -> f32 {
   return length(p) - radius; 
 }
 
-// a signed distance function for a plane, not really but hey
-fn plane(p: vec3<f32>) -> f32 { 
-  return abs(p.y);
-}
+fn plane( p: vec3f, n: vec4f ) -> f32 {
+    // n must be normalized
+    return dot(p,n.xyz) + n.w;
+} 
 
 // a signed distance function for a box 
 fn box(p : vec3<f32>, size : vec3<f32>) -> f32 {

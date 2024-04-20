@@ -43,6 +43,7 @@ struct Material {
     diffuse: bool,
     roughness: f32,
     highlight: bool,
+    intensity: f32,
     scattered: Ray
 }
 struct Sample {
@@ -161,7 +162,7 @@ fn denoise(@builtin(global_invocation_id) cell : vec3<u32>) {
     // using frame differences to calculate motion doesnt help to diferentiate between motion and noise.
     // but it's better than nothing.. :)
     let motion = mix(vec3(1.) - lastColor.rgb, mix(lastColor.rgb,currentColor,.1) , .5 );
-    let tw = .1 + clamp( abs( luminance(motion) - .5 ) * 10., 0., 1.); // temporal weight
+    let tw = .2 + clamp( abs( luminance(motion) - .5 ) * 10., 0., 1.); // temporal weight
 
     textureStore(buffer, cell.xy, vec4( mix( lastColor.rgb, currentColor, tw ) , 1. ) );
 }
@@ -181,7 +182,7 @@ fn setCamera( screen: vec2<f32>, eye: vec3<f32>, lookAt: vec3<f32>, fov: vec2f )
 }
 
 // default diffuse material
-const defaultMaterial = Material(vec3(1.), false, false, false, true, 0., false, Ray(vec3(0.), vec3(0.)));
+const defaultMaterial = Material(vec3(1.), false, false, false, true, 0., false, 0., Ray(vec3(0.), vec3(0.)));
 
 // the main raymarching function to caculate intersections
 fn shootRay( ray: Ray ) -> Hit {
@@ -207,58 +208,63 @@ fn shootRay( ray: Ray ) -> Hit {
 // we sample the starting ray
 fn raySample(ray: Ray, depth: u32) -> Sample {
     var r = ray;
-    var attenuation = vec3(1.);
-    var accColor = vec3(0.);
+    var colorMask = vec3(1.);
+    var colorAccu = vec3(0.);
     var firstNormal = vec3(0.);
+    var distance = 0.;
 
     // bounce the ray until maximum depth an accumulate the color
     for(var b = 0u; b < depth; b++) {
         
         let hit = shootRay(r);
-        if (b == 0u) { firstNormal = hit.normal; }
+        distance += hit.distance;
 
-        // the attenuation is the albedo color of the material
-        attenuation *= hit.material.color;
-
+        //if (b == 0u) { firstNormal = hit.normal; }
+        
+        // the  albedo color of the material modulates the color mask
+        colorMask *= hit.material.color;
         // the scattered ray provided by the BRDF
-        r = hit.material.scattered;
-
-        // dielectric materials let the light pass trought, unless they reflect highights
-        // also if the material is not emissive, we accumulate the direct lighting
-        if (((hit.material.dielectric) && (hit.material.highlight)) || (!hit.material.emissive)) {
-            accColor += attenuation * directLighting(r.origin, hit.normal);
+        r = hit.material.scattered;     
+        
+        if (hit.material.emissive) {
+            colorAccu += colorMask * power(hit.normal, r.direction, hit.material.intensity, distance); break;
         } else {
-            // if we hit a light stop
-            accColor += attenuation; break;
+            // if material is diffuse we accumulate direct lighting attenuated by distance
+            // we can do that to diffuse materials because they accept radiance from all the semi hemisfere
+            // specular and dielectric materials only accept radiance from a very narrow cone along the reflected/refracted ray
+            if (hit.material.diffuse) {
+                colorAccu += colorMask * directLighting(r.origin, hit.normal, distance);
+            } 
         }
 
     }
 
-    return Sample(clamp(accColor, vec3(0.), vec3(1.)), firstNormal);
+    return Sample(clamp(colorAccu, vec3(0.), vec3(1.)), firstNormal);
+}
+
+fn power(normal: vec3f, direction: vec3f, intensity: f32, distance: f32) -> f32 {
+    return intensity * (pow(distance,-2.)) * dot(normal, direction);
 }
 
 // calculate the direct lighting for a hit
-fn directLighting(position: vec3<f32>, normal: vec3<f32>) -> vec3<f32> {
-    var lightColor = vec3<f32>(.0);
+fn directLighting(position: vec3<f32>, normal: vec3<f32>, distance: f32) -> f32 {
+    var lightPower = 0.;
     let light = sampleLights();
 
     // we trace a ray to see if this point is in shadow or not
     let shadowRay = Ray(position, normalize(light.point - position));
-
     // We avoid shooting parallel shadow rays to the light plane
-    if (dot(shadowRay.direction, normal) > 0.01) {  
+    if (dot(shadowRay.direction, normal) > 0.0) {  
         // test if the shadow ray hits something
         let shadowHit = shootRay(shadowRay) ;
         // did we hit the light?
         if (shadowHit.material.emissive) {
-            lightColor = (light.intensity)
-                * 1 / (pow(shadowHit.distance, 2.))
-                * shadowHit.material.color
-                * dot(normal, shadowRay.direction);
+            lightPower = power(normal, shadowRay.direction, shadowHit.material.intensity, shadowHit.distance + distance);
         }
     }
 
-    return lightColor;
+
+    return lightPower;
 }
 
 // here we choose a random light to sample
@@ -364,6 +370,7 @@ fn material( ray: Ray, hit: Hit ) -> Material {
     if (light(pos) < EPSILON) {
         m.color = vec3<f32>(1.,1.,1.);
         m.emissive = true;
+        m.intensity = 40.;
     }
 
     // different materials

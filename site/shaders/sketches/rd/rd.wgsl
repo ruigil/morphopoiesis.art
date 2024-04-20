@@ -40,6 +40,7 @@ fn vertexMain(input : VertexInput) -> VertexOutput {
     let i = f32(input.instance); 
     let cell = vec2f(i % uni.size.x,  floor(i / uni.size.x) );
 
+    // takes the avergave of the neighbours for this vertice in this state.
     let c1 = current[getIndex( vec2(cell.x + input.pos.x ,  cell.y) )];
     let c2 = current[getIndex( vec2(cell.x + input.pos.x, cell.y - input.pos.y) )];
     let c3 = current[getIndex( vec2(cell.x , cell.y - input.pos.y) )];

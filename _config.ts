@@ -27,7 +27,7 @@ const site = lume({
 // assets
 site.ignore("/lib");
 site.copy("/assets/img/svg");
-site.copy([".wgsl"]);
+//site.copy([".wgsl"]);
 
 // plugins
 site.use(attributes());
@@ -58,11 +58,11 @@ site.use(esbuild({
   extensions: [".ts", ".js"],
   esm: {},
   options: {
-    sourcemap: true,     
+    sourcemap: false,     
     bundle: true,
     splitting: false,
     format: "esm",
-    minify: true,
+    minify: false,
     keepNames: true,
     tsconfigRaw:'{ "compilerOptions": { "experimentalDecorators" : true } }',
     platform: "browser",

@@ -23,8 +23,8 @@ export default ({ shaders, comp }: Lume.Data ) : string => {
             shader.tags.map((tag:string) => tags.set(tag, tags.get(tag) ? tags.get(tag)! + 1 : 1))
 
             return html`
-                <div><a style="color:#aaf" href="./${shader.path}"><b>${shader.title}</b></a></div>
-                <img src="./${shader.path}/${shader.id}-small.webp" width="256", height="256">
+                <div><a style="color:#aaf" href="../${shader.path}"><b>${shader.title}</b></a></div>
+                <img src="../${shader.path}/${shader.id}-small.webp" width="256", height="256">
                 <div>
                     <div>${shader.description} <br>[${shader.tags?.map((tag:string) => `<i>${tag}</i>, `).join(" ") }]</div>
                 </div>

@@ -16,7 +16,7 @@ import {
     ComputeGroupPipeline,
     BufferInfo
 } from "./poiesis.interfaces.ts";
-import { square } from "./utils.ts";
+import { square } from "./utils/utils.ts";
 
 
 export class PContext {
@@ -34,6 +34,8 @@ export class PContext {
         if (!adapter) {
           throw new Error("No appropriate GPUAdapter found.");
         }
+
+        //console.log(adapter.limits);
 
         const device = await adapter.requestDevice();
 
@@ -676,7 +678,7 @@ export class PContext {
                 if (buffers.length == 0) return;
                 // unmap pending maps if we are resseting 
                 //buffers.forEach(s => s.dstBuffer.unmap() );
-                await Promise.all(buffers.map( buff => buff.dstBuffer.mapAsync(GPUMapMode.READ)))
+                await Promise.all(buffers.map( buff => buff.dstBuffer.mapAsync(GPUMapMode.READ) ))
                 bufferListeners.forEach((listener) => {
                     const data = buffers.map(s=> {
                         s.view.update(s.dstBuffer.getMappedRange());

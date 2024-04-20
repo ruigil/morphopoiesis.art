@@ -8,7 +8,7 @@ export const pathtracer = async (code:string, defs:Definitions) => {
 
     const radians = (degrees:number):number => degrees * Math.PI / 180;
 
-    const uniforms = { params: { samples: 1, depth:4, fov: radians(60), lookFrom: [0,1.5,4], lookAt: [0,1.5,1], aperture: 0.02 } }
+    const uniforms = { params: { samples: 1, depth:4, fov: radians(60), lookFrom: [0,2,5], lookAt: [0,1.5,1], aperture: 0.0 } }
     
     const spec =  (w:number, h: number):PSpec => {
 
@@ -16,15 +16,13 @@ export const pathtracer = async (code:string, defs:Definitions) => {
             code: code,
             defs: defs,
             uniforms: (f:number) => uniforms,
-            mouse: (x:number,y:number, frame:number) => {  uniforms.params.lookFrom = [(x*5)-2.5,1.5 + (y*2.5) - 1.25,4];  },
+            mouse: (x:number,y:number, frame:number) => {  uniforms.params.lookFrom = [(x*5.)-2.5,2. + (y*3.5) - 1.75,5];  },
             storages: [
                 { name: "debug", size: 1, read: true },
                 { name: "samples", size: size.x * size.y },
             ],
             textures: [
                 { name: "image", data: emptyBitmap },
-                { name: "motion", data: emptyBitmap },
-                { name: "mbuffer", data: emptyBitmap, storage: true },
                 { name: "buffer", data: emptyBitmap, storage: true }
             ],
             computes: [
