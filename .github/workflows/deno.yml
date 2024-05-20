@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -31,9 +31,21 @@ jobs:
         with:
           deno-version: v1.x
 
-      # Uncomment this step to verify the use of 'deno fmt' on each commit.
-      # - name: Verify formatting
-      #   run: deno fmt --check
-
       - name: Build Site
         run: deno task lume
+
+      - name: Deploy
+        run: |
+          which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y  )
+          which rsync || ( apt-get update -y && apt-get install rsync -y )
+          eval $(ssh-agent -s)
+          ssh-add <(echo "$SSH_PRIVATE_KEY" )
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+          scp -r _site/* rigel@$SERVER_IP:/morphopoeisis.art
+    env:
+      SSH_PRIVATE_KEY: ${{secrets.SSH_KEY}}
+      SERVER_IP: ${{secrets.SERVER_IP}}
+      CI: false
