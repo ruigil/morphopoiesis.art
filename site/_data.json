@@ -22,6 +22,32 @@
   },
   "shaders": [
     {
+      "id": "video360",
+      "path": "./shaders/draft/video360",
+      "title": "Video 360",
+      "description": "Equirectangular 360 Video Viewer",
+      "image": "",
+      "tags": ["360","equirectangular","viewer","video"],
+      "license": "cc-by",
+      "sketch": true,
+      "debug": false,
+      "fx": false,
+      "dynamic": false
+    },
+    {
+      "id": "indra",
+      "path": "./shaders/draft/indra",
+      "title": "Indra Pearls",
+      "description": "An exploration of symmetry",
+      "image": "",
+      "tags": [],
+      "license": "cc-by",
+      "sketch": false,
+      "debug": true,
+      "fx": false,
+      "dynamic": false
+    },
+    {
       "id": "genwgsl",
       "path": "./shaders/draft/genwgsl",
       "title": "genwgsl",
