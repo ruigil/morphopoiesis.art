@@ -25,7 +25,7 @@ const site = lume({
 });
 
 // assets
-//site.ignore("/lib");
+site.ignore("/lib");
 site.copy("/assets/img/svg");
 site.copy("/assets/video");
 //site.copy([".wgsl"]);

@@ -76,7 +76,7 @@
       "id": "pathtracer",
       "path": "./shaders/sketches/pathtracer",
       "title": "Path Tracer",
-      "description": "A real-time path tracer, with motion blur, depth of field, adaptative denoise, and several materials. Still a bit noisy, but it's only 1 sample per pixel !",
+      "description": "A real-time path tracer, with motion blur, depth of field, adaptative denoise, and several materials. ",
       "tags": [
         "pathtracing",
         "denoise",
