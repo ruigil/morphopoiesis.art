@@ -25,7 +25,7 @@ const site = lume({
 });
 
 // assets
-site.ignore("/lib");
+//site.ignore("/lib");
 site.copy("/assets/img/svg");
 site.copy("/assets/video");
 //site.copy([".wgsl"]);
@@ -63,7 +63,7 @@ site.use(esbuild({
     bundle: true,
     splitting: false,
     format: "esm",
-    minify: false,
+    minify: true,
     keepNames: true,
     tsconfigRaw:'{ "compilerOptions": { "experimentalDecorators" : true } }',
     platform: "browser",
