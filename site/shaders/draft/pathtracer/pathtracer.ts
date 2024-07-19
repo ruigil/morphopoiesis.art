@@ -1,4 +1,4 @@
-import { PSpec, Definitions, createGaussianKernel } from "../../../lib/poiesis/index.ts";
+import { PSpec, Definitions } from "../../../lib/poiesis/index.ts";
 
 export const pathtracer = async (code:string, defs:Definitions) => {
 
