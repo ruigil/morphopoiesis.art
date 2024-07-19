@@ -344,7 +344,7 @@ export class PContext {
                 const resource:Texture = tex.data instanceof HTMLVideoElement ? 
                     { 
                         binding: td.binding,
-                        resource: this.state.device.importExternalTexture({ source : tex.data }),
+                        resource: this.state.device.importExternalTexture({ label: "external_texture", source : tex.data }),
                         type: 'external_texture',
                         video: tex.data
                     }:
@@ -361,7 +361,6 @@ export class PContext {
 
         const createBindGroupLayout = (resources: Resource[]) => {
             const entries:Array<GPUBindGroupLayoutEntry> = [];
-
             resources.forEach( res => {
                 switch (res.type) {
                     case "uniform": 
@@ -423,23 +422,28 @@ export class PContext {
         const createBindings = (spec:PSpec, resources:Resource[], bindGroupLayout: GPUBindGroupLayout) => {
             // only have a single bind group for now
             const resbinding = new Array(spec.defs.bindGroupLength);
-    
             resources.forEach( res => {
-                resbinding[res.binding] = res.resource;
+                resbinding[res.binding] = res;
             });
     
-            // the definition of bindgroups in the spec doesnt have to match the order of the resources
+            // the spec of bindings is an array of arrays, where each array is a group of bindings
+            // the definition of bindings in the spec doesnt have to match the order of the resources
+            // that's why we need to reorder the resources to match the spec
+            // when there are several groups, we take the first group as reference for the bindings
+            // so [4,2,3,1] means binding 4 is first, binding 2 is second, etc.
+            // when there are two groups, we use the first group as reference and the second group 
+            // reorders the resources for the first group bindings
             const bindingsCount = resources.length;
             const bindingGroupsCount = spec.bindings?.length || 1;
             const bindingGroups = new Array<GPUBindGroup>(bindingGroupsCount);
             
-            const externals = new Array<{ idx: number, video: HTMLVideoElement}>(bindingGroupsCount);            
-            const entries = new Array<GPUBindGroupEntry[]>(bindingGroupsCount);
+            const externals = Array<{ idx: number, video: HTMLVideoElement}>(bindingGroupsCount);            
+            const entries = Array<GPUBindGroupEntry[]>(bindingGroupsCount);
             
             for (let i = 0; i < bindingGroupsCount; i++) {
-                entries[i] = [] 
-
+                entries[i] = [];
                 for (let j = 0; j < bindingsCount; j++) {
+                    
                     // if bindings are not defined, use the default order
                     const index = spec.bindings ? spec.bindings[i][j] : j;
                     if (index == undefined) throw new Error(`Binding ${j} was not found in group ${i}. Check your bindings spec.`);
@@ -448,13 +452,13 @@ export class PContext {
 
                     entries[i].push({
                         // we need to use the first group to define the bindings reference
-                        // this will fail if one binding group and bindings not sequential
                         // we want to keep the binding order but change the resources order
                         binding: spec.bindings ? spec.bindings[0][j] : j, 
-                        resource: res 
+                        resource: res.resource
                     })
-                    if (resources[j].type === 'external_texture') {
-                        externals[i] = { idx: j, video: (resources[j] as Texture).video! };
+                    if (res.type === 'external_texture') {
+                        // cannot have more than one external per group
+                        externals[i] = { idx: j, video: (res as Texture).video! };
                     };
                 }
 
@@ -464,13 +468,13 @@ export class PContext {
                     entries: entries[i],
                 })
             }
-            
             return (index:number) => {
-                // if the group has an external texture, we have to recreate the group every frame
+                // if the group has an external texture, we have to recreate the group binding every frame
                 // importing the texture from the video
+                
                 if (externals[index]) {
-                    const { idx, video } = externals[index];
-                    entries[index][idx].resource = this.state.device.importExternalTexture({ source : video })
+                    const { idx, video } = externals[index];                    
+                    entries[index][idx].resource = this.state.device.importExternalTexture({ source : video });
                     return this.state.device.createBindGroup({
                         label: `Bind Group ${index}`,
                         layout: bindGroupLayout,
