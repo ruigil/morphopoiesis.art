@@ -25,7 +25,7 @@
       "id": "video360",
       "path": "./shaders/draft/video360",
       "title": "Video 360",
-      "description": "Equirectangular 360 Video Viewer",
+      "description": "Equirectangular 360 Video Viewer. Click on the video to play/pause.",
       "image": "",
       "tags": ["360","equirectangular","viewer","video"],
       "license": "cc-by",
