@@ -83,7 +83,7 @@ fn computeTrailmap(@builtin(global_invocation_id) cell : vec3<u32>) {
   // we apply a gaussian blur to simulate diffusion of the trailmap values
   let value = conv3x3(K_GAUSSIAN_BLUR, cell.xy, vec2u(params.size.xy)) ; 
   //let previous = trailMapA[ cell.x + cell.y * u32(params.size.x) ].w; // previous pixel occupancy by particle
-  let newValue = clamp(value * params.evaporation, vec4(0.), vec4(2.));
+  let newValue = clamp(value - .001, vec4(0.), vec4(1.));
 
   if (m.x == cell.x && m.y == cell.y) {
     debug.value = newValue;
@@ -117,7 +117,7 @@ fn computeAgents(@builtin(global_invocation_id) id : vec3<u32>) {
     let next = vec2<u32>( floor( (pos + 1.)  * .5 * params.size ) );
     agents[i].pos = pos;
     let v = trailMapA[ next.y * u32(params.size.x) + next.x ];
-    trailMapB[ next.y * u32(params.size.x) + next.x ] = clamp(v + agents[i].t * 2., vec4(0.), vec4(2.));
+    trailMapB[ next.y * u32(params.size.x) + next.x ] = clamp(v + agents[i].t , vec4(0.), vec4(2.));
 
 
 }
@@ -129,7 +129,7 @@ const forces = mat4x4<f32>(
     0., 0., 0., 1.
 );
 
-const K_GAUSSIAN_BLUR = array<f32,9>(0.0625, 0.125, 0.0625, 0.125, 0.25, 0.125, 0.0625, 0.125, 0.0625);
+const K_GAUSSIAN_BLUR = array<f32,9>(0.1111, 0.1111, 0.1111, 0.1111, .1111, 0.1111, 0.1111, 0.1111, 0.1111);
 // apply a convolution in a 2d grid with a specific kernel
 // assumes a wrap around boundary condition
 // and a buffer of size size

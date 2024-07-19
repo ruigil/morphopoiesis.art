@@ -3,8 +3,8 @@ import { PSpec, Definitions, square, scaleAspect } from "../../../lib/poiesis/in
 export const ifx = (code:string, defs:Definitions) => {
 
     const spec = (w:number,h:number):PSpec => {
-        const numAgents = 2;
-        const size = scaleAspect(w,h,64);
+        const numAgents = 1;
+        const size = scaleAspect(w,h,64); 
         console.log(size);
 
         const aspect = { x: size.x / Math.min(size.x, size.y), y: size.y / Math.min(size.x, size.y) }
@@ -38,7 +38,7 @@ export const ifx = (code:string, defs:Definitions) => {
                     agents: numAgents,
                     sa: 22.5 * (Math.PI / 180),
                     sd: 40.,
-                    evaporation: .99,
+                    evaporation: .95,
                 }
             }),
             storages: [
@@ -51,7 +51,6 @@ export const ifx = (code:string, defs:Definitions) => {
                 { name: "computeTrailmap", workgroups: [Math.ceil(size.x / 8), Math.ceil(size.y / 8), 1] },
                 { name: "computeAgents", workgroups: [Math.ceil(numAgents / 64), 1, 1] }
             ],
-            computeGroupCount: 1,
             bindings: [ [0,1,2,3,4,5], [0,1,3,2,4,5] ]
         }
     }
