@@ -2,7 +2,7 @@
 title: Everything Flows
 layout: post.layout.ts
 type: post
-header: /shaders/sketches/fluid/fluid
+header: /shaders/fluid/fluid
 date: Git Created
 tags:
     - Fluid

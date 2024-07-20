@@ -2,7 +2,7 @@
 title: The leopard spots
 layout: post.layout.ts
 type: post
-header: /shaders/sketches/rd/rd
+header: /shaders/rd/rd
 date: Git Created
 tags:
     - Turing

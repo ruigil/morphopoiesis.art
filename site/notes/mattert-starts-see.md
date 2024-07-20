@@ -2,7 +2,7 @@
 title: Matter starts to see...
 layout: post.layout.ts
 type: post
-header: /shaders/sketches/dla/dla
+header: /shaders/dla/dla
 date: Git Created
 tags:
     - DLA

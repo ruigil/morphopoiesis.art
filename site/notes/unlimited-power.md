@@ -2,7 +2,7 @@
 title: Unlimited Power
 layout: post.layout.ts
 type: post
-header: /shaders/sketches/colorIFS/colorIFS
+header: /shaders/colorIFS/colorIFS
 date: Git created
 tags:
     - WebGPU

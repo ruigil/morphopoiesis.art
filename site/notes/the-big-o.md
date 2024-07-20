@@ -2,7 +2,7 @@
 title: The Big-O
 layout: post.layout.ts
 type: post
-header: /shaders/sketches/boids/boids
+header: /shaders/boids/boids
 date: Git Created
 tags:
     - Boids
