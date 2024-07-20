@@ -23,7 +23,6 @@
   "shaders": [
     {
       "id": "video360",
-      "path": "./shaders/draft/video360",
       "title": "Video 360",
       "description": "Equirectangular 360 Video Viewer. Click on the video to play/pause.",
       "image": "",
@@ -36,7 +35,6 @@
     },
     {
       "id": "indra",
-      "path": "./shaders/draft/indra",
       "title": "Indra Pearls",
       "description": "An exploration of symmetry",
       "image": "",
@@ -49,7 +47,6 @@
     },
     {
       "id": "genwgsl",
-      "path": "./shaders/draft/genwgsl",
       "title": "genwgsl",
       "description": "A simple generator of WGSL shaders",
       "image": "",
@@ -62,7 +59,6 @@
     },
     {
       "id": "webcam",
-      "path": "./shaders/draft/webcam",
       "title": "webcam",
       "description": "webcam",
       "image": "",
@@ -74,7 +70,6 @@
     },
     {
       "id": "pathtracer",
-      "path": "./shaders/sketches/pathtracer",
       "title": "Path Tracer",
       "description": "A real-time path tracer, with motion blur, depth of field, adaptative denoise, and several materials. ",
       "tags": [
@@ -90,7 +85,6 @@
     },
     {
       "id": "ligrowth",
-      "path": "./shaders/art/ligrowth",
       "title": "Limits to Growth",
       "description": "This is an exploration of the limits to growth, with a diffuse limited aggregation algorithm, inspired by the book of the same name by Donella H. Meadows, Dennis L. Meadows, Jørgen Randers, and William W. Behrens III. ",
       "tags": [
@@ -105,7 +99,6 @@
     },
     {
       "id": "inversion",
-      "path": "./shaders/draft/inversion",
       "title": "Inversion",
       "description": "A circle inversion",
       "tags": [
@@ -118,23 +111,21 @@
       "fx": true
     },
     {
-      "id": "ifx",
-      "path": "./shaders/draft/ifx",
-      "title": "IFX",
-      "description": "A simple iterative fractal explorer",
+      "id": "particlelife",
+      "title": "Particle Life",
+      "description": "A particle life simulator",
       "tags": [
-        "ifs",
-        "fractal"
+        "particles",
+        "ca"
       ],
       "license": "cc-by",
       "sketch": false,
       "debug": true,
       "dynamic":false,
-      "fx": true
+      "fx": false
     },
     {
-      "id": "pathtracer",
-      "path": "./shaders/draft/pathtracer",
+      "id": "pathtracer2",
       "title": "Path Tracer",
       "description": "A simple path tracer",
       "tags": [
@@ -147,7 +138,6 @@
     },
     {
       "id": "fluid",
-      "path": "./shaders/sketches/fluid",
       "title": "Fluid",
       "description": "Fluid simulator. You can play with your mouse to add color.",
       "tags": [
@@ -161,7 +151,6 @@
     },
     {
       "id": "dla",
-      "path": "./shaders/sketches/dla",
       "title": "DLA",
       "description": "Diffuse Limited Aggregation, to create an Ice structure. You can play with your mouse to melt the ice.",
       "tags": [
@@ -176,7 +165,6 @@
     },
     {
       "id": "physarum",
-      "path": "./shaders/sketches/physarum",
       "title": "Physarum",
       "description": "A slime mold building a transport network. You can play with your mouse to erase the chemical field.",
       "tags": [
@@ -192,7 +180,6 @@
     },
     {
       "id": "boids",
-      "path": "./shaders/sketches/boids",
       "title": "Boids",
       "description": "Android birds trying to sync their movement and blinking. You can play with your mouse to attract them.",
       "tags": [
@@ -206,7 +193,6 @@
     },
     {
       "id": "rd",
-      "path": "./shaders/sketches/rd",
       "title": "Reaction Diffusion",
       "description": "Move your mouse to explore the generation of different patterns.",
       "tags": [
@@ -220,7 +206,6 @@
     },
     {
       "id": "gol",
-      "path": "./shaders/sketches/gol",
       "title": "Game of Life",
       "description": "Conway's Game of Life",
       "tags": [
@@ -234,7 +219,6 @@
     },
     {
       "id": "colorIFS",
-      "path": "./shaders/sketches/colorIFS",
       "title": "Color IFS",
       "description": "A simple colorized IFS fractal",
       "tags": [
