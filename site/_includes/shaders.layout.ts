@@ -1,5 +1,5 @@
 
-export default ( data : Lume.Data, helpers: Lume.Helpers) => {
+export default ( data : Lume.Data) => {
 
     return /* html */`
       <html lang="en">

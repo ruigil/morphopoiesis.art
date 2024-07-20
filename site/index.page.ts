@@ -1,9 +1,11 @@
+import { Data } from "lume/core/file.ts";
+
 export const title = "Home";
 export const motto = "studies on the synthesis of form";
 export const layout = "base.layout.ts";
 export const url = "/";
 
-const post = (data: Lume.Data | undefined, { date }: Lume.Helpers) => {
+const post = (data: Data, { date }: Lume.Helpers) => {
   return /* html */`
     <div class="rounded border w-full p-4 panel visible">
       <div class="flex flex-wrap gap-4">
@@ -25,7 +27,7 @@ export default ({ search }: Lume.Data, helpers: Lume.Helpers): string => {
   const items = () => {
     const menuItems: string[] = [];
 
-    search.pages("featured=true", "date=desc").map((data: any) => {
+    search.pages("featured=true", "date=desc").map((data) => {
       menuItems.push(post(data, helpers));
     });
     //console.log(menuItems)

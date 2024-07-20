@@ -1,18 +1,10 @@
+import { Shader } from "../lib/generators.ts";
+
 export const title = "Shaders";
 export const layout = "shaders.layout.ts";
 
 
-type Shader = {
-    id: number,
-    path: string;
-    title: string,
-    description: string,
-    image: string,
-    tags: string[],
-    sketch: boolean,
-}
-
-export default ({ shaders, comp }: Lume.Data ) : string => {
+export default ({ shaders }: Lume.Data ) : string => {
 
     const items = () => {
         const tags:Map<string,number> = new Map()
@@ -21,8 +13,8 @@ export default ({ shaders, comp }: Lume.Data ) : string => {
             shader.tags.map((tag:string) => tags.set(tag, tags.get(tag) ? tags.get(tag)! + 1 : 1))
 
             return /* html */`
-                <div><a style="color:#aaf" href="../${shader.path}"><b>${shader.title}</b></a></div>
-                <img src="../${shader.path}/${shader.id}-small.webp" width="256", height="256">
+                <div><a style="color:#aaf" href="./${shader.id}"><b>${shader.title}</b></a></div>
+                <img src="./${shader.id}/${shader.id}-small.webp" width="256", height="256">
                 <div>
                     <div>${shader.description} <br>[${shader.tags?.map((tag:string) => `<i>${tag}</i>, `).join(" ") }]</div>
                 </div>

@@ -1,8 +1,10 @@
+import { Data } from "lume/core/file.ts";
+
 export const title = "Notes";
 export const layout = "page.layout.ts";
 export const menu = { visible: true, order: 1 }
 
-const post = (data: Lume.Data, { date }: Lume.Helpers, index: number) => {
+const post = (data: Data, { date }: Lume.Helpers) => {
     return /* html */`
         <div class="rounded border  p-4 panel visible" >
             <div class="flex flex-wrap gap-4" >
@@ -21,14 +23,14 @@ const post = (data: Lume.Data, { date }: Lume.Helpers, index: number) => {
     `;
 }
 
-export default ({ comp, search, url }: Lume.Data, helpers: Lume.Helpers) => {
+export default ({ search }: Lume.Data, helpers: Lume.Helpers) => {
 
     const items = () => {
         const notes: string[] = []
         const tags: Map<string, number> = new Map()
-        search.pages("type=post", "date=desc").map((data: any, i:number) => {
+        search.pages("type=post", "date=desc").map((data) => {
             data.tags?.map((tag: string) => tags.set(tag, tags.get(tag) ? tags.get(tag)! + 1 : 1))
-            notes.push(post(data, helpers, i))
+            notes.push(post(data, helpers))
         });
         //console.log(menuItems)
         return {

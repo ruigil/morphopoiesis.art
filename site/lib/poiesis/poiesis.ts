@@ -217,7 +217,7 @@ export class PContext {
 
         const createUniforms = (spec: PSpec) : Uniform[] => {
 
-            const uniforms = spec.uniforms ? spec.uniforms(0,[0,0,0,0]) : {};
+            const uniforms = spec.uniforms ? spec.uniforms(0) : {};
             const uniRessource:Array<Uniform> = [];
 
             for (const [key, value] of Object.entries(spec.defs.uniforms as Record<string,BufferInfo>)) {
@@ -405,9 +405,7 @@ export class PContext {
                             visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE, 
                             externalTexture: { viewDimension: "2d" }
                         }); break;;
-                
                 }
-
             });
             // Create the bind group layout and pipeline layout.
             // this is needed because we use two different piplines and they must share the same layout

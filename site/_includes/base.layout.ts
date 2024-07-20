@@ -1,5 +1,5 @@
 
-const footer = (data: Lume.Data, { date }: Lume.Helpers) => {
+const footer = (_: Lume.Data, { date }: Lume.Helpers) => {
 
   return /* html */`
     <footer class="footer">
@@ -28,7 +28,7 @@ const toolbar = ({ search, metas, url }: Lume.Data) => {
   const items = () => {
       const menuItems: string[] = []
 
-      search.pages("menu.visible=true", "menu.order").map((data:any) => {
+      search.pages("menu.visible=true", "menu.order").map((data) => {
           const current = url || "/";
           menuItems.push(`<li><a ${current === data.url ? "class='is-selected'" : ''} href="${data.url}">${data.title}</a></li>`)
       });
