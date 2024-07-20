@@ -1,5 +1,3 @@
-import { html } from "../lib/utilities.ts";
-
 export const title = "Sketches";
 export const layout = "page.layout.ts";
 export const menu = { visible: true, order: 2 }
@@ -22,7 +20,7 @@ export default ({ shaders, comp }: Lume.Data ) : string => {
         const list = shaders.filter( (s:Shader) => s.sketch).map((shader:Shader) => {
             shader.tags.map((tag:string) => tags.set(tag, tags.get(tag) ? tags.get(tag)! + 1 : 1))
 
-            return html`
+            return /* html */`
                 <sl-card class="card-overview  w-96">
                     <a slot="image" href="./${shader.id}">
                         <img
@@ -40,7 +38,7 @@ export default ({ shaders, comp }: Lume.Data ) : string => {
 
         return {
             shaders : list.join(""),
-            tags: Array.from(tags).map( t => html`
+            tags: Array.from(tags).map( t => /* html */`
                     <sl-tag size="large">
                         <div class="pr-2"><a href="">${t[0]}</a></div> 
                         <sl-badge pill>${t[1]}</sl-badge>
@@ -52,7 +50,7 @@ export default ({ shaders, comp }: Lume.Data ) : string => {
 
     const data = items();
     
-    return html`
+    return /* html */`
         <h1> Latest sketches </h1>
         <div class="flex flex-wrap gap-4 w-full">${ data.shaders }</div>`
 

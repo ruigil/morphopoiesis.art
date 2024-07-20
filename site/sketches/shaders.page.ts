@@ -1,4 +1,3 @@
-import { html } from "../lib/utilities.ts";
 import hljs from 'npm:highlight.js';
 
 export const layout = "page.layout.ts";
@@ -15,7 +14,7 @@ const related = (shader: any, data: Lume.Data) => {
     return menuItems.join("")
   }
 
-  return html`<div class="w-full">${items()}</div>`
+  return `<div class="w-full">${items()}</div>`
 }
 
 const shaderContent = async (shader: any, data: Lume.Data) => {
@@ -25,7 +24,7 @@ const shaderContent = async (shader: any, data: Lume.Data) => {
   const htmlWgsl = hljs.highlight(wgslCode, { language: 'rust' }).value
   const htmlTs = hljs.highlight(tsCode, { language: 'typescript' }).value
 
-  return html`
+  return /* html */`
     <div class="flex-col w-full max-w-3xl mx-auto">
     <sl-card class="card-overview w-full">
       <div slot="image" class="w-full" style="padding-top: 100%; position:relative;">

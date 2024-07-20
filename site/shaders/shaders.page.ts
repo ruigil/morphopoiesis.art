@@ -1,4 +1,4 @@
-import { shaderGenerator, Shader } from "../lib/generators.ts";
+import { shaderGenerator } from "../lib/generators.ts";
 
 
 export default async function* (data: Lume.Data) {

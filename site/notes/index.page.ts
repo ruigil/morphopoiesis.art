@@ -1,11 +1,9 @@
-import { html } from "../lib/utilities.ts";
-
 export const title = "Notes";
 export const layout = "page.layout.ts";
 export const menu = { visible: true, order: 1 }
 
 const post = (data: Lume.Data, { date }: Lume.Helpers, index: number) => {
-    return html`
+    return /* html */`
         <div class="rounded border  p-4 panel visible" >
             <div class="flex flex-wrap gap-4" >
                 <div class="flex-start">
@@ -36,14 +34,14 @@ export default ({ comp, search, url }: Lume.Data, helpers: Lume.Helpers) => {
         return {
             notes: notes.join(""),
             tags: Array.from(tags).map(t => 
-                html`<sl-tag size="large"><div class="pr-2"><a href="">${t[0]}</a></div> <sl-badge pill>${t[1]}</sl-badge></sl-tag>`)
+                `<sl-tag size="large"><div class="pr-2"><a href="">${t[0]}</a></div> <sl-badge pill>${t[1]}</sl-badge></sl-tag>`)
                 .join("")
         }
     }
 
     const data = items();
 
-    return html`
+    return /* html */`
         <h1>Latest notes</h1>
         <div class="flex flex-wrap gap-4 w-full">
             ${data.notes}

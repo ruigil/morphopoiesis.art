@@ -1,10 +1,8 @@
-import { html } from "../lib/utilities.ts";
-
 export const layout = "base.layout.ts";
 
 export default (data: Lume.Data, helpers: Lume.Helpers) => {
 
-  return html`
+  return /* html */`
     <div class="flex items-center h-60" style="background-image: url(../../${data.header}-big.webp); background-size: cover;" >
       <div class="mx-auto text-5xl p-7 rounded-lg opacity-90 font-bold" style="background: var(--sl-color-neutral-0)">${data.title}</div>  
     </div>

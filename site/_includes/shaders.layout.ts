@@ -1,8 +1,7 @@
-import { html } from "../lib/utilities.ts";
 
 export default ( data : Lume.Data, helpers: Lume.Helpers) => {
 
-    return html`
+    return /* html */`
       <html lang="en">
         <head>
           <title>${data.title}</title>

@@ -1,5 +1,3 @@
-import { html } from "../lib/utilities.ts";
-
 export const title = "Shaders";
 export const layout = "shaders.layout.ts";
 
@@ -22,7 +20,7 @@ export default ({ shaders, comp }: Lume.Data ) : string => {
         const list = shaders.map((shader:Shader) => {
             shader.tags.map((tag:string) => tags.set(tag, tags.get(tag) ? tags.get(tag)! + 1 : 1))
 
-            return html`
+            return /* html */`
                 <div><a style="color:#aaf" href="../${shader.path}"><b>${shader.title}</b></a></div>
                 <img src="../${shader.path}/${shader.id}-small.webp" width="256", height="256">
                 <div>
@@ -40,7 +38,7 @@ export default ({ shaders, comp }: Lume.Data ) : string => {
 
     const data = items();
     
-    return html`
+    return /* html */`
         <style>
             .works {
                 margin: 0;

@@ -1,10 +1,8 @@
-import { html } from "../lib/utilities.ts";
-
 export const layout = "base.layout.ts";
 
 export default (data: Lume.Data, helpers: Lume.Helpers) => {
 
-  return html`
+  return /* html */`
       <main class="container spacing flex flex-col flex-grow h-full w-full gap-8 mx-auto">
         <div class="max-w-3xl mx-auto about">
           ${data.content}

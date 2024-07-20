@@ -1,8 +1,7 @@
-import { html } from "../lib/utilities.ts";
 
 const footer = (data: Lume.Data, { date }: Lume.Helpers) => {
 
-  return html`
+  return /* html */`
     <footer class="footer">
         <div class="flex place-items-center gap-2 w-full">
             <span>© ${date("now", "yyyy")}</span> morphopoiesis
@@ -36,7 +35,7 @@ const toolbar = ({ search, metas, url }: Lume.Data) => {
       return menuItems.join("")
   }
 
-  return html`
+  return /* html */`
     <nav class="navbar-container">
         <div class="navbar">
             <a href="/" class="navbar-logo" aria-label="Return home">
@@ -87,7 +86,7 @@ const toolbar = ({ search, metas, url }: Lume.Data) => {
 
 export default ( data : Lume.Data, helpers: Lume.Helpers) => {
 
-  return html`
+  return /* html */`
     <html lang="en">
       <head>
         <title>${data.title}</title>

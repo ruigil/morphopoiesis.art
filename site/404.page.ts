@@ -1,11 +1,10 @@
 export const title = "404 Not found";
-import { html } from "./lib/utilities.ts";
 
 export const layout = "about.layout.ts";
 
-export default ({ comp, featured, metas, search }: Lume.Data, helpers: Lume.Helpers): string => {
+export default (): string => {
 
-	return html`
+	return /* html */`
     	<h1>Error 404 - Page not found :( </h1>
     	<p>
     		<svg  version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 60 60" xml:space="preserve">

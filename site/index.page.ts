@@ -1,12 +1,10 @@
-import { html } from "./lib/utilities.ts";
-
 export const title = "Home";
 export const motto = "studies on the synthesis of form";
 export const layout = "base.layout.ts";
 export const url = "/";
 
 const post = (data: Lume.Data | undefined, { date }: Lume.Helpers) => {
-  return html`
+  return /* html */`
     <div class="rounded border w-full p-4 panel visible">
       <div class="flex flex-wrap gap-4">
         <div class="flex-start">
@@ -34,7 +32,7 @@ export default ({ search }: Lume.Data, helpers: Lume.Helpers): string => {
     return menuItems.join("");
   };
 
-  return html`
+  return /* html */`
     <main class="flex flex-col flex-grow screen w-full">
       <div class="grow"></div>
       <div class="pt-4  text-2xl desc text-center text-5xl font-bold h-20 w-full desc backdrop-blur">&darr; studies on the synthesis of form &darr;</div>
