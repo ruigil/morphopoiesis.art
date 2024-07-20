@@ -1,13 +1,14 @@
+import { Shader } from "../lib/generators.ts";
 import hljs from 'npm:highlight.js';
 
 export const layout = "page.layout.ts";
 
-const related = (shader: any, data: Lume.Data) => {
+const related = (shader: Shader, data: Lume.Data) => {
 
   const items = () => {
     const menuItems: string[] = []
 
-    data.search.pages(`${shader.id}`, "date=desc").map((page) => {
+    data.search.pages(`${shader.id}`, "date=desc").map(() => {
       menuItems.push(`<a href="${data.url}" >${data.title}</a>`)
     });
     //console.log(menuItems)
@@ -17,10 +18,10 @@ const related = (shader: any, data: Lume.Data) => {
   return `<div class="w-full">${items()}</div>`
 }
 
-const shaderContent = async (shader: any, data: Lume.Data) => {
+const shaderContent = async (shader: Shader, data: Lume.Data) => {
 
-  const wgslCode = await Deno.readTextFile(`./site/${shader.path}/${shader.id}.wgsl`);
-  const tsCode = await Deno.readTextFile(`./site/${shader.path}/${shader.id}.ts`);
+  const wgslCode = await Deno.readTextFile(`./site/shaders/${shader.id}/${shader.id}.wgsl`);
+  const tsCode = await Deno.readTextFile(`./site/shaders/${shader.id}/${shader.id}.ts`);
   const htmlWgsl = hljs.highlight(wgslCode, { language: 'rust' }).value
   const htmlTs = hljs.highlight(tsCode, { language: 'typescript' }).value
 

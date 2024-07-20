@@ -3,7 +3,6 @@ import { Definitions } from "./poiesis/poiesis.interfaces.ts";
 
 export type Shader = {
     id: string,
-    path: string;
     title: string,
     description: string,
     image: string,
@@ -70,7 +69,7 @@ export const reflect = (wgslCode: string) => {
         members: members(b.members),
         type:  primitiveTypeName(b.type),
     }))
-    .reduce( (acc:Record<string,any>, e:any) => { acc[e.name] = e; return acc; },{} )
+    .reduce( (acc:Record<string,any>, e) => { acc[e.name] = e; return acc; },{} )
 
     //console.log(reflect)
 
@@ -91,7 +90,7 @@ export const reflect = (wgslCode: string) => {
         fragment: {
             name: reflect.entry.fragment[0].node.name
         },
-        computes: reflect.entry.compute.map( (c:any) => ({ name: c.node.name }) )
+        computes: reflect.entry.compute.map( (c) => ({ name: c.node.name }) )
     }
 
     const samplers = reflect.samplers.map( s => ({
@@ -106,7 +105,7 @@ export const reflect = (wgslCode: string) => {
         binding: s.binding
     }))
 
-    const response = {
+    return {
         samplers: samplers,
         storages: storages,
         uniforms: uniforms,
@@ -115,13 +114,11 @@ export const reflect = (wgslCode: string) => {
         bindGroupLength: reflect.getBindGroups()[0].length // the length of the first one
     } as Definitions;
 
-
-    return JSON.stringify(response, null, 2);
 }
 
 
 
-export const script = (shader: Shader, rootpath:string) => {
+export const script = (shader: Shader, rpath: string) => {
 
     const saveScreenshot = (id: string) => {
       return /* ts */ `
@@ -230,10 +227,10 @@ export const script = (shader: Shader, rootpath:string) => {
     }
   
     return /*ts*/ `
-      import { animate } from '${rootpath}lib/poiesis/index.ts';
-      import { Pane } from '${rootpath}lib/tweakpane/tweakpane-4.0.3.min.js';
+      import { animate } from '${rpath}/../lib/poiesis/index.ts';
+      import { Pane } from '${rpath}/../lib/tweakpane/tweakpane-4.0.3.min.js';
   
-      ${ shader.dynamic ? shader.spec : `import { ${shader.id} } from '${rootpath}/${shader.path}/${shader.id}.ts'` }
+      ${ shader.dynamic ? shader.spec : `import { ${shader.id} } from '${rpath}/../shaders/${shader.id}/${shader.id}.ts'` }
 
       document.addEventListener('DOMContentLoaded', async (event)  => {
         const canvas = document.querySelector("#canvas");
@@ -254,12 +251,11 @@ export const script = (shader: Shader, rootpath:string) => {
   
         const anim = animate(spec, canvas, ${ shader.debug ?  'uniforms, { onFPS: fpsListener }, { onRead: bufferListener }' : '{}' } );
         anim.start();
-        //anim.delay(1000);
   
       });`
   }
   
-export const htmlPage = async (shader: Shader) => {
+export const htmlPage = (shader: Shader) => {
 
     return /*html*/`
       <div id="error" class="full-window"></div>
@@ -293,18 +289,21 @@ const licenses:Record<string,string> = {
 export const license = (name: string) => licenses[name];
 
 
-export const shaderGenerator = async function* (shader: Shader, rootPath: string) {
+export const shaderGenerator = async function* (shader: Shader, rpath: string = ".") {
+  
+  // wgsl file
   yield {
-    url: `${rootPath}/${shader.path}/${shader.id}.wgsl`,
+    url: `${rpath}/../shaders/${shader.id}/${shader.id}.wgsl`,
     content: shader.wgsl,
   };
+  // Definitions file
   yield {
-    url: `${rootPath}/${shader.path}/${shader.id}.json`,
-    content: `${reflect( shader.wgsl )}`,
+    url: `${rpath}/../shaders/${shader.id}/${shader.id}.json`,
+    content: `${ JSON.stringify(reflect( shader.wgsl ), null, 2)}`,
   };
   // html page
   yield {
-    url: `${rootPath}/${shader.path}/`,
+    url: `${rpath}/../shaders/${shader.id}/`,
     title: shader.title,
     layout: "shaders.layout.ts",
     description: shader.description,
@@ -312,14 +311,13 @@ export const shaderGenerator = async function* (shader: Shader, rootPath: string
   };
   // shader licence
   yield {
-    url: `${rootPath}/${shader.path}/LICENSE.md`,
+    url: `${rpath}/../shaders/${shader.id}/LICENSE.md`,
     content: license(shader.license),
   };
   // shader code
   yield {
-    url: `${rootPath}/${shader.path}/index.ts`,
-    content: script(shader,`${rootPath}/`),
+    url: `${rpath}/../shaders/${shader.id}/index.ts`,
+    content: script(shader,rpath),
   };
 
 }
-

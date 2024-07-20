@@ -1,8 +1,10 @@
-const script = (shader: any, data: Lume.Data) => {
+import { Shader } from "../lib/generators.ts";
+
+const script = (shader:Shader) => {
     
     return /*ts*/ `
         import { animate } from '../lib/poiesis/index.ts';
-        import { ${shader.id} } from '../${shader.path}/${shader.id}.ts';
+        import { ${shader.id} } from '../shaders/${shader.id}/${shader.id}.ts';
 
         document.addEventListener('DOMContentLoaded', async (event)  => {
             const canvas = document.querySelector("#canvas");
@@ -48,8 +50,8 @@ const script = (shader: any, data: Lume.Data) => {
                 }
             });
   
-            const code = await (await fetch('../../${shader.path}/${shader.id}.wgsl')).text();
-            const defs = await (await fetch('../../${shader.path}/${shader.id}.json')).json();
+            const code = await (await fetch('../../shaders/${shader.id}/${shader.id}.wgsl')).text();
+            const defs = await (await fetch('../../shaders/${shader.id}/${shader.id}.json')).json();
 
             const fpsListener = (fps) => { fpsSmall.textContent = fps.fps + " fps"};
 
@@ -69,7 +71,7 @@ export default function* (data: Lume.Data) {
         url: `./${s.id}/index.ts`,
         title: s.title,
         description: s.description,
-        content: `${script(s, data)}`,
+        content: `${script(s)}`,
       };
     }
 }

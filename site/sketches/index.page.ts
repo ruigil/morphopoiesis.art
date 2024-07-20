@@ -12,7 +12,7 @@ type Shader = {
     sketch: boolean,
 }
 
-export default ({ shaders, comp }: Lume.Data ) : string => {
+export default ({ shaders }: Lume.Data ) : string => {
 
     const items = () => {
         const tags:Map<string,number> = new Map()
@@ -24,7 +24,7 @@ export default ({ shaders, comp }: Lume.Data ) : string => {
                 <sl-card class="card-overview  w-96">
                     <a slot="image" href="./${shader.id}">
                         <img
-                            src="../${shader.path}/${shader.id}-medium.webp"
+                            src="../shaders/${shader.id}/${shader.id}-medium.webp"
                             alt="${shader.description}"
                         />
                     </a>
