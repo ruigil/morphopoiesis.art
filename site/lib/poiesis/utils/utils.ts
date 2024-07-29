@@ -47,6 +47,7 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
     const crtl = { play: false, delta: 0 };
 
     const mouse: Array<number> = [0,0,0,0];
+    const mButtons: Array<number> = [0,0,0];
     const resolution: Array<number> = [0,0];
     const aspectRatio: Array<number> = [1,1];
 
@@ -61,6 +62,9 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
     
     canvas.addEventListener('mousemove', (event:MouseEvent) => updateMouse(event.clientX, event.clientY));
     canvas.addEventListener('touchmove', (event:TouchEvent) => updateMouse(event.touches[0].clientX, event.touches[0].clientY));
+
+    canvas.addEventListener('mousedown', (event) => { mButtons[event.button] = 1; });
+    canvas.addEventListener('mouseup', (event) => { mButtons[event.button] = 0; });
 
     const fps = () => {
         fpsListener && fpsListener.onFPS({ fps: (frame / elapsed).toFixed(2), time: elapsed.toFixed(1), frame: frame } );
@@ -118,11 +122,12 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
         if ( crtl.play  ) {
             elapsed = ((performance.now() - start) / 1000) - idle;
     
-            await context!.frame(frame, { 
+            const f = await context?.frame(frame, { 
                 sys: { 
                     frame: frame, 
                     time: elapsed, 
-                    mouse: mouse, 
+                    mouse: mouse,
+                    buttons: mButtons,
                     resolution: resolution,
                     aspect: aspectRatio 
                 }, ...(s!.uniforms ? s!.uniforms(frame) : {}), ...unis });
