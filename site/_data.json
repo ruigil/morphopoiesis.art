@@ -66,7 +66,7 @@
       "license": "cc-by",
       "sketch": false,
       "debug": true,
-      "fx": true
+      "fx": false
     },
     {
       "id": "pathtracer",

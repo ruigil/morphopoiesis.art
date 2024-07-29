@@ -2,9 +2,11 @@
 // https://creativecommons.org/licenses/by/4.0/
 
 struct Sys {
+    frame: u32,
     time: f32,
     resolution: vec2<f32>,
     mouse: vec4<f32>,
+    buttons: vec3<f32>,
     aspect: vec2<f32>
 };
 
@@ -13,13 +15,14 @@ struct SimParams {
   agents: f32,
   sa: f32,
   sd: f32,
-  evaporation: f32
+  evaporation: f32,
+  step: u32
 }
 
 struct Agent {
   pos : vec2<f32>,
   vel : vec2<f32>,
-  t: vec4<f32>
+  t: vec4<u32>
 }
 
 struct VertexInput {
@@ -27,9 +30,15 @@ struct VertexInput {
     @builtin(instance_index) instance: u32
 };
 
+struct Seed {
+    coord: vec2<u32>,
+    distance: f32,
+    dirty: f32
+}
+
 struct VertexOutput {
     @builtin(position) pos: vec4f,
-    @location(0) state: vec4<f32>
+    @location(0) state: f32
 }
 
 struct Debug {
@@ -38,10 +47,11 @@ struct Debug {
     size: vec2<f32>
 }
 
+
 @group(0) @binding(0) var<uniform> sys : Sys;
 @group(0) @binding(1) var<uniform> params : SimParams;
-@group(0) @binding(2) var<storage, read> trailMapA : array<vec4<f32>>;
-@group(0) @binding(3) var<storage, read_write> trailMapB : array<vec4<f32>>;
+@group(0) @binding(2) var<storage, read> seedMapA : array<Seed>;
+@group(0) @binding(3) var<storage, read_write> seedMapB : array<Seed>;
 @group(0) @binding(4) var<storage, read_write> agents : array<Agent>;
 @group(0) @binding(5) var<storage, read_write> debug : Debug;
 
@@ -50,7 +60,7 @@ fn vertMain( input: VertexInput) -> VertexOutput {
   
     let i = f32(input.instance); 
     let cell = vec2f(i % params.size.x, floor(i / params.size.x) );
-    let state = vec4<f32>(trailMapA[input.instance]);
+    let state = seedMapA[input.instance].distance;
 
     let cellSize = 2. / params.size.xy ;
     // The cell(0,0) is a the top left corner of the screen.
@@ -67,31 +77,56 @@ fn vertMain( input: VertexInput) -> VertexOutput {
 
 @fragment
 fn fragMain(input : VertexOutput) -> @location(0) vec4<f32> {
-  // we just render the state of the trailmap as a hsv 2 rgb value  
-  let sv = pow(input.state.x, 3.);
-  let c = mix(input.state.xyz, vec3<f32>(1.), input.state.w);
-  return vec4( tosRGB( c )  ,1.0) ;
+  return vec4( tosRGB( clamp( vec3f(1./(input.state + 1)), vec3(0.),vec3(1.)) )  ,1.0) ;
 }
-
+const K_LAPLACE = array<f32,9>(0., 1., 0., 1., 0., 1., 0., 1., 0.);
 @compute @workgroup_size(8, 8)
-fn computeTrailmap(@builtin(global_invocation_id) cell : vec3<u32>) {
-  // keep the simulation in the range [0,size]
-  if (cell.x >= u32(params.size.x) || cell.y >= u32(params.size.y)) { return; }
+fn computeKernel(@builtin(global_invocation_id) cell : vec3<u32>) {
+    // keep the simulation in the range [0,size]
+    if (cell.x >= u32(params.size.x) || cell.y >= u32(params.size.y)) { return; }
 
-  let m = vec2u(sys.mouse.xy * params.size );
+    let m = vec2u(sys.mouse.xy * params.size );
 
-  // we apply a gaussian blur to simulate diffusion of the trailmap values
-  let value = conv3x3(K_GAUSSIAN_BLUR, cell.xy, vec2u(params.size.xy)) ; 
-  //let previous = trailMapA[ cell.x + cell.y * u32(params.size.x) ].w; // previous pixel occupancy by particle
-  let newValue = clamp(value - .001, vec4(0.), vec4(1.));
+    var current = seedMapA[ cell.y * u32(params.size.x) + cell.x];
+
+    var acc = 0.;
+    let size = vec2<u32>(params.size);
+    for(var i = 0u; i < 9u; i++) {
+        let offset =  (vec2u( (i / 3u) - 1u , (i % 3u) - 1u ) + cell.xy + size) % size;
+        acc += K_LAPLACE[i] * seedMapA[offset.y * size.x + offset.x].distance;        
+    }
+    let d = seedMapB[ cell.y * u32(params.size.x) + cell.x].distance;
+    seedMapB[ cell.y * u32(params.size.x) + cell.x].distance = (acc/4.) - d;
+    
+    // we use the convention that a seed has positive coordinates
+    /*
+  if (current.dirty == 1.) {
+    let s = 1u;//pow(2.,step); 
+    for(var i = 0u; i < 9u; i++) {
+        let offset =  (vec2u( (i / 3u) - 1u , (i % 3u) - 1u ) * s + cell.xy + size) % size;
+        
+        let neighbour = seedMapA[ offset.y * size.x + offset.x ];
+
+        let distance = distance(vec2<f32>(current.coord), vec2<f32>(offset));
+
+        if (neighbour.dirty < current.dirty) {
+            seedMapB [offset.y * size.x + offset.x] = Seed(current.coord,distance,1.);
+        }
+    }
+    seedMapB[ cell.y * u32(params.size.x) + cell.x].dirty =  2.;
+  }
+*/
+    if (sys.buttons.x == 1.) {
+        seedMapB[ m.y * u32(params.size.x) + m.x].distance = 20.;
+    }
+
 
   if (m.x == cell.x && m.y == cell.y) {
-    debug.value = newValue;
-    debug.coord = cell.xy;
-    debug.size = params.size;
+    debug.value = vec4f(current.distance);
+    debug.coord = current.coord;
+    debug.size = sys.buttons.xy;
   }
 
-  trailMapB[ cell.x + cell.y * u32(params.size.x) ] = newValue;
 }
 
 
@@ -107,19 +142,23 @@ fn computeAgents(@builtin(global_invocation_id) id : vec3<u32>) {
     var dir = normalize(agent.vel);
     var pos = agent.pos;
 
-    //agents[i].vel = vel;
-    //pos += vel * .1;
+    //pos += agents[i].vel * .01;
     
     //wrap around boundary condition [-1,1]
     pos = fract( (pos + 1.) * .5) * 2. - 1.;
 
     // calculate the grid indexes for the current and next position
+    let current = vec2<u32>( floor( (agents[i].pos + 1.)  * .5 * params.size ) );
     let next = vec2<u32>( floor( (pos + 1.)  * .5 * params.size ) );
     agents[i].pos = pos;
-    let v = trailMapA[ next.y * u32(params.size.x) + next.x ];
-    trailMapB[ next.y * u32(params.size.x) + next.x ] = clamp(v + agents[i].t , vec4(0.), vec4(2.));
-
-
+    //let v = trailMapA[ next.y * u32(params.size.x) + next.x ];
+    
+    //let c = seedMapA[ current.y * u32(params.size.x) + current.x ];
+    seedMapB[ current.y * u32(params.size.x) + current.x ] = Seed(current, 0., select(0.,1., sys.frame < 1));
+    if ((current.x != next.x) || (current.y != next.y)) {
+        seedMapB[ current.y * u32(params.size.x) + current.x ] = Seed(next, distance(vec2f(next),vec2f(current)), 1.);
+        seedMapB[ next.y * u32(params.size.x) + next.x ] = Seed(next, 0., 1.);
+    }
 }
 
 const forces = mat4x4<f32>(
@@ -129,21 +168,10 @@ const forces = mat4x4<f32>(
     0., 0., 0., 1.
 );
 
-const K_GAUSSIAN_BLUR = array<f32,9>(0.1111, 0.1111, 0.1111, 0.1111, .1111, 0.1111, 0.1111, 0.1111, 0.1111);
+const K_DISTANCE = array<f32,9>(1.4142, 1., 1.4142, 1., 0., 1., 1.4142, 1., 1.4142);
 // apply a convolution in a 2d grid with a specific kernel
 // assumes a wrap around boundary condition
 // and a buffer of size size
-fn conv3x3( kernel: array<f32,9>, cell: vec2<u32>, size: vec2<u32>) -> vec4<f32> {
-    var acc = vec4(0.);
-    
-    for(var i = 0u; i < 9u; i++) {
-        let offset =  (vec2u( (i / 3u) - 1u , (i % 3u) - 1u ) + cell + size) % size;
-        // the  buffer can't be passed into the function
-        acc += kernel[i] * trailMapA[offset.y * size.x + offset.x];
-    } 
-    
-    return acc;
-}
 
 // random number between 0 and 1 with 3 seeds and 3 dimensions
 fn rnd33( seed: vec3u) -> vec3f {
