@@ -4,7 +4,7 @@ export const boids = (code:string, defs:Definitions) => {
 
     const spec = ():PSpec => {
         const numBoids = 2000;
-        const boids = Array.from({ length: numBoids }, (e,i) => ({
+        const boids = Array.from({ length: numBoids }, () => ({
             pos: [2 * Math.random() - 1, 2 * Math.random() - 1],
             vel: [2 * Math.random() - 1, 2 * Math.random() - 1],
             pha: 2 * Math.PI * Math.random()
