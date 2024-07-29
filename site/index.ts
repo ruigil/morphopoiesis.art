@@ -8,7 +8,7 @@ const featureShader = async () => {
   const body = document.querySelector('body');
 
   const isDark = (): boolean => {
-    const currentMode = window.matchMedia("(prefers-color-scheme: dark)").matches.toString();
+    const currentMode = globalThis.matchMedia("(prefers-color-scheme: dark)").matches.toString();
     return (localStorage.getItem("dark-theme") || currentMode) === "true"; // true = "dark", false = "light"
   }
 
@@ -25,7 +25,7 @@ const featureShader = async () => {
   const observer = new MutationObserver(mutations => {
     mutations.forEach(mutation => {
       if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-        let dark = (mutation.target as HTMLBodyElement).classList.contains('sl-theme-dark');
+        const dark = (mutation.target as HTMLBodyElement).classList.contains('sl-theme-dark');
         if (dark) {
           color.params.mode = [.4,.2,.1,3];
         } else {
@@ -47,7 +47,7 @@ const featureShader = async () => {
 
 }
 
-document.addEventListener('DOMContentLoaded', async (event) => {
+document.addEventListener('DOMContentLoaded', () => {
   featureShader();
 });
 
