@@ -28,4 +28,4 @@ Recently I've read the book [Everything Flows](https://www.amazon.com/Everything
 
 To understand flows, I implemented a basic fluid simulator in WebGPU. I used the classic [paper](http://graphics.cs.cmu.edu/nsp/course/15-464/Fall09/papers/StamFluidforGames.pdf) by Jos Stam, and Karl Sims has a nice [visual tutorial](https://www.karlsims.com/fluid-flow.html) on how everthing works.
 
-[![FLUID](/shaders/sketches/fluid/fluid-big.webp)](/sketches/fluid/)
+[![FLUID](/shaders/fluid/fluid-big.webp)](/sketches/fluid/)

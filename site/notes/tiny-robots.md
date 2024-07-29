@@ -24,4 +24,4 @@ Let pause briefly for the implications of this. This system is a simple iterativ
 
 Here is a the Game of Life [implemented](/sketches/gol/) with WebGPU.
 
-[![GOL](/shaders/sketches/gol/gol-big.webp)](/sketches/gol/)
+[![GOL](/shaders/gol/gol-big.webp)](/sketches/gol/)

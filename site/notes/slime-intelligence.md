@@ -34,4 +34,4 @@ What is remarkable about this algorithm is that although the basic rules are sim
 
 Here is an [implementation](/sketches/physarum/) on WebGPU. You can play with your mouse to create a black hole in the chemical field and stopping agents from interacting, but you will notice that the transport network they form is pretty resilient.
 
-[![physarum](/shaders/sketches/physarum/physarum-big.webp)](/sketches/physarum/)
+[![physarum](/shaders/physarum/physarum-big.webp)](/sketches/physarum/)

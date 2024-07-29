@@ -30,4 +30,4 @@ There is a simple model of crystal formation called [diffusion-limited aggregati
 
 Here is an implementation of the model in the GPU.
 
-[![DLA](/shaders/sketches/dla/dla-big.webp)](/sketches/dla/)
+[![DLA](/shaders/dla/dla-big.webp)](/sketches/dla/)
