@@ -22,11 +22,28 @@
   },
   "shaders": [
     {
+      "id": "wave",
+      "path": "wave",
+      "title": "Wave Equation",
+      "description": "Background circle with 3 oscillators with prime frequency. Click the mouse for high frequency oscillations.",
+      "image": "",
+      "tags": ["wave", "2d", "mouse"],
+      "license": "cc-by",
+      "sketch": true,
+      "debug": false,
+      "fx": false
+    },
+    {
       "id": "video360",
       "title": "Video 360",
       "description": "Equirectangular 360 Video Viewer. Click on the video to play/pause.",
       "image": "",
-      "tags": ["360","equirectangular","viewer","video"],
+      "tags": [
+        "360",
+        "equirectangular",
+        "viewer",
+        "video"
+      ],
       "license": "cc-by",
       "sketch": true,
       "debug": false,
@@ -121,7 +138,7 @@
       "license": "cc-by",
       "sketch": false,
       "debug": true,
-      "dynamic":false,
+      "dynamic": false,
       "fx": false
     },
     {
