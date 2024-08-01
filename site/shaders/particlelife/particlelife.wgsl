@@ -96,7 +96,7 @@ fn computeKernel(@builtin(global_invocation_id) cell : vec3<u32>) {
         acc += K_LAPLACE[i] * seedMapA[offset.y * size.x + offset.x].distance;        
     }
     let d = seedMapB[ cell.y * u32(params.size.x) + cell.x].distance;
-    seedMapB[ cell.y * u32(params.size.x) + cell.x].distance = (acc/4.) - d;
+    seedMapB[ cell.y * u32(params.size.x) + cell.x].distance = (acc/2.) - d;
     
     // we use the convention that a seed has positive coordinates
     /*
@@ -117,7 +117,7 @@ fn computeKernel(@builtin(global_invocation_id) cell : vec3<u32>) {
   }
 */
     if (sys.buttons.x == 1.) {
-        seedMapB[ m.y * u32(params.size.x) + m.x].distance = 20.;
+        seedMapB[ m.y * u32(params.size.x) + m.x].distance = 10.;
     }
 
 
