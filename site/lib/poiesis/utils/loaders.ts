@@ -12,24 +12,17 @@ export const loadTexture = async (url: string) => {
 
 export const loadWebcam = async () => {
     // Request permission to access the user's camera
-    console.log("Requesting permission to access the user's camera");
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-    const videoSettings = stream.getVideoTracks()[0].getSettings();
-    const capabilities = stream.getVideoTracks()[0].getCapabilities();
+
     // Create a video element to capture the video stream
     const video = document.createElement('video');
     video.srcObject = stream;
-
     video.muted = true;
     video.autoplay = true;
-    const metadataLoaded = new Promise<void>((resolve) => {
-        video.addEventListener('loadedmetadata', () => {
-            resolve();
-        });
-    });        
-    // Wait for the metadata to be loaded
-    await metadataLoaded;
+
+    await video.play();
+    const videoSettings = stream.getVideoTracks()[0].getSettings();
+    const capabilities = stream.getVideoTracks()[0].getCapabilities();
     
-    //console.log(videoSettings);
     return { video: video, settings: videoSettings, capabilities: capabilities }; 
 }
