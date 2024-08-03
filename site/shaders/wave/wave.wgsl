@@ -20,7 +20,7 @@ struct Uni {
 struct Oscillators {
     amplitude: f32,
     frequency: f32,
-    position: vec2<u32>
+    position: vec2<i32>
 }
 
 struct VertexInput {
@@ -44,6 +44,7 @@ fn vertexMain(input : VertexInput) -> VertexOutput {
     let i = f32(input.instance); 
 
     let cell = vec2f(i % uni.size.x, floor(i / uni.size.x));
+    // each pixel in the simulation is represented bay a instance square
     let state = f32(current[input.instance]);
     
     let cellSize = 2. / uni.size.xy ;
@@ -55,17 +56,16 @@ fn vertexMain(input : VertexInput) -> VertexOutput {
 
     var output: VertexOutput;
     output.pos = vec4f(cellPos, 0., 1.);
-    output.uv = vec2f(input.pos.xy);
     output.state = state;
     return output;
 }
 
 @fragment
 fn fragmentMain( input: VertexOutput) -> @location(0) vec4f {
-    // use the phase as a color hue
-    return vec4( tosRGB( hsv2rgb(vec3( abs(input.state*.1) + 0.7, 1., .1 )) ) ,1.0) ;
+    // use the wave phase as a color hue
+    return vec4( tosRGB( hsv2rgb(vec3( abs(input.state)*.1 + .66 , .9, .1 )) ) ,1.0) ;
 }      
-// 9 point stencil laplace operator
+// Mehrstellen 9 point stencil laplace operator 
 const K_LAPLACE9 = array<f32,9>(.1666666, .6666666, .1666666, .6666666, -3.3333333, .6666666, .1666666, .6666666, .1666666);
 
 @compute @workgroup_size(8, 8)
@@ -73,8 +73,9 @@ fn computeWave(@builtin(global_invocation_id) cell: vec3u) {
     // keep the simulation in the range [0,size]
     if (cell.x >= u32(uni.size.x) || cell.y >= u32(uni.size.y)) { return; }
 
-    let size = vec2u(uni.size);
-    let m = vec2u(sys.mouse.xy * uni.size );
+    let size = vec2i(uni.size);
+    let pos = vec2i(cell.xy);
+    let m = vec2i(sys.mouse.xy * uni.size );
 
     // Wave equation parameters
     let dt = 1.; // time step
@@ -82,35 +83,35 @@ fn computeWave(@builtin(global_invocation_id) cell: vec3u) {
     let c = 1. / (sqrt(2.) * dt) ;  // wave speed, Courant-Friedrichs-Lewy (CFL) condition
     
     // current cell index
-    let index = cell.y * size.x + cell.x;
+    let index = pos.y * size.x + pos.x;
 
-    // we switch buffers each frame, so the previous is now the next buffer.
+    // we switch buffers each frame, so the previous value is in the next buffer.
     let previous = next[index];
 
     // boundary condition
-    let circle = abs(length(vec2f(cell.xy) - vec2f(size/2)) - f32(size.y)/2.5) - 1. < 0.;
+    let circle = abs(length(vec2f(pos) - vec2f(size/2)) - f32(size.y)/2.5) - 1. < 0.;
 
-    var laplacian: f32 = 0.0;
-    if (!circle) { // boundary conditions
-        for(var i = 0u; i < 9u; i++) {
-            let offset =  (vec2u( (i / 3u) - 1u , (i % 3u) - 1u ) + cell.xy + size) % size;
+    if (!circle) {
+        // calculate the laplacian  
+        var laplacian: f32 = 0.0;
+        for(var i = 0; i < 9; i++) {
+            let offset =  (vec2i( (i / 3) - 1, (i % 3) - 1 ) + pos + size) % size;
             laplacian += K_LAPLACE9[i] * current[offset.y * size.x + offset.x];       
         }
-    }
-    
-    // wave equation, finite elements method
-    next[index] = 2.0 * current[index] - previous + c * c * dt * dt * laplacian;
-    //next[index] *= damping;
 
-    // add oscillators perturbation to the field
-    for (var i=0u; i < 3u; i++) {
-        let o = uni.osc[i];
-        next[ o.position.y * size.x + o.position.x ] = o.amplitude * sin(o.frequency * sys.time);
-    }
+        // wave equation, finite elements method
+        next[index] = 2.0 * current[index] - previous + c * c * dt * dt * laplacian;
+        //next[index] *= damping;
 
-    // add mouse click perturbation
-    if (sys.buttons.x == 1.) {
-        next[ m.y * size.x + m.x] = uni.amplitude * sin(uni.frequency * sys.time);
+        // add oscillators perturbation to the field
+        for (var i=0; i < 3; i++) {
+            let o = uni.osc[i];
+            next[ o.position.y * size.x + o.position.x ] = o.amplitude * sin(o.frequency * sys.time);
+        }
+        // add mouse click perturbation
+        if (sys.buttons.x == 1.) {
+            next[ m.y * size.x + m.x] = uni.amplitude * sin(uni.frequency * sys.time);
+        }
     }
 
 }
