@@ -20,9 +20,9 @@ export const particlelife = (code:string, defs:Definitions) => {
                 t: type
             }
         });
-
-        const seedMap = Array.from({ length: size.x * size.y }, () => ({ seed: [0, 0], distance: 0., dirty: 0. }));
         
+        const instances = Math.ceil(Math.log2(Math.max(size.x,size.y))) + 1;
+
         return {
             code: code,
             defs: defs,
@@ -46,14 +46,15 @@ export const particlelife = (code:string, defs:Definitions) => {
             storages: [
                 { name: "agents", size: numAgents , data: agents} ,
                 { name: "debug", size: 1, read: true },
-                { name: "seedMapA", size: size.x * size.y, data: seedMap},
+                { name: "instance", size: 1 },
+                { name: "seedMapA", size: size.x * size.y },
                 { name: "seedMapB", size: size.x * size.y } 
             ],
             computes: [
-                { name: "computeKernel", workgroups: [Math.ceil(size.x / 8), Math.ceil(size.y / 8), 1] },
+                { name: "computeKernel", workgroups: [Math.ceil(size.x / 8), Math.ceil(size.y / 8), 1], instances: 1 },
                 { name: "computeAgents", workgroups: [Math.ceil(numAgents / 64), 1, 1] }
             ],
-            bindings: [ [0,1,2,3,4,5], [0,1,3,2,4,5] ]
+            bindings: [ [0,1,2,3,4,5,6], [0,1,3,2,4,5,6] ]
         }
     }
 

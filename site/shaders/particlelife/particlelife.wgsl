@@ -43,7 +43,7 @@ struct VertexOutput {
 
 struct Debug {
     value: vec4<f32>,
-    coord: vec2<u32>,
+    coord: vec2<i32>,
     size: vec2<f32>
 }
 
@@ -52,6 +52,7 @@ struct Debug {
 @group(0) @binding(1) var<uniform> params : SimParams;
 @group(0) @binding(2) var<storage, read> seedMapA : array<Seed>;
 @group(0) @binding(3) var<storage, read_write> seedMapB : array<Seed>;
+@group(0) @binding(6) var<storage, read_write> instance : f32;
 @group(0) @binding(4) var<storage, read_write> agents : array<Agent>;
 @group(0) @binding(5) var<storage, read_write> debug : Debug;
 
@@ -77,7 +78,7 @@ fn vertMain( input: VertexInput) -> VertexOutput {
 
 @fragment
 fn fragMain(input : VertexOutput) -> @location(0) vec4<f32> {
-  return vec4( tosRGB( clamp( vec3f(1./(input.state + 1)), vec3(0.),vec3(1.)) )  ,1.0) ;
+  return vec4( tosRGB( clamp( vec3f(input.state/max(params.size.x,params.size.y) ), vec3(0.),vec3(1.)) )  ,1.0) ;
 }
 const K_LAPLACE = array<f32,9>(0., 1., 0., 1., 0., 1., 0., 1., 0.);
 @compute @workgroup_size(8, 8)
@@ -86,46 +87,47 @@ fn computeKernel(@builtin(global_invocation_id) cell : vec3<u32>) {
     if (cell.x >= u32(params.size.x) || cell.y >= u32(params.size.y)) { return; }
 
     let m = vec2u(sys.mouse.xy * params.size );
-
-    var current = seedMapA[ cell.y * u32(params.size.x) + cell.x];
-
-    var acc = 0.;
     let size = vec2<u32>(params.size);
-    for(var i = 0u; i < 9u; i++) {
-        let offset =  (vec2u( (i / 3u) - 1u , (i % 3u) - 1u ) + cell.xy + size) % size;
-        acc += K_LAPLACE[i] * seedMapA[offset.y * size.x + offset.x].distance;        
+
+    // 7
+    let p2 = ceil(log2(max(params.size.x,params.size.y)));
+    // 64, 32, 16, 8, 4, 2, 1
+    let step = i32(  exp2( p2 - 1. - (instance % p2) ) );
+
+    instance += 1.;
+
+
+    let index = cell.y * size.x + cell.x;
+    let current = seedMapA[ index ];
+    if (step == 64)  {
+        seedMapB[ index ] = Seed(vec2u(10000u), current.distance, 0.);
+    } else {
+        seedMapB[ index ] = current;
     }
-    let d = seedMapB[ cell.y * u32(params.size.x) + cell.x].distance;
-    seedMapB[ cell.y * u32(params.size.x) + cell.x].distance = (acc/2.) - d;
-    
-    // we use the convention that a seed has positive coordinates
-    /*
-  if (current.dirty == 1.) {
-    let s = 1u;//pow(2.,step); 
-    for(var i = 0u; i < 9u; i++) {
-        let offset =  (vec2u( (i / 3u) - 1u , (i % 3u) - 1u ) * s + cell.xy + size) % size;
-        
-        let neighbour = seedMapA[ offset.y * size.x + offset.x ];
 
-        let distance = distance(vec2<f32>(current.coord), vec2<f32>(offset));
-
-        if (neighbour.dirty < current.dirty) {
-            seedMapB [offset.y * size.x + offset.x] = Seed(current.coord,distance,1.);
+    var bestDist = distance(vec2f(cell.xy), vec2f(current.coord));
+    for(var x = -1; x <= 1; x++) {
+        for(var y = -1; y <= 1; y++) {
+            let offset =  ((vec2i(cell.xy) + vec2(x,y) * step) + vec2i(size)) % vec2i(size);
+            let seed = seedMapA[ offset.y * i32(size.x) + offset.x ];
+            let dist = distance(vec2f(seed.coord), vec2f(cell.xy));
+            if (dist < bestDist) {
+                seedMapB[ index ] = Seed(seed.coord, dist, 0.);
+            }
         }
     }
-    seedMapB[ cell.y * u32(params.size.x) + cell.x].dirty =  2.;
-  }
-*/
+
+    
     if (sys.buttons.x == 1.) {
-        seedMapB[ m.y * u32(params.size.x) + m.x].distance = 10.;
+        seedMapB[ m.y * u32(params.size.x) + m.x] = Seed(m, 0., 0.);
     }
 
-
-  if (m.x == cell.x && m.y == cell.y) {
-    debug.value = vec4f(current.distance);
-    debug.coord = current.coord;
-    debug.size = sys.buttons.xy;
-  }
+    if (m.x == cell.x && m.y == cell.y) {
+        let ms = seedMapA[ m.y * size.x + m.x];
+        debug.value = vec4f(vec2f(ms.coord),ms.distance,instance);
+        debug.coord = vec2i( ( 0 / 3) - 1, (0 % 3) - 1 ) ;
+        debug.size = params.size;
+    }
 
 }
 
@@ -154,10 +156,10 @@ fn computeAgents(@builtin(global_invocation_id) id : vec3<u32>) {
     //let v = trailMapA[ next.y * u32(params.size.x) + next.x ];
     
     //let c = seedMapA[ current.y * u32(params.size.x) + current.x ];
-    seedMapB[ current.y * u32(params.size.x) + current.x ] = Seed(current, 0., select(0.,1., sys.frame < 1));
+    //seedMapB[ current.y * u32(params.size.x) + current.x ] = Seed(current, 0., select(0.,1., sys.frame < 1));
     if ((current.x != next.x) || (current.y != next.y)) {
-        seedMapB[ current.y * u32(params.size.x) + current.x ] = Seed(next, distance(vec2f(next),vec2f(current)), 1.);
-        seedMapB[ next.y * u32(params.size.x) + next.x ] = Seed(next, 0., 1.);
+        //seedMapB[ current.y * u32(params.size.x) + current.x ] = Seed(next, distance(vec2f(next),vec2f(current)), 1.);
+        //seedMapB[ next.y * u32(params.size.x) + next.x ] = Seed(next, 0., 1.);
     }
 }
 
