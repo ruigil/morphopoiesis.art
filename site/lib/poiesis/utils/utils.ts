@@ -44,7 +44,7 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
     let context:PContext | null = null;
     let s: PSpec | null = null;
     const rids = { intid: 0, requestId: 0 };
-    const crtl = { play: false, delta: 0 };
+    const crtl = { play: false, stop: false, delta: 0 };
 
     const mouse: Array<number> = [0,0,0,0];
     const mButtons: Array<number> = [0,0,0];
@@ -71,19 +71,18 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
     }
 
     const reset = async () => {
+        crtl.play = false;
         if (context == null) context = await PContext.init(canvas);
         frame = 0;
         elapsed = 0;
         idle = 0;
-        cancelAnimationFrame(rids.requestId);
         s = spec(canvas.width, canvas.height);
         context = context.build( s )
         if (bufferListener) {
             context = context.addBufferListener(bufferListener);
         }
-        // we should only request another render, when the last one is finished, how ?
-        rids.requestId = requestAnimationFrame(render)
         start = performance.now();
+        crtl.play = true;
     }
 
     const canvasResize = async (entries: ResizeObserverEntry[]) => {
@@ -97,6 +96,7 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
 
         try {
             await reset();
+            requestAnimationFrame(render)
         } catch (err) {
             console.log(err);
             const error = document.querySelector("#error") as HTMLDivElement;
@@ -109,6 +109,7 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
 
 
     const render = async () => {
+        //console.log(rids.requestId)
 
         if (crtl.play && !rids.intid) {
             rids.intid = setInterval(() => fps(), 200);
@@ -122,7 +123,7 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
         if ( crtl.play  ) {
             elapsed = ((performance.now() - start) / 1000) - idle;
     
-            const f = await context?.frame(frame, { 
+            await context?.frame(frame, { 
                 sys: { 
                     frame: frame, 
                     time: elapsed, 
@@ -134,21 +135,20 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
 
             // frame starts at 0, because binding groups start at 0
             frame++;
-
+    
         } else 
             idle = ((performance.now()- start)/1000) - elapsed;
         
-
-        if (crtl.delta != 0) 
-            setTimeout( ()=> rids.requestId = requestAnimationFrame(render), crtl.delta);
-        else 
-            rids.requestId = requestAnimationFrame(render);
+        if (!crtl.stop) {
+            if (crtl.delta != 0) setTimeout( ()=> requestAnimationFrame(render), crtl.delta);
+            else requestAnimationFrame(render);
+        }
     }
 
     return {
         start: () => { crtl.play = true; },
         togglePlayPause: () => { crtl.play = !crtl.play; },
-        stop: () => { cancelAnimationFrame(rids.requestId);  },
+        stop: () => { crtl.stop = true; },
         reset: () => { reset() },
         delay: (delta: number) => { crtl.delta = delta; },
     }
