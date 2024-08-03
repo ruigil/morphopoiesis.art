@@ -12,7 +12,7 @@ export const loadTexture = async (url: string) => {
 
 export const loadWebcam = async () => {
     // Request permission to access the user's camera
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true })
 
     // Create a video element to capture the video stream
     const video = document.createElement('video');
