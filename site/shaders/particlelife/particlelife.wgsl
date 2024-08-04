@@ -109,6 +109,7 @@ fn computeKernel(@builtin(global_invocation_id) cell : vec3<u32>) {
     for(var x = -1; x <= 1; x++) {
         for(var y = -1; y <= 1; y++) {
             let offset =  ((vec2i(cell.xy) + vec2(x,y) * step) + vec2i(size)) % vec2i(size);
+            
             let seed = seedMapA[ offset.y * i32(size.x) + offset.x ];
             let dist = distance(vec2f(seed.coord), vec2f(cell.xy));
             if (dist < bestDist) {
