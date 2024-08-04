@@ -43,8 +43,8 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
     let start = performance.now();
     let context:PContext | null = null;
     let s: PSpec | null = null;
-    const rids = { intid: 0, requestId: 0 };
-    const crtl = { play: false, stop: false, delta: 0 };
+    let intid = 0;
+    const crtl = { play: false, delta: 0 };
 
     const mouse: Array<number> = [0,0,0,0];
     const mButtons: Array<number> = [0,0,0];
@@ -54,7 +54,7 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
     const updateMouse = (x:number,y:number) => {
         mouse[2] = mouse[0]; // last position x
         mouse[3] = mouse[1]; // last position y
-        let rect = canvas.getBoundingClientRect();
+        const rect = canvas.getBoundingClientRect();
         mouse[0] = (x - rect.left) / rect.width;
         mouse[1] = (y - rect.top) / rect.height;
         if (s && s.mouse) s.mouse(mouse[0], mouse[1], frame); 
@@ -96,7 +96,6 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
 
         try {
             await reset();
-            requestAnimationFrame(render)
         } catch (err) {
             console.log(err);
             const error = document.querySelector("#error") as HTMLDivElement;
@@ -111,13 +110,13 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
     const render = async () => {
         //console.log(rids.requestId)
 
-        if (crtl.play && !rids.intid) {
-            rids.intid = setInterval(() => fps(), 200);
+        if (crtl.play && !intid) {
+            intid = setInterval(() => fps(), 200);
         }
 
-        if (!crtl.play && rids.intid) {
-            clearInterval(rids.intid);
-            rids.intid = 0;
+        if (!crtl.play && intid) {
+            clearInterval(intid);
+            intid = 0;
         }
 
         if ( crtl.play  ) {
@@ -139,16 +138,16 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
         } else 
             idle = ((performance.now()- start)/1000) - elapsed;
         
-        if (!crtl.stop) {
-            if (crtl.delta != 0) setTimeout( ()=> requestAnimationFrame(render), crtl.delta);
-            else requestAnimationFrame(render);
-        }
+        if (crtl.delta != 0) setTimeout( ()=> requestAnimationFrame(render), crtl.delta);
+        else requestAnimationFrame(render);
     }
+
+    requestAnimationFrame(render)
 
     return {
         start: () => { crtl.play = true; },
         togglePlayPause: () => { crtl.play = !crtl.play; },
-        stop: () => { crtl.stop = true; },
+        stop: () => { crtl.play = false; },
         reset: () => { reset() },
         delay: (delta: number) => { crtl.delta = delta; },
     }
