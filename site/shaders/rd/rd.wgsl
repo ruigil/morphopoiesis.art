@@ -25,9 +25,7 @@ struct VertexInput {
 
 struct VertexOutput {
     @builtin(position) pos: vec4f,
-    @location(0) cell: vec2f,
-    @location(1) uv: vec2f,
-    @location(2) state: vec2f
+    @location(0) state: vec2f
 }
 
 fn getIndex(cell : vec2<f32>) -> u32 { 
@@ -58,8 +56,6 @@ fn vertexMain(input : VertexInput) -> VertexOutput {
 
     var output: VertexOutput;
     output.pos = vec4f(vec2(cellPos), 0., 1.); //[0.1,0.1]...[0.9,0.9] cell vertex positions
-    output.uv = vec2f(input.pos.xy); // [-1,-1]...[1,1]
-    output.cell = cell; // [0,0],[1,1] ... [size.x, size.y]
     output.state = state; // the current state
     return output;
 }
@@ -69,9 +65,7 @@ fn fragmentMain( input: VertexOutput) -> @location(0) vec4f {
 
     // we use the state to control the color
     let v = input.state;
-    let color:vec3f = hsv2rgb(vec3f( abs(v.y-v.x)  , 1., pow(v.y + 0.001 ,.5) ));
-
-    //return vec4f( 1.0,0.,0.,1.); //vec4f( tosRGB(color), 1.;
+    let color = hsv2rgb(vec3f( abs(v.y-v.x)  , 1., pow(v.y + 0.001 ,.5) ));
 
     return vec4f( tosRGB(color), 1.);
 }      
@@ -96,20 +90,46 @@ fn computeMain(@builtin(global_invocation_id) cell: vec3u) {
         vec2(0.039, 0.058), // holes
         vec2(0.022, 0.0610) // microbes
     );
-    let pos = vec2u(floor(sys.mouse.xy * uni.size));
 
     // we divide the screen in 9 areas and we use 
     // the mouse position to select the pattern
     let m = floor(sys.mouse.xy * 3);
     let ai = params[u32(m.y) * 3u + u32(m.x)];
+
     // calculate the value and store it in the next buffer
-    let v = rd( cell.xy, vec2u(uni.size), ai.x, ai.y);
+    let v = rd( vec2i(cell.xy), vec2i(uni.size), ai.x, ai.y);
     next[cell.y * u32(uni.size.x) + cell.x] = clamp(v, vec2(0.), vec2(1.));
 
     // we add a small amount of B in the mouse position
+    let pos = vec2u(floor(sys.mouse.xy * uni.size));
     let index = pos.y * u32(uni.size.x) + pos.x;
     next[index].y = 1.;
 
+}
+
+
+// 9 point stencil laplace operator
+const K_LAPLACE9 = array<f32,9>(.25, .5, .25, .5, -3., .5, .25, .5, .25);
+
+// gray-scott reaction-diffusion system
+fn rd( cell: vec2<i32>, size: vec2<i32>, feed:f32, decay:f32) -> vec2f { 
+    
+    var laplacian = vec2(0.);    
+    for(var i = 0; i < 9; i++) {
+        let offset =  (vec2i( (i / 3) - 1 , (i % 3) - 1 ) + cell + size) % size;
+        laplacian += (K_LAPLACE9[i] * current[offset.y * size.x + offset.x]);
+    } 
+
+    // chemicals A and B are stored in the x and y component of buffer
+    let ab = current[ cell.y * size.x + cell.x];
+
+    // calculate the dA and dB
+    let da = ((.2097 * laplacian.x) - (ab.x * ab.y * ab.y)) + (feed * (1. - ab.x));
+    let db = ((.1050 * laplacian.y) + (ab.x * ab.y * ab.y)) - ((feed + decay) * ab.y);
+
+    // we use the 1 as the dt time step
+    let dt = 1.; 
+    return ab +  dt * vec2(da,db); 
 }
 
 // convert a color in hsv color space to rgb 
@@ -126,37 +146,4 @@ fn tosRGB(linearRGB: vec3f) -> vec3f {
     let lower = linearRGB.rgb * vec3(12.92);
 
     return vec3<f32>(mix(higher, lower, vec3<f32>(cutoff)));
-}
-
-// 9 point stencil laplace operator
-const K_LAPLACE9 = array<f32,9>(.25, .5, .25, .5, -3., .5, .25, .5, .25);
-
-// apply a convolution in a 2d grid with a specific kernel
-// assumes a wrap around boundary condition
-// and a current buffer of size 'size.xy'
-fn conv3x3( kernel: array<f32,9>, cell: vec2<u32>, size: vec2<u32>) -> vec2f {
-    var acc = vec2(0.);
-    
-    for(var i = 0u; i < 9u; i++) {
-        let offset =  (vec2u( (i / 3u) - 1u , (i % 3u) - 1u ) + cell + size) % size;
-        acc += (kernel[i] * current[offset.y * size.x + offset.x]);
-    } 
-    
-    return acc;
-}
-
-// gray-scott reaction-diffusion system
-fn rd( cell: vec2<u32>, size: vec2<u32>, feed:f32, decay:f32) -> vec2f { 
-
-    // convolution with a Laplace kernel with a 9 point stencil
-    let laplace = conv3x3(K_LAPLACE9, cell, size);
-    // chemicals A and B are stored in the x and y component of buffer
-    let ab = current[ cell.y * size.x + cell.x];
-
-    // calculate the dA and dB
-    let da = ((.2097 * laplace.x) - (ab.x * ab.y * ab.y)) + (feed * (1. - ab.x));
-    let db = ((.1050 * laplace.y) + (ab.x * ab.y * ab.y)) - ((feed + decay) * ab.y);
-
-    // we use the 1 as the dt time step 
-    return ab +  1./*dt*/ * vec2(da,db); 
 }
