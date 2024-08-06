@@ -162,7 +162,7 @@ fn denoise(@builtin(global_invocation_id) cell : vec3<u32>) {
     // using frame differences to calculate motion doesnt help to diferentiate between motion and noise.
     // but it's better than nothing.. :)
     let motion = mix(vec3(1.) - lastColor.rgb, mix(lastColor.rgb,currentColor,.1) , .5 );
-    let tw = .2 + clamp( abs( luminance(motion) - .5 ) * 10., 0., 1.); // temporal weight
+    let tw = .2 + clamp( abs( luminance(motion) - .5 ) * 20., 0., 1.); // temporal weight
 
     textureStore(buffer, cell.xy, vec4( mix( lastColor.rgb, currentColor, tw ) , 1. ) );
 }

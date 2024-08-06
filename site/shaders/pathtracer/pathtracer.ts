@@ -8,7 +8,7 @@ export const pathtracer = async (code:string, defs:Definitions) => {
 
     const radians = (degrees:number):number => degrees * Math.PI / 180;
 
-    const uniforms = { params: { samples: 1, depth: 4, fov: radians(60), lookFrom: [0,1.5,4], lookAt: [0,1.5,1], aperture: 0.02, clear: 0 } }
+    const uniforms = { params: { samples: 4, depth: 4, fov: radians(60), lookFrom: [0,1.5,4], lookAt: [0,1.5,1], aperture: 0.02, clear: 0 } }
 
     const spec =  (w:number, h: number):PSpec => {
 

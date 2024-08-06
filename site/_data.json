@@ -97,7 +97,7 @@
       ],
       "license": "cc-by",
       "sketch": true,
-      "debug": false,
+      "debug": true,
       "fx": false
     },
     {
