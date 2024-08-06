@@ -2,21 +2,21 @@ import { PSpec, Definitions } from "../../lib/poiesis/index.ts";
 
 export const pathtracer = async (code:string, defs:Definitions) => {
 
-    const size = {x : 512, y: 512 }
+    const size = {x : 1024, y: 1024 }
     const empty = new ImageData(size.x, size.y);
     const emptyBitmap = await createImageBitmap(empty);
 
     const radians = (degrees:number):number => degrees * Math.PI / 180;
 
-    const uniforms = { params: { samples: 4, depth: 4, fov: radians(60), lookFrom: [0,1.5,4], lookAt: [0,1.5,1], aperture: 0.02, clear: 0 } }
+    const uniforms = { params: { samples: 2, depth: 4, fov: radians(60), lookFrom: [0,1.5,4], lookAt: [0,1.5,1], aperture: 0.05, clear: 0 } }
 
-    const spec =  (w:number, h: number):PSpec => {
+    const spec =  ():PSpec => {
 
         return {
             code: code,
             defs: defs,
-            uniforms: (f:number) => uniforms,
-            mouse: (x:number,y:number, frame:number) => {  uniforms.params.lookFrom = [(x*5)-2.5,1.5 + (y*2.5) - 1.25,4]; },
+            uniforms: () => uniforms,
+            mouse: (x:number,y:number) => {  uniforms.params.lookFrom = [(x*5)-2.5,1.5 + (y*2.5) - 1.25,4]; },
             storages: [
                 { name: "samples", size: size.x * size.y }
             ],
