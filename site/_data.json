@@ -22,6 +22,21 @@
   },
   "shaders": [
     {
+      "id": "fastvoronoi",
+      "title": "Fast Voronoi",
+      "description": "A real-time voronoi construction using the jump flood algorithm, with complexity O(N).",
+      "tags": [
+        "voronoi",
+        "jfa",
+        "particles"
+      ],
+      "license": "cc-by",
+      "sketch": true,
+      "debug": false,
+      "dynamic": false,
+      "fx": false
+    },
+    {
       "id": "wave",
       "path": "wave",
       "title": "Wave Equation",
@@ -126,20 +141,6 @@
       "sketch": false,
       "debug": true,
       "fx": true
-    },
-    {
-      "id": "particlelife",
-      "title": "Particle Life",
-      "description": "A particle life simulator",
-      "tags": [
-        "particles",
-        "ca"
-      ],
-      "license": "cc-by",
-      "sketch": false,
-      "debug": true,
-      "dynamic": false,
-      "fx": false
     },
     {
       "id": "pathtracer2",
