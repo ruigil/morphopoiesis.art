@@ -19,9 +19,9 @@ export const ligrowth = (code: string,defs: Definitions, fx:any ) => {
             }
         });
         // initialize the ice with a few nucleation points
-        //const ice = Array.from({ length: size.x * size.y }, () => Math.random() < 0.003 ? 1 : 0);
+        const ice = Array.from({ length: size.x * size.y }, () => Math.random() < 0.003 ? 1 : 0);
         // initialization is done in the shader, because of 2d utils libs
-        const ice = Array.from({ length: size.x * size.y }, (_,i:number) =>  0);
+        //const ice = Array.from({ length: size.x * size.y }, (_,i:number) =>  0);
           
         const seededRandom = (count: number) => {
             const rand = Array.from({ length: count }, () => fx.rand());
@@ -64,9 +64,9 @@ export const ligrowth = (code: string,defs: Definitions, fx:any ) => {
                 { name: "debug", size: 1, read: true }
             ],
             computes: [
-                { name: "initializeSeeds", workgroups: [Math.ceil(size.x / 8), Math.ceil(size.y / 8), 1] },
                 { name: "computeIce", workgroups: [Math.ceil(size.x / 8), Math.ceil(size.y / 8), 1] },
                 { name: "computeDrops", workgroups: [Math.ceil(numWaterDrops / 64), 1, 1] },
+                { name: "initializeSeeds", workgroups: [Math.ceil(size.x / 8), Math.ceil(size.y / 8), 1] },
             ],
             computeGroupCount: 16,
             bindings: [ [0,1,2,3,4,5], [0,1,3,2,4,5] ],

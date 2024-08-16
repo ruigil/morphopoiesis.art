@@ -509,7 +509,7 @@ export class PContext {
                 if (!c) throw new Error(`Spec for compute ${entryPoint} not found!`);
 
                 const pipeline = this.state.device.createComputePipeline({
-                    label: `${entryPoint} compute pipeline`,
+                    label: `${entryPoint}`,
                     layout: pipelineLayout,
                     compute: {
                       module: shaderModule,
@@ -523,9 +523,11 @@ export class PContext {
                     instances: c.instances || 1
                 });
             }
-
+            // sort the pipelines by the spec order.
+            const sortPipelines = spec.computes ? spec.computes.map( sc => pipelines.find( p => p.pipeline.label == sc.name) ).filter( p => p != undefined) : Array<Compute>();
+            //console.log(sortPipelines)
             return {
-                computeGroup: pipelines,
+                computeGroup: sortPipelines,
                 computeGroupCount: computeGC(spec)
             };
         }
@@ -616,14 +618,14 @@ export class PContext {
             // compute pipelines
             if (pipelines?.compute) {
                 const computePass = encoder.beginComputePass();
-
+                
                 for( let cg = 0; cg < pipelines.compute.computeGroupCount; cg++) {
                     const bg = bindGroup(frame + cg)
 
                     for (let c = 0; c < pipelines.compute.computeGroup.length; c++) {
                         const compute = pipelines.compute.computeGroup[c];
+                        //console.log(compute.pipeline.label)
                         computePass.setPipeline(compute.pipeline);
-
                         for (let i = 0; i < compute.instances ; i++) {
                             const g = bindGroup(bg + i )
                             computePass.setBindGroup(0, pipelines.bindings(g));
