@@ -24,7 +24,7 @@
     {
       "id": "fastvoronoi",
       "title": "Fast Voronoi",
-      "description": "A real-time voronoi construction using the jump flood algorithm, with complexity O(N).",
+      "description": "A real-time voronoi construction using the jump flood algorithm.",
       "tags": [
         "voronoi",
         "jfa",
