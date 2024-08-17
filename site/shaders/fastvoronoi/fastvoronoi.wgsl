@@ -22,17 +22,17 @@ struct Seed {
   kind: f32
 }
 
-struct VertexInput {
-    @location(0) pos: vec2<f32>,
-    @builtin(instance_index) instance: u32
-};
-
 struct Cell {
     coord: vec2<u32>,
     distance: f32,
     kind: f32,
     step: u32
 }
+
+struct VertexInput {
+    @location(0) pos: vec2<f32>,
+    @builtin(instance_index) instance: u32
+};
 
 struct VertexOutput {
     @builtin(position) pos: vec4f,
@@ -90,49 +90,48 @@ fn initCells(@builtin(global_invocation_id) cell : vec3<u32>) {
 fn computeSeeds(@builtin(global_invocation_id) id : vec3<u32>) {
 
     let i = id.x;
-
     if (i >= u32(params.seeds)) { return; }
 
     let seed = seeds[i];
+    var pos = seed.pos + seed.vel *.01;
 
-    var pos = seed.pos + seed.vel *.01;    
     //wrap around boundary condition [-1,1]
     pos = fract( (pos + 1.) * .5) * 2. - 1.;
-    seeds[i].pos = pos;    
+    seeds[i].pos = pos;
 
     let current = vec2<u32>( floor( (pos + 1.)  * .5 * params.size ) );
-    
     cellNext[current.y * u32(params.size.x) + current.x ] = Cell(current, 0., seed.kind, params.steps);
 }
 
-// fill the cells with the closest neighbour in a log2 step size
-// this compute function is called n instances each frame to fill the entire screen
+// fill the cells with the closest seed neighbour in a log2 step size of the screen 
+// this compute function is called n instances (log 2 step) each frame to fill the entire screen
 @compute @workgroup_size(8, 8)
 fn jumpFlood(@builtin(global_invocation_id) cell : vec3<u32>) {
     // keep the simulation in the range [0,size]
     if (cell.x >= u32(params.size.x) || cell.y >= u32(params.size.y)) { return; }
 
-    let m = vec2u(sys.mouse.xy * params.size );
     let size = vec2<i32>(params.size);
-
     let index = cell.y * u32(size.x) + cell.x;
-    
     let current = cellCurrent[ index ];
-    cellNext[ index ] = current; 
 
-    var bestDist = distance(vec2f(cell.xy), vec2f(current.coord));
+    var bestSeed = current;
     for(var x = -1; x <= 1; x++) {
         for(var y = -1; y <= 1; y++) {
             // wrap arround coordinates. 
             let offset =  (vec2i(cell.xy) + (vec2(x,y) * i32(current.step)) + (2*size)) % (size);
-            let cellNeighbour = cellCurrent[ offset.y * i32(size.x) + offset.x ];
+            let cellNeighbour = cellCurrent[ offset.y * size.x + offset.x ];
+
+            // if we find a neighbour with a closer seed we switch the current cell for the new seed
             let dist = distance(vec2f(cell.xy),vec2f(cellNeighbour.coord));
-            if (dist < bestDist) {
-                cellNext[ index ] = Cell(cellNeighbour.coord, dist, cellNeighbour.kind, current.step);
+            if (dist < bestSeed.distance) {
+                bestSeed = cellNeighbour;
+                bestSeed.distance = dist;
             }
         }
     }
-    cellNext[ index ].step = max(1,current.step >> 1);
+
+    cellNext[ index ] = bestSeed;
+    cellNext[ index ].step = max(1, current.step >> 1);
 }
 
 // converts from HSV to RGB

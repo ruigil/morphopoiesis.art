@@ -31,7 +31,7 @@
         "particles"
       ],
       "license": "cc-by",
-      "sketch": false,
+      "sketch": true,
       "debug": false,
       "dynamic": false,
       "fx": false
