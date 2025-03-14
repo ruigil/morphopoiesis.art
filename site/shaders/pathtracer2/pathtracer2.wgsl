@@ -2,18 +2,6 @@
 // https://creativecommons.org/licenses/by/4.0/
 
 
-@group(0) @binding(0) var<uniform> sys: Sys;
-@group(0) @binding(1) var samp: sampler;
-@group(0) @binding(2) var image: texture_2d<f32>;
-@group(0) @binding(3) var buffer: texture_storage_2d<rgba8unorm, write>;
-@group(0) @binding(4) var<storage, read_write> debug : Debug;
-@group(0) @binding(5) var<uniform> params: Params;
-@group(0) @binding(6) var<storage, read_write> samples: array<Sample>;
-
-const PI = 3.1415926535897932384626433832795;
-const EPSILON = 0.001;
-const MAXDIST = 20.;
-
 // types
 struct Sys {
     time: f32,
@@ -81,6 +69,18 @@ struct VertexOutput {
   @builtin(position) pos : vec4<f32>,
   @location(0) fragUV : vec2<f32>,
 }
+
+@group(0) @binding(0) var<uniform> sys: Sys;
+@group(0) @binding(1) var samp: sampler;
+@group(0) @binding(2) var image: texture_2d<f32>;
+@group(0) @binding(3) var buffer: texture_storage_2d<rgba8unorm, write>;
+@group(0) @binding(4) var<storage, read_write> debug : Debug;
+@group(0) @binding(5) var<uniform> params: Params;
+@group(0) @binding(6) var<storage, read_write> samples: array<Sample>;
+
+const PI = 3.1415926535897932384626433832795;
+const EPSILON = 0.001;
+const MAXDIST = 20.;
 
 @vertex
 fn vertexMain(@location(0) pos: vec2<f32>) -> VertexOutput  {

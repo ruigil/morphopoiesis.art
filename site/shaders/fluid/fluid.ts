@@ -1,6 +1,6 @@
 import { PSpec, Definitions, square, scaleAspect } from "../../lib/poiesis/index.ts";
 
-export const fluid = async (code:string, defs:Definitions) => {
+export const fluid = (code:string, defs:Definitions) => {
 
     const spec = (w:number,h:number):PSpec => {
         const size = scaleAspect(w,h,512);

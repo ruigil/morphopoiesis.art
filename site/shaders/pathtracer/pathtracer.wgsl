@@ -1,6 +1,12 @@
 // This work is licensed under CC BY 4.0 
 // https://creativecommons.org/licenses/by/4.0/
 
+const PI = 3.1415926535897932384626433832795;
+const EPSILON = 0.001;
+const MAXDIST = 1000.;
+
+
+
 
 @group(0) @binding(0) var<uniform> sys: Sys;
 @group(0) @binding(1) var samp: sampler;
@@ -8,19 +14,6 @@
 @group(0) @binding(3) var buffer: texture_storage_2d<rgba8unorm, write>;
 @group(0) @binding(5) var<uniform> params: Params;
 @group(0) @binding(6) var<storage, read_write> samples: array<Sample>;
-
-const PI = 3.1415926535897932384626433832795;
-const EPSILON = 0.001;
-const MAXDIST = 1000.;
-
-// types
-struct Sys {
-    time: f32,
-    frame: u32,
-    mouse: vec4<f32>,
-    resolution: vec2<f32>,
-    aspect: vec2<f32>
-}
 
 struct Ray {
     origin: vec3<f32>,
@@ -63,6 +56,14 @@ struct Params {
     aperture: f32,
     lookFrom: vec3<f32>,
     lookAt: vec3<f32>,
+}
+// types
+struct Sys {
+    time: f32,
+    frame: u32,
+    mouse: vec4<f32>,
+    resolution: vec2<f32>,
+    aspect: vec2<f32>
 }
 
 struct VertexOutput {

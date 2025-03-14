@@ -1,6 +1,6 @@
-import { PSpec, Definitions } from "../../lib/poiesis/index.ts";
+import { PSpec, Definition } from "../../lib/poiesis/index.ts";
 
-export const pathtracer = async (code:string, defs:Definitions) => {
+export const pathtracer = async (code:string, defs:Definition) => {
 
     const size = {x : 1024, y: 1024 }
     const empty = new ImageData(size.x, size.y);

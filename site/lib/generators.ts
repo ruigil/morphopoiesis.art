@@ -1,5 +1,5 @@
-import { ArrayType, MemberInfo, TemplateType, Type, WgslReflect } from "./poiesis/wgsl-reflect/index.ts";
-import { Definitions } from "./poiesis/poiesis.interfaces.ts";
+import { WgslReflect, VariableInfo, MemberInfo, TypeInfo, StructInfo, ArrayInfo, TemplateInfo } from "./poiesis/wgsl-reflect/index.ts";
+import { ArrayType, BaseVariable, Definitions, PrimitiveType, StructType, TemplateType, Variable, VariableType } from "./poiesis/poiesis.interfaces.ts";
 
 export type Shader = {
     id: string,
@@ -16,106 +16,198 @@ export type Shader = {
     license: string,
 }
 
-export const reflect = (wgslCode: string) => {
-
-    const primitiveTypeName = (type: Type | null): string => {
-        if (type instanceof ArrayType) return primitiveTypeName(type.format);
-        if (type instanceof TemplateType) return primitiveTypeName(type.format);
-        return type!.name;
-    }
-    const sizeType = (type: Type | null, size:number = 0): number => {
-        if (type instanceof ArrayType) return sizeType(type.format, type.count);
-        if (type instanceof TemplateType) return sizeType(type.format, type.name === 'vec4' ? 4 : type.name === 'vec3' ?  3 : type.name === 'vec2' ? 2 : 1 );
-        // we assume only the primitives types u32, i32 and f32, so all 4 bytes 
-        return size * 4;
-    }
-
-    const members = (ms :MemberInfo[] | null) : any =>  {
-        if (!ms) return undefined;
-        return ms.map( m => ({
-            arrayCount: m.arrayCount,
-            arrayStride: m.arrayStride,
-            isArray: m.isArray,
-            isStruct: m.isStruct,
-            name: m.name,
-            offset: m.offset,
-            size: m.size,
-            members: members(m.members),
-            type: primitiveTypeName(m.type),
-        })).reduce( (acc:Record<string,any>, e:any) => { acc[e.name] = e; return acc; },{})
-    };
-
-    const reflect = new WgslReflect(wgslCode);
-
-    const storages = reflect.storage
-    .map( s => ({ 
-        ...reflect.getStorageBufferInfo(s)!,
-        access: s.node.access, 
-    } ))
-    .map( b => ({
-        ...b,
-        align: undefined,
-        size: (b.isArray) ? b.arrayStride : b.size,
-        arrayStride: (b.isArray) && (!b.isStruct) ? b.align : b.arrayStride, 
-        members: members(b.members),
-        type:  primitiveTypeName(b.type),
-    }))
-    .reduce( (acc:Record<string,any>, e:any) => { acc[e.name] = e; return acc; },{} )
-
-    const uniforms = reflect.uniforms
-    .map( s => ({...reflect.getUniformBufferInfo(s)!}))
-    .map( b => ({
-        ...b,
-        members: members(b.members),
-        type:  primitiveTypeName(b.type),
-    }))
-    .reduce( (acc:Record<string,any>, e) => { acc[e.name] = e; return acc; },{} )
-
-    //console.log(reflect)
-
-    const vertexInputs = reflect.entry.vertex[0].inputs.filter(i => i.locationType="location").map( i => {
-        return {
-        name: i.name,
-        location: i.location,
-        type: primitiveTypeName(i.type),
-        size: sizeType(i.type)
+const reflect = (wgslCode: string) => {
+  const makeDefinitions = (variables: VariableInfo[]): Record<string, Variable> => {
+    const result: Record<string, Variable> = {};
+  
+    const makeArrayType = (typeInfo: TypeInfo | null, elementSize?: number): VariableType => {
+      if (!typeInfo) {
+        return { name: "unknown", size: elementSize || 0, primitive: "unknown" } as PrimitiveType;
+      }
+      
+      // Base info for the type
+      const baseInfo: BaseVariable = {
+        size: elementSize || 0, // Use provided element size if available
+      };
+      
+      if (typeInfo instanceof StructInfo) {
+        // Element is a struct
+        const members: Record<string, VariableType> = {};
+        if (typeInfo.members) {
+          for (const member of typeInfo.members) {
+            members[member.name] = makeDefinitionType(member);
+          }
         }
-    })
-
-    const entries = { 
-        vertex: {
-            inputs: vertexInputs,
-            name: reflect.entry.vertex[0].node.name
-        },
-        fragment: {
-            name: reflect.entry.fragment[0].node.name
-        },
-        computes: reflect.entry.compute.map( (c) => ({ name: c.node.name }) )
+        return {
+          ...baseInfo,
+          struct: {
+            name: typeInfo.name,
+            members: members
+          }
+        } as StructType;
+      } else if (typeInfo instanceof ArrayInfo) {
+        // Element is another array (nested array)
+        // For nested arrays, the element size is the stride (if known) or we calculate it
+        return {
+          ...baseInfo,
+          array: {
+            count: typeInfo.count,
+            element: makeArrayType(typeInfo.format, typeInfo.stride),
+          }
+        } as ArrayType;
+      } else if (typeInfo instanceof TemplateInfo) {
+        // Element is a template
+        return {
+          ...baseInfo,
+          template: {
+            name: typeInfo.name,
+            size: baseInfo.size,
+            primitive: typeInfo.format ? typeInfo.format.name : "unknown"
+          }
+        } as TemplateType;
+      } else {
+        // Element is a primitive
+        return {
+          ...baseInfo,
+          primitive: typeInfo.name
+        } as PrimitiveType;
+      }
+    }  
+      
+    const makeDefinitionType = (variableInfo: VariableInfo | MemberInfo): VariableType => {
+      // Start with the base info - size is already provided by the reflection API
+      const baseInfo: BaseVariable = {
+        size: variableInfo.size, // Total size in bytes
+      };
+      
+      // Add binding/group info if present (only on VariableInfo, not MemberInfo)
+      if ('group' in variableInfo && variableInfo.group !== undefined) {
+        baseInfo.group = variableInfo.group;
+        baseInfo.binding = variableInfo.binding;
+      }
+      
+      // Add offset if present (usually on MemberInfo)
+      if ('offset' in variableInfo && variableInfo.offset !== undefined) {
+        baseInfo.offset = variableInfo.offset;
+      }
+      
+      // Add access if present
+      if ('access' in variableInfo && variableInfo.access) {
+        baseInfo.access = variableInfo.access;
+      }
+      
+      // Now create the typed structure based on the type
+      if (!variableInfo.type) {
+        return { ...baseInfo, primitive: "unknown" } as PrimitiveType;
+      }
+      
+      if (variableInfo.type instanceof StructInfo) {
+        // It's a struct
+        const members: Record<string, VariableType> = {};
+        if (variableInfo.type.members) {
+          for (const member of variableInfo.type.members) {
+            members[member.name] = makeDefinitionType(member);
+          }
+        }
+        return {
+          ...baseInfo,
+          struct: {
+            members: members
+          }
+        } as StructType;
+      } else if (variableInfo.type instanceof ArrayInfo) {
+        // It's an array
+        // For arrays, we need the stride between elements
+        const elementStride = variableInfo.stride;
+        
+        // Construct the element type
+        const element = makeArrayType(
+          variableInfo.type.format, 
+          elementStride // Pass the stride as the element size
+        );
+        
+        return {
+          ...baseInfo,
+          array: {
+            count: variableInfo.type.count,
+            stride: elementStride,
+            element: element
+          }
+        } as ArrayType;
+      } else if (variableInfo.type instanceof TemplateInfo) {
+        // It's a template (vec2, vec3, etc.)
+        // We use the size directly from the reflection API
+        return {
+          ...baseInfo,
+          template: {
+            size: baseInfo.size,
+            primitive: variableInfo.type.format ? variableInfo.type.format.name : "unknown"
+          }
+        } as TemplateType;
+      } else {
+        // It's a primitive type
+        return {
+          ...baseInfo,
+          primitive: variableInfo.type.name
+        } as PrimitiveType;
+      }
     }
+      
+    for (const variable of variables) {
+      result[variable.name] = makeDefinitionType(variable) as Variable;
+    }
+    
+    return result;
+  }
+  const primitiveTypeName = (type: TypeInfo | null): string => {
+    if (type instanceof ArrayInfo) return primitiveTypeName(type.format);
+    if (type instanceof TemplateInfo) return primitiveTypeName(type.format);
+    return type!.name;
+  }
+  const sizeType = (type: TypeInfo | null, size:number = 0): number => {
+      if (type instanceof ArrayInfo) return sizeType(type.format, type.count);
+      if (type instanceof TemplateInfo) return sizeType(type.format, type.name === 'vec4' ? 4 : type.name === 'vec3' ?  3 : type.name === 'vec2' ? 2 : 1 );
+      // we assume only the primitives types u32, i32 and f32, so all 4 bytes 
+      return size * 4;
+  }
 
-    const samplers = reflect.samplers.map( s => ({
-        name: s.node.name,
-        group: s.group,
-        binding: s.binding
-    }))
+  const reflect = new WgslReflect(wgslCode);
+  const uniformVariables = makeDefinitions(reflect.uniforms);
+  const storageVariables = makeDefinitions(reflect.storage.filter( s => s.resourceType === 1));
+  
+  const samplers = reflect.samplers.map( s => ({ name: s.name, group: s.group, binding: s.binding }))
+  const textures = reflect.textures.map( t => ({ name: t.name, group: t.group, binding: t.binding }))
+                    .concat( reflect.storage.filter( s => s.resourceType === 4).map( t => ({ name: t.name, group: t.group, binding: t.binding })))
 
-    const textures = reflect.textures.map( s => ({
-        name: s.node.name,
-        group: s.group,
-        binding: s.binding
-    }))
+  const entries = {
+      ...(reflect.entry.vertex[0] ? 
+      {
+          vertex: {
+          name: reflect.entry.vertex[0].name,
+          inputs: reflect.entry.vertex[0].inputs.map( i => 
+              ({ name: i.name, location: i.location,  type: primitiveTypeName(i.type), size: sizeType(i.type)}))
+          }
+      } : undefined),
+      ...(reflect.entry.fragment[0] ? {
+          fragment: {
+              name: reflect.entry.fragment[0].name
+          },
+      } : undefined),
+      ...(reflect.entry.compute ? {
+          computes:  reflect.entry.compute.map( c => ({ name: c.name }))
+      } : undefined)
+  }
 
-    return {
-        samplers: samplers,
-        storages: storages,
-        uniforms: uniforms,
-        textures: textures,
-        entries: entries, 
-        bindGroupLength: reflect.getBindGroups()[0].length // the length of the first one
-    } as Definitions;
-
+  return {
+    samplers: samplers,
+    textures: textures,
+    entries: entries,
+    uniforms: uniformVariables,
+    storages: storageVariables,
+    bindGroupLength: reflect.getBindGroups()[0].length  
+  } as Definitions;
+  
 }
-
 
 
 export const script = (shader: Shader, rpath: string) => {
@@ -290,7 +382,7 @@ export const license = (name: string) => licenses[name];
 
 
 export const shaderGenerator = async function* (shader: Shader, rpath: string = ".") {
-  
+
   // wgsl file
   yield {
     url: `${rpath}/../shaders/${shader.id}/${shader.id}.wgsl`,

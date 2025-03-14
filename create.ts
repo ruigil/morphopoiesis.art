@@ -18,9 +18,9 @@ shader.path = prompt(`Shader Path [${shader.id}]:`) || shader.id;
 shader.title = prompt(`Shader Title [${shader.id}]:`) || shader.id;
 shader.description = prompt(`Shader Description [${shader.id}]: `) || shader.id;
 shader.license = prompt(`Shader Licence [cc-by]: `) || "cc-by";
-shader.debug = Boolean(prompt(`Debug [true]: `) || "true");
-shader.sketch = Boolean(prompt(`Sketch [false]: `) || "false");
-shader.fx = Boolean(prompt(`FXHASH [false]: `) || "false");
+shader.debug = Boolean(prompt(`Debug [true]: `) == "");
+shader.sketch = Boolean(prompt(`Sketch [false]: `) != "");
+shader.fx = Boolean(prompt(`FXHASH [false]: `) != "");
 
 if (shader.id === "null") {
     console.log("Invalid ID");

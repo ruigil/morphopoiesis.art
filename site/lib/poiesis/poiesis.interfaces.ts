@@ -1,3 +1,12 @@
+export interface PoiesisContext {
+    build: (a: PSpec) => PoiesisInstance
+}
+
+export interface PoiesisInstance {
+    addBufferListener: (listener: BufferListener) => void
+    frame: (frame:number, unis?: any) => Promise<void>
+}
+
 export interface PoiesisState {
     context: GPUCanvasContext;
     device: GPUDevice;
@@ -6,7 +15,6 @@ export interface PoiesisState {
     pipelines?: Pipelines;
     storages?: StorageTypes;
     clearColor?: {r:number,g:number,b:number,a:number};
-    spec?: (w:number,h:number) => PSpec;
     wgslSpec?: PSpec
     bufferListeners?: Array<BufferListener>;
 }
@@ -73,29 +81,6 @@ export interface Pipelines {
     bindings: (index:number) => GPUBindGroup;
 }
 
-export interface BufferView {
-    name: string;
-    buffer: ArrayBuffer;
-    set: (data:any) => void;
-    get: () => any;
-    update: (buffer: ArrayBuffer) => void;
-}
-
-export interface BufferInfo {
-    name: string;
-    type: string;
-    size: number;
-    group: number;
-    binding: number;
-    access: string;
-    offset: number;
-    isArray: boolean;
-    isStruct: boolean;
-    arrayCount: number;
-    arrayStride: number;
-    members: Record<string,BufferInfo>;
-}
-
 export interface BufferListener {
     onRead: (buffer: Array<BufferView>) => void;
 }
@@ -106,18 +91,6 @@ export interface VAttr {
     instances?: number;
 }
 
-export interface Definitions {
-    uniforms: Record<string,BufferInfo>;
-    storages: Record<string,BufferInfo>;
-    samplers: Array<{ name:string, group: number, binding: number}>;
-    textures: Array<{ name:string, group: number, binding: number}>;
-    entries: {
-        vertex: { inputs: Array<{ name:string, location:number, type:string, size:number}>, name:string },
-        fragment: { name:string },
-        computes: Array<{ name:string }>
-    };
-    bindGroupLength: number;
-}
 
 export interface PSpec {
     code: string;
@@ -130,7 +103,7 @@ export interface PSpec {
     textures?: Array<{ name : string, data: ImageBitmap | HTMLVideoElement | undefined, storage?: boolean}>;
     computes?: Array<{ name: string, workgroups: [number,number,number], instances?: number }>;
     computeGroupCount?: number;
-    clearColor?: { r:number, g:number, b:number, a:number}
+    clearColor?: { r:number, g:number, b:number, a:number }
     bindings?: Array<Array<number>>;
     debugpane?: any;
 }
@@ -147,3 +120,79 @@ export interface Controls {
 export interface FPSListener {
     onFPS: (fps: { fps: string, time: string, frame: number}) => void;
 }
+
+export interface BaseVariable {
+    size: number;
+    offset?: number;
+    group?: number;
+    binding?: number;
+    access?: string;
+}
+  
+  
+  // For primitive types (f32, i32, u32, etc.)
+export interface PrimitiveType extends BaseVariable {
+    primitive: string;
+}
+  
+  // For template types (vec2, vec3, mat4, etc.)
+export interface TemplateType extends BaseVariable {
+    template: {
+      name: string;
+      size: number;
+      primitive: string;
+    };
+}
+  
+  // For struct types
+export interface StructType extends BaseVariable {
+    struct: {
+      name: string;
+      members: Record<string, VariableType>;
+    };
+}
+  
+  // For array types
+export interface ArrayType extends BaseVariable {
+    array: {
+      count: number;
+      stride?: number;
+      element: VariableType;
+    };
+}
+  
+  // Union type for all structured types
+export type VariableType = PrimitiveType | TemplateType | StructType | ArrayType;
+  
+  // Union type for top-level variables
+export type Variable = BaseVariable & VariableType;
+  
+  // Type for the entire reflection result
+export interface Definitions {
+    uniforms: Record<string, Variable>;
+    storages: Record<string, Variable>;
+    textures?: Array<{ name: string; group: number; binding: number }>;
+    samplers?: Array<{ name: string; group: number; binding: number }>;
+    entries?: {
+      vertex?: {
+        name: string;
+        inputs: { name: string; location: string | number; type: string; size: number }[];
+      };
+      fragment?: {
+        name: string;
+      };
+      computes?: { name: string }[];
+    };
+    bindGroupLength?: number;
+  }
+  
+  // Now update our buffer view interface to use these types
+export interface BufferView {
+    buffer: ArrayBuffer;
+    set: (data: unknown) => void;
+    get: () => unknown;
+    update: (newBuffer: ArrayBuffer) => void;
+  }
+  
+export type TypedArray = Float32Array | Int32Array | Uint32Array | Uint8Array;  
+  

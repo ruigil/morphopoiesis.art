@@ -22,6 +22,30 @@
   },
   "shaders": [
     {
+      "id": "mandelbox",
+      "path": "mandelbox",
+      "title": "Mandelbox",
+      "description": "Mandelbox Fractal",
+      "image": "",
+      "tags": ["fractal","raymarching","mouse"],
+      "license": "cc-by",
+      "sketch": false,
+      "debug": true,
+      "fx": false
+    },
+    {
+      "id": "mobius",
+      "path": "mobius",
+      "title": "Mobius",
+      "description": "Mobius Transform",
+      "image": "",
+      "tags": [],
+      "license": "cc-by",
+      "sketch": false,
+      "debug": true,
+      "fx": false
+    },
+    {
       "id": "fastvoronoi",
       "title": "Fast Voronoi",
       "description": "A real-time voronoi construction using the jump flood algorithm.",
@@ -42,7 +66,11 @@
       "title": "Wave Equation",
       "description": "Background circle with 3 oscillators with prime frequency. Click the mouse for high frequency oscillations.",
       "image": "",
-      "tags": ["wave", "2d", "mouse"],
+      "tags": [
+        "wave",
+        "2d",
+        "mouse"
+      ],
       "license": "cc-by",
       "sketch": true,
       "debug": false,
