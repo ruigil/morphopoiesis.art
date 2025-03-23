@@ -67,7 +67,7 @@ fn vertexMain(input : VertexInput) -> VertexOutput {
 // 11 Wang tiles and one undefined for an uncollapsed cell.
 // u32 words are read from right to left. The color are set clockwise, north, east, south, west
 // r - red, g - green, b - blue, w - white
-const tiles = array<u32,12>(
+const tiles = array<u32,11>(
     0x4222, // (r,r,r,g)
     0x4828, // (b,r,b,g) 
     0x4442, // (r,g,g,g)  
@@ -79,28 +79,29 @@ const tiles = array<u32,12>(
     0x2128, // (b,r,w,r)   
     0x2844, // (g,g,b,r)  
     0x4212, // (r,w,r,g)
-    0xFFFF // undefined 
 );
 
 fn tileColor( t: u32, direction: u32) -> vec3<f32> {
-    if (t == 0u) { return vec3(.5,.3,.2); } // contradiction
+    
+    if (t == 0u) { return vec3(.7,.4,.1); } // contradiction
+
     let d = (t >> (direction * 4u)) & 0xFu;
     switch(d) {
         case 1u: { return vec3(.9,.9,.9); } // white
         case 2u: { return vec3(.9,0.2,0.2); } // red
         case 4u: { return vec3(0.2,.9,0.2); } // green
         case 8u: { return vec3(0.2,0.2,.9); } // blue
-        default: { return vec3( 0.1, 0.2, 0.3 ); } // undefined
+        default: { return vec3(.1,.2,.3 ); } // undefined
     }
 }
 
 // draw the tile
 fn tile( tile: u32, p: vec2<f32>) -> vec3<f32> {
 
-    let top = smoothstep(0.,0.1,p.y-abs(p.x)) * tileColor(tile, 0u);  // north
-    let right = smoothstep(0.,0.1,p.x-abs(p.y)) * tileColor(tile, 1u); // east
-    let down = smoothstep(0.,0.1,-p.y-abs(p.x)) * tileColor(tile, 2u); // south
-    let left = smoothstep(0.,0.1,-p.x-abs(p.y)) * tileColor(tile, 3u); // west
+    let top = smoothstep(0.,0.05,p.y-abs(p.x)) * tileColor(tile, 0u);  // north
+    let right = smoothstep(0.,0.05,p.x-abs(p.y)) * tileColor(tile, 1u); // east
+    let down = smoothstep(0.,0.05,-p.y-abs(p.x)) * tileColor(tile, 2u); // south
+    let left = smoothstep(0.,0.05,-p.x-abs(p.y)) * tileColor(tile, 3u); // west
 
     return  top + right + down + left;
 }
