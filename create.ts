@@ -63,7 +63,7 @@ fn fragmentMain(@builtin(position) coord: vec4f) -> @location(0) vec4f {
         try {
             Deno.writeTextFileSync(path, data );
             return "Written to " + path;
-        } catch (e) {
+        } catch (e:any) {
             return e.message;
         }
     }

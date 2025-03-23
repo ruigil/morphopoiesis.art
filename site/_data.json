@@ -22,12 +22,32 @@
   },
   "shaders": [
     {
+      "id": "wfc",
+      "path": "wfc",
+      "title": "Wave Function Collapse",
+      "description": "WFC with aperiodic Wang tile set. Click the mouse to collapse cells. If you get a contradiction press the 'r' key to reset",
+      "image": "",
+      "tags": [
+        "tiling",
+        "aperiodic",
+        "mouse"
+      ],
+      "license": "cc-by",
+      "sketch": true,
+      "debug": false,
+      "fx": false
+    },
+    {
       "id": "mandelbox",
       "path": "mandelbox",
       "title": "Mandelbox",
       "description": "Mandelbox Fractal",
       "image": "",
-      "tags": ["fractal","raymarching","mouse"],
+      "tags": [
+        "fractal",
+        "raymarching",
+        "mouse"
+      ],
       "license": "cc-by",
       "sketch": false,
       "debug": true,

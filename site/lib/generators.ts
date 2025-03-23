@@ -226,6 +226,17 @@ export const script = (shader: Shader, rpath: string) => {
         });
       `
     }
+    const resetKey = () => {
+      return /* ts */ `
+        // Add keypress event listener
+        document.addEventListener('keypress', function(event) {
+          if (event.key === 'r') { 
+          console.log('reset'); 
+            anim.reset()
+          }
+        });
+      `
+    }
   
     const fillParam = () => {
       return /* ts */ `
@@ -248,22 +259,11 @@ export const script = (shader: Shader, rpath: string) => {
     const tweakPane = () => {
       return /* ts */ `
         
-        const pane = new Pane();
+        const pane = new Pane({ title: '${shader.title}'});
         
-        pane.addBinding(PARAMS, 'name', { readonly: true });
         pane.addBinding(PARAMS, 'fps', { readonly: true });
         pane.addBinding(PARAMS, 'frame', { readonly: true });
         pane.addBinding(PARAMS, 'elapsed', { readonly: true });
-        const d = pane.addFolder({ title: 'Debug', expanded: false});
-        d.addBinding(PARAMS, 'debug', {
-          readonly: true,
-          multiline: true,
-          rows: 10,
-        });
-        const unis = pane.addFolder({
-          title: 'Uniforms',
-          expanded: false,
-        });
         for (let key in su) {
           const u = unis.addBinding(PARAMS, key, { readonly: false });
           u.on('change', (ev) => {
@@ -275,6 +275,16 @@ export const script = (shader: Shader, rpath: string) => {
         }
         const crtl = pane.addFolder({
           title: 'Controls',
+        });
+        const unis = pane.addFolder({
+          title: 'Uniforms',
+          expanded: false,
+        });
+        const d = pane.addFolder({ title: 'Debug', expanded: false});
+        d.addBinding(PARAMS, 'debug', {
+          readonly: true,
+          multiline: true,
+          rows: 20,
         });
   
         const pp = crtl.addButton({
@@ -326,9 +336,7 @@ export const script = (shader: Shader, rpath: string) => {
 
       document.addEventListener('DOMContentLoaded', async (event)  => {
         const canvas = document.querySelector("#canvas");
-        
-  
-        ${ saveScreenshot(shader.id) }
+
   
         const fx = ('$fx' in window) ? $fx : undefined;
       
@@ -337,12 +345,17 @@ export const script = (shader: Shader, rpath: string) => {
   
         const spec = await ${shader.id}(code,defs, fx);
   
+        ${ shader.debug && listeners() }
         ${ shader.debug && fillParam() }
         ${ shader.debug && tweakPane() }
-        ${ shader.debug && listeners() }
-  
+
         const anim = animate(spec, canvas, ${ shader.debug ?  'uniforms, { onFPS: fpsListener }, { onRead: bufferListener }' : '{}' } );
         anim.start();
+        
+  
+        ${ saveScreenshot(shader.id) }
+        ${ resetKey() }
+  
   
       });`
   }

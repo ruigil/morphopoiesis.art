@@ -68,7 +68,6 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
                 idle = 0;
                 startTime = performance.now();
                 intervalId = setInterval(() => fps(),200);
-                run();
             }        
         }
 
@@ -90,8 +89,8 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
                 intervalId = null;
             }
             if (animationFrameId !== null) {
-              cancelAnimationFrame(animationFrameId);
-              animationFrameId = null;
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
             }      
         }
 
@@ -132,6 +131,7 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
                 poiesis.addBufferListener(bufferListener);
             }
             start();
+            if (animationFrameId == null) run();
         }
     
         return {

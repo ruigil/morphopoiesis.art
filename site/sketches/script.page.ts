@@ -58,6 +58,13 @@ const script = (shader:Shader) => {
             const spec = await ${shader.id}(code,defs);
             const anim = animate(spec, canvas, undefined , { onFPS: fpsListener } );
             anim.start();
+            
+            document.addEventListener('keypress', function(event) {
+              if (event.key === 'r') { 
+              console.log('reset'); 
+                anim.reset()
+              }
+            });
 
         });
     `
