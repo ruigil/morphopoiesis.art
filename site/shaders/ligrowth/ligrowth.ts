@@ -39,7 +39,6 @@ export const ligrowth = (code: string,defs: Definitions, fx:any ) => {
             },
             object: mode[3]
         }
-
         return {
             code: code,
             defs: defs,
