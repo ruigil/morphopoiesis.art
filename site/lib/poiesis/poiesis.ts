@@ -1,4 +1,3 @@
-// <reference types="./webgpu.d.ts" />
 import { 
     BufferListener,
     Geometry, 
@@ -20,6 +19,7 @@ import {
     TypedArray,
     StructType,
 } from "./poiesis.interfaces.ts";
+
 import { square } from "./utils/utils.ts";
 
 
