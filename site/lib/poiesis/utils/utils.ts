@@ -55,6 +55,7 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
         let delta:number = 0;
         let intervalId:number | null = null;
         let poiesis: PoiesisInstance;
+        let delayTimeout: number = 0;
 
         const fps = () => {
             fpsListener && fpsListener.onFPS({ fps: (frame / elapsed).toFixed(2), time: elapsed.toFixed(1), frame: frame } );
@@ -91,7 +92,8 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
             if (animationFrameId !== null) {
                 cancelAnimationFrame(animationFrameId);
                 animationFrameId = null;
-            }      
+            }
+            clearTimeout(delayTimeout);
         }
 
         const run = async (): Promise<void> => {
@@ -117,9 +119,8 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
                 idle = ((performance.now()- startTime)/1000) - elapsed;
             }
 
-            if (delta != 0) setTimeout( () => animationFrameId = requestAnimationFrame(() => run()), delta);
+            if (delta != 0) delayTimeout = setTimeout( () => animationFrameId = requestAnimationFrame(() => run()), delta);
             else animationFrameId = requestAnimationFrame(() => run());    
-    
         }
         
         const reset = async () => {

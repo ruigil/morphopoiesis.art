@@ -240,10 +240,9 @@ export const script = (shader: Shader, rpath: string) => {
   
     const fillParam = () => {
       return /* ts */ `
-        //console.log(spec(canvas.width, canvas.height).debugpane.get())
-        let specdebug = spec(canvas.width, canvas.height).debugpane;
-        const su = specdebug ? specdebug.get() : {};
-        const uniforms = specdebug ? specdebug.map(su) : {};
+        let specuni = spec(canvas.width, canvas.height).unipane;
+        const su = specuni ? specuni.get() : {};
+        const uniforms = specuni ? specuni.map(su) : {};
         const PARAMS = {
           name: '${shader.title}',
           fps: '',
@@ -264,60 +263,62 @@ export const script = (shader: Shader, rpath: string) => {
         pane.addBinding(PARAMS, 'fps', { readonly: true });
         pane.addBinding(PARAMS, 'frame', { readonly: true });
         pane.addBinding(PARAMS, 'elapsed', { readonly: true });
-        for (let key in su) {
-          const u = unis.addBinding(PARAMS, key, { readonly: false });
-          u.on('change', (ev) => {
-            const mu = specdebug.map({...su, [key]: ev.value });
-            for (let mukey in mu) {
-              uniforms[mukey] = mu[mukey];
-            }
-          });
-        }
         const crtl = pane.addFolder({
           title: 'Controls',
         });
-        const unis = pane.addFolder({
-          title: 'Uniforms',
-          expanded: false,
-        });
-        const d = pane.addFolder({ title: 'Debug', expanded: false});
-        d.addBinding(PARAMS, 'debug', {
-          readonly: true,
-          multiline: true,
-          rows: 20,
-        });
+        if (specuni) {
+          const unis = pane.addFolder({
+            title: 'Uniforms',
+            expanded: false,
+          });
+          for (let key in su) {
+            const u = unis.addBinding(PARAMS, key, { readonly: false });
+            u.on('change', (ev) => {
+              const mu = specuni.map({...su, [key]: ev.value });
+              for (let mukey in mu) {
+                uniforms[mukey] = mu[mukey];
+              }
+            });
+          }
+        }
+        pane.addFolder({ title: 'Debug', expanded: false})
+          .addBinding(PARAMS, 'debug', {
+            readonly: true,
+            multiline: true,
+            rows: 20,
+          });
   
         const pp = crtl.addButton({
           title: 'pause',
-          label: 'Play/Pause',   // optional
-        });
-        const reset = crtl.addButton({
-          title: 'reset',
-          label: 'Reset',   // optional
-        });
-        const delay = crtl.addBinding(PARAMS, 'delay', { readonly: false });
-        delay.on('change', (ev) => {
-          anim.delay(ev.value);
-        });
-  
-        pp.on('click', () => {
-          if (pp.title === 'pause') { pp.title = 'play'; } else { pp.title = 'pause'; }
+          label: 'Play/Pause',   
+        })
+        pp.on('click', (e) => {
+          pp.title = (pp.title === 'pause') ? 'play' : 'pause';
           anim.togglePlayPause();
         });
-        reset.on('click', () => {
+
+        crtl.addButton({
+          title: 'reset',
+          label: 'Reset',   
+        }).on('click', () => {
           anim.reset();
-          specdebug = spec(canvas.width, canvas.height).debugpane;
-          if (specdebug) {
-            const su = specdebug.get();
+          specuni = spec(canvas.width, canvas.height).unipane;
+          if (specuni) {
+            const su = specuni.get();
             for (let sukey in su) {
               PARAMS[sukey] = su[sukey];
             }
-            const mu = specdebug.map(su);
+            const mu = specuni.map(su);
             for (let mukey in mu) {
               uniforms[mukey] = mu[mukey];
             }
           }
         });
+
+        crtl.addBinding(PARAMS, 'delay', { readonly: false }).on('change', (ev) => {
+          anim.delay(ev.value);
+        });
+  
       `
     }
   
@@ -337,7 +338,6 @@ export const script = (shader: Shader, rpath: string) => {
       document.addEventListener('DOMContentLoaded', async (event)  => {
         const canvas = document.querySelector("#canvas");
 
-  
         const fx = ('$fx' in window) ? $fx : undefined;
       
         const code = await (await fetch('./${shader.id}.wgsl')).text();
@@ -351,11 +351,9 @@ export const script = (shader: Shader, rpath: string) => {
 
         const anim = animate(spec, canvas, ${ shader.debug ?  'uniforms, { onFPS: fpsListener }, { onRead: bufferListener }' : '{}' } );
         anim.start();
-        
-  
+          
         ${ saveScreenshot(shader.id) }
         ${ resetKey() }
-  
   
       });`
   }

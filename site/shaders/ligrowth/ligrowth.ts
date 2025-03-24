@@ -70,7 +70,7 @@ export const ligrowth = (code: string,defs: Definitions, fx:any ) => {
             ],
             computeGroupCount: 16,
             bindings: [ [0,1,2,3,4,5], [0,1,3,2,4,5] ],
-            debugpane: { get: () => unipane, map: (u:any) =>  ({ params: { mode: [ u.phase.x, u.phase.y, u.phase.z, u.object] }}) }
+            unipane: { get: () => unipane, map: (u:any) =>  ({ params: { mode: [ u.phase.x, u.phase.y, u.phase.z, u.object] }}) }
         }
     }
 
