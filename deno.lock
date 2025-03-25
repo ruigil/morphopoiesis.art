@@ -5075,5 +5075,10 @@
     "https://esm.sh/stable/react@18.2.0/denonext/jsx-runtime.js": "54d8a51c6ca025380abd2d5302e4a9b38ff835d9759c4657e52314f587eaf6bf",
     "https://esm.sh/stable/react@18.2.0/denonext/react.mjs": "3c4f23bcfc53b256fcfaf6f834fa9f584c3bb7be667b2682c6cb6ba8ef88f8e6",
     "https://unpkg.com/@highlightjs/cdn-assets@11.6.0/es/languages/javascript.min.js": "1987b5a890a8e5cea9db74c41483fc1bb00923d0bf390a9e866d6cfeebe1c430"
+  },
+  "workspace": {
+    "dependencies": [
+      "npm:@webgpu/types@*"
+    ]
   }
 }
