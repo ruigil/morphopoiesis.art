@@ -106,7 +106,7 @@ export interface PSpec {
     storages?: Array<{ name: string, size: number, data?: Array<any>, read?:boolean, vertex?:boolean, }>;
     samplers?: Array<{ name : string, magFilter: string, minFilter: string }>;
     textures?: Array<{ name : string, data: ImageBitmap | HTMLVideoElement | undefined, storage?: boolean}>;
-    computes?: Array<{ name: string, workgroups: [number,number,number], instances?: number, constants: unknown }>;
+    computes?: Array<{ name: string, workgroups: [number,number,number], instances?: number, constants?: unknown }>;
     computeGroupCount?: number;
     clearColor?: { r:number, g:number, b:number, a:number }
     bindings?: Array<Array<number>>;
