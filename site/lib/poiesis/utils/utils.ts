@@ -36,7 +36,7 @@ export const scaleAspect = (w:number,h:number,scale:number) => {
     return { x: Math.floor(w / cellSize + .5) , y: Math.floor(h / cellSize + .5) };
 }
 
-export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasElement, unis?: Record<string,any>, fpsListener?: FPSListener, bufferListener?: BufferListener ) => {
+export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasElement, unis?: Record<string,any>, fpsListener?: FPSListener, bufferListeners?: BufferListener[] ) => {
 
     const mouse: Array<number> = [0,0,0,0];
     const mButtons: Array<number> = [0,0,0];
@@ -48,12 +48,12 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
 
     const controller = () => {
         let isRunning = false;
-        let animationFrameId: number | null = null;
+        let animationFrameId: number = 0;
         let elapsed:number = 0;
         let idle:number = 0;
         let startTime:number = 0;
         let delta:number = 0;
-        let intervalId:number | null = null;
+        let intervalId:number = 0;
         let poiesis: PoiesisInstance;
         let delayTimeout: number = 0;
 
@@ -75,9 +75,9 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
         const togglePlayPause = () => {
             isRunning = !isRunning;
 
-            if (intervalId) {
+            if (intervalId != 0) {
                 clearInterval(intervalId);
-                intervalId = null;
+                intervalId = 0;
             } else {
                 intervalId = setInterval(() => fps(),200);
             }
@@ -85,13 +85,13 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
 
         const stop = () => {
             isRunning = false;
-            if (intervalId != null) {
+            if (intervalId != 0) {
                 clearInterval(intervalId);
-                intervalId = null;
+                intervalId = 0;
             }
-            if (animationFrameId !== null) {
+            if (animationFrameId !== 0) {
                 cancelAnimationFrame(animationFrameId);
-                animationFrameId = null;
+                animationFrameId = 0;
             }
             clearTimeout(delayTimeout);
         }
@@ -100,19 +100,17 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
             if (isRunning) {
                 elapsed = ((performance.now() - startTime) / 1000) - idle;
 
-                try {
-                    await poiesis.frame(frame, { 
-                      sys: { 
-                          frame: frame, 
-                          time: elapsed, 
-                          mouse: mouse,
-                          buttons: mButtons,
-                          resolution: resolution,
-                          aspect: aspectRatio 
-                      }, ...(shaderSpec?.uniforms ? shaderSpec.uniforms(frame) : {}), ...unis });
-                } catch (error) {
-                    console.error('Error in animation frame:', error);
-                }
+                await poiesis.run({ 
+                    sys: { 
+                        frame: frame, 
+                        time: elapsed, 
+                        mouse: mouse,
+                        buttons: mButtons,
+                        resolution: resolution,
+                        aspect: aspectRatio 
+                    }, ...(shaderSpec?.uniforms ? shaderSpec.uniforms(frame) : {}), ...unis },
+                    frame);
+
                 frame++;            
       
             } else {
@@ -120,7 +118,7 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
             }
 
             if (delta != 0) delayTimeout = setTimeout( () => animationFrameId = requestAnimationFrame(() => run()), delta);
-            else animationFrameId = requestAnimationFrame(() => run());    
+            else animationFrameId = requestAnimationFrame(run);    
         }
         
         const reset = async () => {
@@ -128,11 +126,11 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
             const context = await Poiesis(canvas)
             shaderSpec = spec(canvas.width, canvas.height)
             poiesis = context.build( shaderSpec )
-            if (bufferListener) {
-                poiesis.addBufferListener(bufferListener);
+            if (bufferListeners) {
+                poiesis.addBufferListeners(bufferListeners);
             }
             start();
-            if (animationFrameId == null) run();
+            if (animationFrameId == 0) run();
         }
     
         return {
@@ -154,10 +152,12 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
     }
     
     canvas.addEventListener('mousemove', (event:MouseEvent) => updateMouse(event.clientX, event.clientY));
-    canvas.addEventListener('touchmove', (event:TouchEvent) => updateMouse(event.touches[0].clientX, event.touches[0].clientY));
+    canvas.addEventListener('touchmove', (event:TouchEvent) => updateMouse(event.touches[0].clientX, event.touches[0].clientY),{ passive: true });
 
     canvas.addEventListener('mousedown', (event) => { mButtons[event.button] = 1; });
     canvas.addEventListener('mouseup', (event) => { mButtons[event.button] = 0; });
+    canvas.addEventListener('touchstart', () => { mButtons[0] = 1; }, { passive: true });
+    canvas.addEventListener('touchend', () => { mButtons[0] = 0; }, { passive: true });
 
     const control = controller();
 

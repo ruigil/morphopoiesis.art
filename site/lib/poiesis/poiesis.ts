@@ -1,3 +1,4 @@
+import { buffer } from "node:stream/consumers";
 import { 
     BufferListener,
     Geometry, 
@@ -253,6 +254,8 @@ export const Poiesis = async (canvas: HTMLCanvasElement) => {
 
     const createGeometry = (spec: PSpec): Geometry => {
 
+        if (!spec.defs.entries?.vertex) return { vertexCount: 0 }
+
         const buffersLayout:GPUVertexBufferLayout[] = [];
 
         // iterate over the inputs of the vertex shader and create the vertex buffer layout with the attributes passed as parameters
@@ -377,7 +380,9 @@ export const Poiesis = async (canvas: HTMLCanvasElement) => {
             // if the buffer is marked as read, then we allocate a staging buffer to read the data
             if (storageSpec.read) {
                 readStorage.push({
+                    name: storageSpec.name,
                     srcBuffer: storageBuffer,
+                    listener: undefined,
                     dstBuffer: state.device.createBuffer({
                         label: `${storageSpec.name} read buffer`,
                         size: storageView.buffer.byteLength,
@@ -624,6 +629,7 @@ export const Poiesis = async (canvas: HTMLCanvasElement) => {
                 compute: {
                   module: shaderModule,
                   entryPoint: entryPoint,
+                  constants: c.constants || {}
                 }
             });
 
@@ -698,17 +704,14 @@ export const Poiesis = async (canvas: HTMLCanvasElement) => {
             clearColor: wgslSpec.clearColor || {r:0,g:0,b:0,a:1},
             wgslSpec: wgslSpec,
         };
-        return { addBufferListener, frame }
+        return { addBufferListeners, run }
     }
 
-    const addBufferListener = ( listener: BufferListener ) => {
-        state = {
-            ...state,
-            bufferListeners: [listener]
-        };
+    const addBufferListeners = ( listeners: BufferListener[] ) => {
+        state.storages?.readStorages.forEach( rs => rs.listener = listeners.find( l => l.name === rs.name ))
     }
 
-    const frame = async (frame: number = 0, unis?: Record<string, unknown>) => {
+    const run = async (unis?: Record<string, unknown>, frame: number = 0 ) => {
         const { bufferListeners, storages, device, uniforms, pipelines, geometry, context, clearColor, wgslSpec } = state;
 
         const bindGroup = (i:number) => wgslSpec!.bindings ? (i % wgslSpec!.bindings.length) : 0;
@@ -790,20 +793,16 @@ export const Poiesis = async (canvas: HTMLCanvasElement) => {
         }
 
         const readBuffers = async () => {
-            if (bufferListeners) {
-                const buffers = storages?.readStorages || [];
-                if (buffers.length == 0) return;
-                // unmap pending maps if we are resseting 
-                await Promise.all(buffers.map( buff => buff.dstBuffer.mapAsync(GPUMapMode.READ) ))
-                bufferListeners.forEach((listener) => {
-                    const data = buffers.map(s=> {
-                        s.view.update(s.dstBuffer.getMappedRange());
-                        return s.view;
-                    });
-                    listener.onRead( data );
+            if (state.storages && state.storages.readStorages.length > 0) {
+                const storages = state.storages.readStorages.filter( s => s.listener )
+                
+                await Promise.all(storages.map( b => b.dstBuffer.mapAsync(GPUMapMode.READ)))
+                storages.forEach((storage) => {
+                    storage.view.update(storage.dstBuffer.getMappedRange());
+                    storage.listener!.onRead( storage.view );
+                    storage.dstBuffer.unmap();                    
                 });    
-                buffers.forEach(s=> s.dstBuffer.unmap() );
-            } 
+            }
         }
  
         // update uniforms
@@ -814,7 +813,6 @@ export const Poiesis = async (canvas: HTMLCanvasElement) => {
 
         // read buffers into staging buffers
         await readBuffers();
-
     }
 
     return { build }

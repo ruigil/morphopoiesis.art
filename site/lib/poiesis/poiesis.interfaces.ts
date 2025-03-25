@@ -1,10 +1,12 @@
+import { Buffer } from "node:buffer";
+
 export interface PoiesisContext {
     build: (a: PSpec) => PoiesisInstance
 }
 
 export interface PoiesisInstance {
-    addBufferListener: (listener: BufferListener) => void
-    frame: (frame:number, unis?: any) => Promise<void>
+    addBufferListeners: (listeners: BufferListener[]) => void
+    run: (unis?: Record<string,unknown>, frame?:number) => Promise<void>
 }
 
 export interface PoiesisState {
@@ -20,11 +22,11 @@ export interface PoiesisState {
 }
 
 export interface Geometry {
-    vertexBuffer: GPUBuffer;
+    vertexBuffer?: GPUBuffer 
     vertexCount: number;
     vertexBufferLayout?: GPUVertexBufferLayout[];
     instances?: number;
-    instanceBuffer?: GPUBuffer | undefined;
+    instanceBuffer?: GPUBuffer;
 }
 
 export interface Resource {
@@ -49,6 +51,8 @@ export interface Texture extends Resource {
 }
 
 export interface ReadStorage  {
+    name: string;
+    listener?: BufferListener;
     srcBuffer: GPUBuffer;
     dstBuffer: GPUBuffer;
     view: BufferView;
@@ -82,7 +86,8 @@ export interface Pipelines {
 }
 
 export interface BufferListener {
-    onRead: (buffer: Array<BufferView>) => void;
+    name: string,
+    onRead: (view: BufferView) => void;
 }
 
 export interface VAttr {
@@ -101,7 +106,7 @@ export interface PSpec {
     storages?: Array<{ name: string, size: number, data?: Array<any>, read?:boolean, vertex?:boolean, }>;
     samplers?: Array<{ name : string, magFilter: string, minFilter: string }>;
     textures?: Array<{ name : string, data: ImageBitmap | HTMLVideoElement | undefined, storage?: boolean}>;
-    computes?: Array<{ name: string, workgroups: [number,number,number], instances?: number }>;
+    computes?: Array<{ name: string, workgroups: [number,number,number], instances?: number, constants: unknown }>;
     computeGroupCount?: number;
     clearColor?: { r:number, g:number, b:number, a:number }
     bindings?: Array<Array<number>>;

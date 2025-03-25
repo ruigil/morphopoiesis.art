@@ -240,7 +240,9 @@ export const script = (shader: Shader, rpath: string) => {
   
     const fillParam = () => {
       return /* ts */ `
-        let specuni = spec(canvas.width, canvas.height).unipane;
+        let s = spec(canvas.width, canvas.height);
+        let specuni = s.unipane;
+        let specstorage = s.storages.filter( s => s.read )
         const su = specuni ? specuni.get() : {};
         const uniforms = specuni ? specuni.map(su) : {};
         const PARAMS = {
@@ -249,9 +251,11 @@ export const script = (shader: Shader, rpath: string) => {
           frame: 0,
           elapsed: '',
           debug: '',
+          test_results: '',
           delay: 0,
           ...su
         };
+        specstorage.forEach( ss => PARAMS[ss.name] = '');
       `
     }
   
@@ -281,12 +285,14 @@ export const script = (shader: Shader, rpath: string) => {
             });
           }
         }
-        pane.addFolder({ title: 'Debug', expanded: false})
-          .addBinding(PARAMS, 'debug', {
-            readonly: true,
-            multiline: true,
-            rows: 20,
-          });
+        specstorage.forEach( ss => {
+          pane.addFolder({ title: ss.name, expanded: false})
+            .addBinding(PARAMS,ss.name, {
+              readonly: true,
+              multiline: true,
+              rows: 20,
+          });        
+        })
   
         const pp = crtl.addButton({
           title: 'pause',
@@ -324,8 +330,19 @@ export const script = (shader: Shader, rpath: string) => {
   
     const listeners = () => {
       return /* ts */ `
-        const fpsListener = (fps) => { PARAMS.fps = fps.fps + " fps"; PARAMS.elapsed = fps.time; PARAMS.frame = fps.frame};
-        const bufferListener = (view) => { PARAMS.debug =  JSON.stringify(view[0].get(),null,4) } ;
+        const fpsListener = {
+          onFPS: (fps) => { PARAMS.fps = fps.fps + " fps"; PARAMS.elapsed = fps.time; PARAMS.frame = fps.frame }
+        };
+        const bufferListeners = [
+          {
+            name: 'debug',
+            onRead: (view) => { PARAMS.debug =  JSON.stringify(view.get(),null,4) } 
+          },
+          {
+            name: 'test_results',
+            onRead: (view) => { PARAMS.test_results =  JSON.stringify(view.get(),null,4) } 
+          }
+        ];
       `
     }
   
@@ -349,7 +366,7 @@ export const script = (shader: Shader, rpath: string) => {
         ${ shader.debug && fillParam() }
         ${ shader.debug && tweakPane() }
 
-        const anim = animate(spec, canvas, ${ shader.debug ?  'uniforms, { onFPS: fpsListener }, { onRead: bufferListener }' : '{}' } );
+        const anim = animate(spec, canvas, ${ shader.debug ?  'uniforms, fpsListener, bufferListeners' : '{}' } );
         anim.start();
           
         ${ saveScreenshot(shader.id) }
