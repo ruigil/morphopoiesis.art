@@ -22,6 +22,18 @@
   },
   "shaders": [
     {
+      "id": "nn",
+      "path": "nn",
+      "title": "Neural Network",
+      "description": "Artificial Neural Network for classification ",
+      "image": "",
+      "tags": [],
+      "license": "cc-by",
+      "sketch": false,
+      "debug": true,
+      "fx": false
+    },
+    {
       "id": "wfc",
       "path": "wfc",
       "title": "Wave Function Collapse",
@@ -34,7 +46,7 @@
       ],
       "license": "cc-by",
       "sketch": true,
-      "debug": true,
+      "debug": false,
       "fx": false
     },
     {
