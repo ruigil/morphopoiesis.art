@@ -26,7 +26,7 @@ export const nn = async (code: string,defs: Definitions, fx:any ) => {
     const eta = 0.001;
 
     const sigma = Math.sqrt(2.0/numInputs);
-    // Generate and store weights
+    // Generate and store weights...
     const weightData = new Array(numWeights);
     for (let i = 0; i < numWeights; i+= 2) {
         let x1 = Math.random();
