@@ -63,7 +63,7 @@ site.use(esbuild({
     bundle: true,
     splitting: false,
     format: "esm",
-    minify: false,
+    minify: true,
     keepNames: true,
     tsconfigRaw:'{ "compilerOptions": { "experimentalDecorators" : true } }',
     platform: "browser",
