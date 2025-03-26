@@ -43,7 +43,7 @@ jobs:
           chmod 700 ~/.ssh
           ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
-          scp -r _site/* rigel@$SERVER_IP:~/morphopoeisis.art
+          scp -r _site/* rigel@$SERVER_IP:~/morphopoiesis.art
     env:
       SSH_PRIVATE_KEY: ${{secrets.SSH_KEY}}
       SERVER_IP: ${{secrets.SERVER_IP}}
