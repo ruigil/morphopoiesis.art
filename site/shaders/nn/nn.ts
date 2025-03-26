@@ -24,7 +24,7 @@ export const nn = async (code: string,defs: Definitions, fx:any ) => {
     const numBias = layer1Size + layer2Size + layer3Size;
     const numEpochs = 150;
     const eta = 0.001;
-
+    // test
     const sigma = Math.sqrt(2.0/numInputs);
     // Generate and store weights...
     const weightData = new Array(numWeights);
