@@ -22,6 +22,18 @@
   },
   "shaders": [
     {
+      "id": "islamic",
+      "path": "symmetry/islamic",
+      "title": "Islamic Art",
+      "description": "Using symmetry and transformations to create patterns",
+      "image": "",
+      "tags": ["symmetry","pattern"],
+      "license": "cc-by",
+      "sketch": true,
+      "debug": true,
+      "fx": false
+    },
+    {
       "id": "nn",
       "path": "nn",
       "title": "Neural Network",
@@ -79,6 +91,7 @@
     },
     {
       "id": "fastvoronoi",
+      "path": "fastvoronoi",
       "title": "Fast Voronoi",
       "description": "A real-time voronoi construction using the jump flood algorithm.",
       "tags": [
@@ -110,6 +123,7 @@
     },
     {
       "id": "video360",
+      "path": "video360",
       "title": "Video 360",
       "description": "Equirectangular 360 Video Viewer. Click on the video to play/pause.",
       "image": "",
@@ -127,6 +141,7 @@
     },
     {
       "id": "indra",
+      "path": "indra",
       "title": "Indra Pearls",
       "description": "An exploration of symmetry",
       "image": "",
@@ -139,6 +154,7 @@
     },
     {
       "id": "genwgsl",
+      "path": "genwgsl",
       "title": "genwgsl",
       "description": "A simple generator of WGSL shaders",
       "image": "",
@@ -151,6 +167,7 @@
     },
     {
       "id": "webcam",
+      "path": "webcam",
       "title": "webcam",
       "description": "webcam",
       "image": "",
@@ -162,6 +179,7 @@
     },
     {
       "id": "pathtracer",
+      "path": "pathtracer",
       "title": "Path Tracer",
       "description": "A real-time path tracer, with motion blur, depth of field, adaptative denoise, and several materials. ",
       "tags": [
@@ -177,6 +195,7 @@
     },
     {
       "id": "ligrowth",
+      "path": "ligrowth",
       "title": "Limits to Growth",
       "description": "This is an exploration of the limits to growth, with a diffuse limited aggregation algorithm, inspired by the book of the same name by Donella H. Meadows, Dennis L. Meadows, Jørgen Randers, and William W. Behrens III. ",
       "tags": [
@@ -191,6 +210,7 @@
     },
     {
       "id": "inversion",
+      "path": "inversion",
       "title": "Inversion",
       "description": "A circle inversion",
       "tags": [
@@ -204,6 +224,7 @@
     },
     {
       "id": "pathtracer2",
+      "path": "pathtracer2",
       "title": "Path Tracer",
       "description": "A simple path tracer",
       "tags": [
@@ -216,6 +237,7 @@
     },
     {
       "id": "fluid",
+      "path": "fluid",
       "title": "Fluid",
       "description": "Fluid simulator. You can play with your mouse to add color.",
       "tags": [
@@ -229,6 +251,7 @@
     },
     {
       "id": "dla",
+      "path": "dla",
       "title": "DLA",
       "description": "Diffuse Limited Aggregation, to create an Ice structure. You can play with your mouse to melt the ice.",
       "tags": [
@@ -243,6 +266,7 @@
     },
     {
       "id": "physarum",
+      "path": "physarum",
       "title": "Physarum",
       "description": "A slime mold building a transport network. You can play with your mouse to erase the chemical field.",
       "tags": [
@@ -258,6 +282,7 @@
     },
     {
       "id": "boids",
+      "path": "boids",
       "title": "Boids",
       "description": "Android birds trying to sync their movement and blinking. You can play with your mouse to attract them.",
       "tags": [
@@ -271,6 +296,7 @@
     },
     {
       "id": "rd",
+      "path": "rd",
       "title": "Reaction Diffusion",
       "description": "Move your mouse to explore the generation of different patterns.",
       "tags": [
@@ -284,6 +310,7 @@
     },
     {
       "id": "gol",
+      "path": "gol",
       "title": "Game of Life",
       "description": "Conway's Game of Life",
       "tags": [
@@ -297,6 +324,7 @@
     },
     {
       "id": "colorIFS",
+      "path": "colorIFS",
       "title": "Color IFS",
       "description": "A simple colorized IFS fractal",
       "tags": [
