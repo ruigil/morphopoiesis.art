@@ -101,6 +101,7 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
                 elapsed = ((performance.now() - startTime) / 1000) - idle;
 
                 await poiesis.run({ 
+                    // the variable in the shader MUST be 'sys'
                     sys: { 
                         frame: frame, 
                         time: elapsed, 

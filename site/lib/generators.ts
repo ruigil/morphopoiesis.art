@@ -5,6 +5,7 @@ export type Shader = {
     id: string,
     title: string,
     description: string,
+    path: string,
     image: string,
     tags: string[],
     sketch: boolean,
@@ -242,7 +243,7 @@ export const script = (shader: Shader, rpath: string) => {
       return /* ts */ `
         let s = spec(canvas.width, canvas.height);
         let specuni = s.unipane;
-        let specstorage = s.storages.filter( s => s.read )
+        let specstorage = s.storages ? s.storages.filter( s => s.read ) : [];
         const su = specuni ? specuni.get() : {};
         const uniforms = specuni ? specuni.map(su) : {};
         const PARAMS = {
@@ -350,7 +351,7 @@ export const script = (shader: Shader, rpath: string) => {
       import { animate } from '${rpath}/../lib/poiesis/index.ts';
       import { Pane } from '${rpath}/../lib/tweakpane/tweakpane-4.0.3.min.js';
   
-      ${ shader.dynamic ? shader.spec : `import { ${shader.id} } from '${rpath}/../shaders/${shader.id}/${shader.id}.ts'` }
+      ${ shader.dynamic ? shader.spec : `import { ${shader.id} } from '${rpath}/../shaders/${shader.path}/${shader.id}.ts'` }
 
       document.addEventListener('DOMContentLoaded', async (event)  => {
         const canvas = document.querySelector("#canvas");
@@ -413,17 +414,17 @@ export const shaderGenerator = async function* (shader: Shader, rpath: string = 
 
   // wgsl file
   yield {
-    url: `${rpath}/../shaders/${shader.id}/${shader.id}.wgsl`,
+    url: `${rpath}/../shaders/${shader.path}/${shader.id}.wgsl`,
     content: shader.wgsl,
   };
   // Definitions file
   yield {
-    url: `${rpath}/../shaders/${shader.id}/${shader.id}.json`,
+    url: `${rpath}/../shaders/${shader.path}/${shader.id}.json`,
     content: `${ JSON.stringify(reflect( shader.wgsl ), null, 2)}`,
   };
   // html page
   yield {
-    url: `${rpath}/../shaders/${shader.id}/`,
+    url: `${rpath}/../shaders/${shader.path}/`,
     title: shader.title,
     layout: "shaders.layout.ts",
     description: shader.description,
@@ -431,12 +432,12 @@ export const shaderGenerator = async function* (shader: Shader, rpath: string = 
   };
   // shader licence
   yield {
-    url: `${rpath}/../shaders/${shader.id}/LICENSE.md`,
+    url: `${rpath}/../shaders/${shader.path}/LICENSE.md`,
     content: license(shader.license),
   };
   // shader code
   yield {
-    url: `${rpath}/../shaders/${shader.id}/index.ts`,
+    url: `${rpath}/../shaders/${shader.path}/index.ts`,
     content: script(shader,rpath),
   };
 

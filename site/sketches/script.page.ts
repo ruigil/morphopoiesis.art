@@ -4,7 +4,7 @@ const script = (shader:Shader) => {
     
     return /*ts*/ `
         import { animate } from '../lib/poiesis/index.ts';
-        import { ${shader.id} } from '../shaders/${shader.id}/${shader.id}.ts';
+        import { ${shader.id} } from '../shaders/${shader.path}/${shader.id}.ts';
 
         document.addEventListener('DOMContentLoaded', async (event)  => {
             const canvas = document.querySelector("#canvas");
@@ -50,8 +50,8 @@ const script = (shader:Shader) => {
                 }
             });
   
-            const code = await (await fetch('../../shaders/${shader.id}/${shader.id}.wgsl')).text();
-            const defs = await (await fetch('../../shaders/${shader.id}/${shader.id}.json')).json();
+            const code = await (await fetch('../../shaders/${shader.path}/${shader.id}.wgsl')).text();
+            const defs = await (await fetch('../../shaders/${shader.path}/${shader.id}.json')).json();
 
             const fpsListener = (fps) => { fpsSmall.textContent = fps.fps + " fps"};
 

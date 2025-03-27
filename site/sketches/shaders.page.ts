@@ -20,8 +20,8 @@ const related = (shader: Shader, data: Lume.Data) => {
 
 const shaderContent = async (shader: Shader, data: Lume.Data) => {
 
-  const wgslCode = await Deno.readTextFile(`./site/shaders/${shader.id}/${shader.id}.wgsl`);
-  const tsCode = await Deno.readTextFile(`./site/shaders/${shader.id}/${shader.id}.ts`);
+  const wgslCode = await Deno.readTextFile(`./site/shaders/${shader.path}/${shader.id}.wgsl`);
+  const tsCode = await Deno.readTextFile(`./site/shaders/${shader.path}/${shader.id}.ts`);
   const htmlWgsl = hljs.highlight(wgslCode, { language: 'rust' }).value
   const htmlTs = hljs.highlight(tsCode, { language: 'typescript' }).value
 

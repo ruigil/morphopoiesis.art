@@ -712,7 +712,7 @@ export const Poiesis = async (canvas: HTMLCanvasElement) => {
     }
 
     const run = async (unis?: Record<string, unknown>, frame: number = 0 ) => {
-        const { bufferListeners, storages, device, uniforms, pipelines, geometry, context, clearColor, wgslSpec } = state;
+        const { storages, device, uniforms, pipelines, geometry, context, clearColor, wgslSpec } = state;
 
         const bindGroup = (i:number) => wgslSpec!.bindings ? (i % wgslSpec!.bindings.length) : 0;
 

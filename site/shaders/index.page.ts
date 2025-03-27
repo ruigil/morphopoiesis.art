@@ -9,10 +9,10 @@ export default ({ shaders }: Lume.Data ) : string => {
         const list = shaders.map((shader:Shader) => {
             return /* html */`
                 <div class="card">
-                    <a href="./${shader.id}">
-                        <img src="./${shader.id}/${shader.id}-small.webp" width="256", height="256">
+                    <a href="./${shader.path}">
+                        <img src="./${shader.path}/${shader.id}-small.webp" width="256", height="256">
                     </a>
-                    <a class="shader-title" href="./${shader.id}">${shader.title}</a>
+                    <a class="shader-title" href="./${shader.path}">${shader.title}</a>
                 </div>
                 `
         });
