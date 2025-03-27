@@ -6,6 +6,7 @@ const TAU: f32 = 6.28318530718;
 struct Sys {
     time: f32,
     resolution: vec2<f32>,
+    mouse: vec4<f32>,
     aspect: vec2<f32>
 }
 
@@ -18,9 +19,8 @@ fn vertexMain(@location(0) pos: vec2<f32>) -> @builtin(position) vec4f  {
 
 @fragment
 fn main(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
-    let uv = (fragCoord.xy / sys.resolution.xy);
     
-    var r = normCoord(fragCoord.xy, sys.resolution);
+    var r = normCoord(fragCoord.xy, sys.resolution) - sys.mouse.xy * 4. * vec2(-1.,1.);
 
     // create an hexagonal lattice.
     let hex = lat6(r*2.);
