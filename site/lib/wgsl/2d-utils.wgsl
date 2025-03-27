@@ -40,8 +40,12 @@ fn rot2(a: f32) -> mat2x2f { return mat2x2(cos(a),sin(a),-sin(a),cos(a)); }
 fn inversion(uv: vec2f, r:f32) -> vec2f { return (r*r*uv)/vec2(dot(uv,uv)); }
 //@modpolar-------------------------------------------------------------------------------------------
 // returns the reference frame in modular polar form, the plane is mapped tto a sector align with the positive x axis
-// assumes a normalized uv  bottom left is [-1,-1] and top right is [1,1]
-fn modpolar(uv: vec2f, n: f32) -> vec2f { let angle = atan2(-uv.y,uv.x); let hm = (6.283/(n*2.)); return uv*rot2((angle + (hm*2.) + 3.1415) % (6.283/n) - angle - hm); }
+// does a polar modular repetition of the coordinates
+fn modpolar(st: vec2<f32>, n: f32, phase: f32) -> vec2<f32> {
+    let angle = atan2(st.y, st.x) - phase;
+    let segment = angle - (TAU/n) * floor( (angle*n) / TAU) + phase;
+    return vec2<f32>(cos(segment), sin(segment)) * length(st);
+}
 //@poly-----------------------------------------------------------------------------------------------
 // generic 'n' side polygon, contained in the circle of radius
 fn poly(uv: vec2f, r : f32, n:f32) -> f32 {  return length(uv) * cos(((atan2(uv.y, -uv.x)+ 3.14)  % (6.28 / n)) - (3.14 / n)) - r; }
