@@ -30,7 +30,7 @@
       "tags": ["symmetry","pattern","mouse"],
       "license": "cc-by",
       "sketch": true,
-      "debug": true,
+      "debug": false,
       "fx": false
     },
     {
