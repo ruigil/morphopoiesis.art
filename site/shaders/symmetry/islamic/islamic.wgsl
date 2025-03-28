@@ -4,7 +4,6 @@
 const TAU: f32 = 6.28318530718;
 
 struct Sys {
-    time: f32,
     resolution: vec2<f32>,
     mouse: vec4<f32>,
     aspect: vec2<f32>
@@ -20,11 +19,13 @@ fn vertexMain(@location(0) pos: vec2<f32>) -> @builtin(position) vec4f  {
 @fragment
 fn main(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
     
-    var r = normCoord(fragCoord.xy, sys.resolution) - sys.mouse.xy * 4. * vec2(-1.,1.);
-
+    // normalize coordinates and couple them with the mouse
+    var r = normCoord(fragCoord.xy, sys.resolution);// - (sys.mouse.xy * 4. * vec2(-1.,1.));
+    let uv = r;
     // create an hexagonal lattice.
     let hex = lat6(r*2.);
-    r = hex.xy * 4.;
+    // this reference frame is relative to the center of each hexagon
+    r = hex.xy * 4.; 
     
     // a six fold angular mirror
     // we adjust the previous pattern 60 degrees and translate it
@@ -70,7 +71,7 @@ fn main(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
     
     let color = mix(background, foreground, f);
 
-    return vec4f(color ,1.);
+    return vec4f( color ,1.);
 }
 
 // rotation in 2d
@@ -127,16 +128,7 @@ fn normCoord(coord: vec2<f32>, resolution: vec2<f32>) -> vec2<f32> {
    return (2.0 * coord - resolution) / min(resolution.x, resolution.y) * vec2f(1.,-1.);
 }
 
-fn hsv2rgb(c :vec3f) -> vec3f {
-    let k = vec4f(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-    let p = abs(fract(c.xxx + k.xyz) * 6.0 - k.www);
-    return c.z * mix(k.xxx, clamp(p - k.xxx, vec3(0.0), vec3(1.0)), c.y);
-}
-
-fn hash3( seed: vec3u) -> vec3f {
-    return vec3f( vec3f(pcg3d(seed)) * (1. / f32(0xffffffffu)) ) ;
-}
-
+// https://www.pcg-random.org/
 fn pcg3d(pv:vec3u) -> vec3u {
 
     var v = pv * 1664525u + 1013904223u;
@@ -152,4 +144,16 @@ fn pcg3d(pv:vec3u) -> vec3u {
     v.z += v.x*v.y;
 
     return v;
+}
+
+// converts hue saturation value into red green blue
+fn hsv2rgb(c :vec3f) -> vec3f {
+    let k = vec4f(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    let p = abs(fract(c.xxx + k.xyz) * 6.0 - k.www);
+    return c.z * mix(k.xxx, clamp(p - k.xxx, vec3(0.0), vec3(1.0)), c.y);
+}
+
+// an hash accepting 3 ints and returning 3 floats between 0 and 1
+fn hash3( seed: vec3u) -> vec3f {
+    return vec3f( vec3f(pcg3d(seed)) * (1. / f32(0xffffffffu)) ) ;
 }
