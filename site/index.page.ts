@@ -14,7 +14,6 @@ const post = (data: Data, { date }: Lume.Helpers) => {
         </div>
         <div class="flex flex-col gap-3 max-w-md">
           <div class="text-2xl"><a href="${data!.url}">${data!.title}</a></div>
-          <div class="text-xs"><sl-relative-time date="${date(data!.date)}"></sl-relative-time></div>
           <div class="text-sm content">${(data!.content as string).split(' ').splice(0, 10).join(' ')}...</div>
           <div class="flex-wrap">${data!.tags?.map((tag: string) => `<sl-tag size="small">${tag}</sl-tag>`).join(" ")}</div>
         </div>
