@@ -22,12 +22,28 @@
   },
   "shaders": [
     {
+      "id": "IFS",
+      "path": "symmetry/ifs",
+      "title": "Iterative Function System",
+      "description": "Using an iterative function system to generate fractals. Move your mouse horizontally to increase the iterations.",
+      "image": "",
+      "tags": ["symmetry","ifs","mouse","fractal"],
+      "license": "cc-by",
+      "sketch": true,
+      "debug": false,
+      "fx": false
+    },
+    {
       "id": "islamic",
       "path": "symmetry/islamic",
       "title": "Islamic Art",
       "description": "Using symmetry and transformations to create patterns",
       "image": "",
-      "tags": ["symmetry","pattern","mouse"],
+      "tags": [
+        "symmetry",
+        "pattern",
+        "mouse"
+      ],
       "license": "cc-by",
       "sketch": true,
       "debug": false,
