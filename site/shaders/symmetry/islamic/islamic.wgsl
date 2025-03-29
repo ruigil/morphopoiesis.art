@@ -20,7 +20,7 @@ fn vertexMain(@location(0) pos: vec2<f32>) -> @builtin(position) vec4f  {
 fn main(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
     
     // normalize coordinates and couple them with the mouse
-    var r = normCoord(fragCoord.xy, sys.resolution);// - (sys.mouse.xy * 4. * vec2(-1.,1.));
+    var r = normCoord(fragCoord.xy, sys.resolution) - (sys.mouse.xy * 2. * vec2(-1.,1.));
     let uv = r;
     // create an hexagonal lattice.
     let hex = lat6(r*2.);
