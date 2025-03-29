@@ -22,14 +22,30 @@
   },
   "shaders": [
     {
+      "id": "logo",
+      "path": "logo",
+      "title": "Logo",
+      "description": "Morphopoiesis Logo",
+      "image": "",
+      "tags": [],
+      "license": "cc-by",
+      "sketch": false,
+      "debug": true,
+      "fx": false
+    },
+    {
       "id": "fractal",
       "path": "symmetry/fractal",
       "title": "Fractal Symmetry",
       "description": "Generating a fractal with iterative symmetry operations",
       "image": "",
-      "tags": ["fractal","symmetry","mouse"],
+      "tags": [
+        "fractal",
+        "symmetry",
+        "mouse"
+      ],
       "license": "cc-by",
-      "sketch": true,
+      "sketch": false,
       "debug": false,
       "fx": false
     },
@@ -46,7 +62,7 @@
         "fractal"
       ],
       "license": "cc-by",
-      "sketch": true,
+      "sketch": false,
       "debug": false,
       "fx": false
     },
