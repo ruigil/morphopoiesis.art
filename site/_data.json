@@ -22,12 +22,29 @@
   },
   "shaders": [
     {
+      "id": "fractal",
+      "path": "symmetry/fractal",
+      "title": "Fractal Symmetry",
+      "description": "Generating a fractal with iterative symmetry operations",
+      "image": "",
+      "tags": ["fractal","symmetry","mouse"],
+      "license": "cc-by",
+      "sketch": true,
+      "debug": false,
+      "fx": false
+    },
+    {
       "id": "IFS",
       "path": "symmetry/ifs",
       "title": "Iterative Function System",
       "description": "Using an iterative function system to generate fractals. Move your mouse horizontally to increase the iterations.",
       "image": "",
-      "tags": ["symmetry","ifs","mouse","fractal"],
+      "tags": [
+        "symmetry",
+        "ifs",
+        "mouse",
+        "fractal"
+      ],
       "license": "cc-by",
       "sketch": true,
       "debug": false,
