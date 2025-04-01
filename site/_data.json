@@ -22,6 +22,30 @@
   },
   "shaders": [
     {
+      "id": "gradients",
+      "path": "utils/gradients",
+      "title": "Gradients",
+      "description": "gradients",
+      "image": "",
+      "tags": [],
+      "license": "cc-by",
+      "sketch": false,
+      "debug": false,
+      "fx": false
+    },
+    {
+      "id": "source",
+      "path": "source",
+      "title": "Distortion Field",
+      "description": "Recursive noise distortion field",
+      "image": "",
+      "tags": [],
+      "license": "cc-by",
+      "sketch": false,
+      "debug": true,
+      "fx": false
+    },
+    {
       "id": "logo",
       "path": "logo",
       "title": "Logo",
