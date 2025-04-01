@@ -34,7 +34,7 @@ export const dla = (code:string,defs:Definitions) => {
             }),
             storages: [
                 { name: "drops", size: numWaterDrops , data: waterDrops},
-                { name: "iceA", size: size.x * size.y, data: ice} ,
+                { name: "iceA", size: size.x * size.y, data: ice } ,
                 { name: "iceB", size: size.x * size.y, data: ice } 
             ],
             computes: [
