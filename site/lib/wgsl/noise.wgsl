@@ -76,7 +76,7 @@ fn hash2( seed: vec2u) -> vec2f {
 }
 
 // value noise in 2d
-fn valueNoise(p: vec2f) -> f32 {
+fn valueNoise2d(p: vec2f) -> f32 {
     // cell cordinates
     let c = vec2u(floor(abs(p)));
     // sub-cell cordinates
@@ -88,6 +88,26 @@ fn valueNoise(p: vec2f) -> f32 {
     return mix( mix( hash2( c + o.xx ).x, hash2( c + o.yx ).x, u.x),
                 mix( hash2( c + o.xy ).x, hash2( c + o.yy ).x, u.x), u.y);
 }
+
+
+// value noise in 3d
+fn valueNoise3d(p: vec3f) -> f32 {
+    let i = floor( p );
+    let f = fract( p );
+
+    // quintic interpolation
+    let u = f*f*f*(f*(f*6.0-15.0)+10.0);
+	
+    return mix(mix(mix( hash3( i + vec3f(0,0,0)), 
+                        hash3( i + vec3f(1,0,0)), u.x),
+                   mix( hash3( i + vec3f(0,1,0)), 
+                        hash3( i + vec3f(1,1,0)), u.x), u.y),
+               mix(mix( hash3( i + vec3f(0,0,1)), 
+                        hash3( i + vec3f(1,0,1)), u.x),
+                   mix( hash3( i + vec3f(0,1,1)), 
+                        hash3( i + vec3f(1,1,1)), u.x), u.y), u.z);
+}
+
 
 // random unit vector in 2d
 fn rndNorm2d( p: vec2u ) -> vec2f {
@@ -163,17 +183,38 @@ fn voronoise(p:vec2f) -> f32 {
 }
 
 //generate fractal value noise from multiple octaves
-fn fractalNoise(p:vec2f, o: i32) -> f32 {
-    var nSum = 0.0; //noise total
-    var pp = abs(p); //absolute position
-
-    // iterate through octaves
-    for(var i = 0; i < o; i++) {
-        //add noise octave to total
-        nSum += valueNoise(abs(pp)); 
-        pp *= mat2x2(1.6,1.2,-1.2,1.6); 
+fn fractalNoise2d(p:vec2f, o: i32) -> f32 {
+    var value = 0.0;
+    var amplitude = .5;
+    var frequency = 1.;
+    let pp = p + 1000.;
+    //
+    // Loop of octaves
+    for (var i = 0; i < 8; i++) {
+        value += amplitude * valueNoise2d(pp * frequency);
+        frequency *= 2.;
+        amplitude *= .5;
     }
-    // weighted average
-    return nSum / f32(o);
+    return value;
 }
 
+//generate fractal value noise from multiple octaves
+fn fractalNoise3d(p:vec3f, o: i32) -> f32 {
+    var value = 0.0;
+    var amplitude = .5;
+    var frequency = 1.;
+    let pp = p + 1000.;
+    //
+    // Loop of octaves
+    for (var i = 0; i < 8; i++) {
+        value += amplitude * valueNoise3d(pp * frequency);
+        frequency *= 2.;
+        amplitude *= .5;
+    }
+    return value;
+}
+
+
+fn hash2( seed: vec2u) -> vec2f {
+    return vec2f( vec2f(pcg2d(seed)) * (1. / f32(0xffffffffu)) ) ;
+}

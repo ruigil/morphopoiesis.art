@@ -23,9 +23,10 @@ vec3 bumpmap(vec2 r, vec3 color, vec3 lp, vec3 normal) {
     vec3 eye = vec3(0.,0., 1.);
     // the hit point is the actual coordinate on the plane at z = 0
     vec3 hit = vec3(r,0.);
+
     
     // light intensity
-    vec3 li = vec3(.5); 
+    vec3 li = vec3(.7); 
     // light direction
     vec3 ld = normalize(lp - hit);
     // view direction
@@ -43,7 +44,7 @@ out vec4 pixel;
 // the heightmap is some fractal brownian moton noise, distorted 
 // with itself which is called 'domain warp'
 float heightmap(vec3 r) {
-    float q = fbm( vec3(r.x * .5, r.y * .5, r.z ) );
+    float q = fbm( vec3(r.x * .3, r.y * .3, r.z * 2.) );
     
     float f = fbm( r + q );
     
@@ -66,13 +67,14 @@ void main() {
     // get the normal with the finite difference method
     vec3 normal = normalize(ns*vec3(heightmap( nr + ne.xyz) - heightmap( nr - ne.xyz), heightmap( nr + ne.yxz) - heightmap( nr - ne.yxz), 1./ns ));
       
-    // light position
-    vec3 lp = vec3(vec2(0.),1.);
+     vec2 m = (u_mouse.xy/u_resolution.xy) - .5;
+   // light position
+    vec3 lp = vec3(vec2(-.5,-.0),1.);
 
     // the value of the heighmap at this pixel
     float height =  heightmap(nr) ; 
     // a color gradient to map the heighfield to a color
-    vec3 gradient = vangogh(min( height + (length(nr.xy) * 3.), 1.));
+    vec3 gradient = earth(1.-min( height + (length(nr.xy) * 4.), 1.));
     // the bumpmap technique to light the heighmap
     vec3 color = bumpmap(nr.xy, gradient, lp, normal);
  
