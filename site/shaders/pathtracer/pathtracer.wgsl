@@ -174,12 +174,12 @@ fn setCamera( screen: vec2<f32>, eye: vec3<f32>, lookAt: vec3<f32>, fov: vec2f )
     let lookFrom = eye + vec3(diskSample(params.aperture), 0.);
 
     // orthonormal basis
-    let fw = normalize(lookFrom - lookAt);
+    let fw = normalize(lookAt - lookFrom);
     let rt = cross( vec3(0.,-1.,0.), fw );
     let up = cross( fw, rt);
 
     // inital camera ray
-    return Ray(lookFrom , normalize(vec3(screen * vec2(-1.,1.) * tan(fov / 2. ) , -1.) ) * mat3x3(rt,up,fw) );
+    return Ray(lookFrom ,  mat3x3(rt,up,fw) * normalize(vec3(screen * tan(fov / 2. ) , 1.) ));
 }
 
 // default diffuse material
