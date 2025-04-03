@@ -4,6 +4,9 @@ fn normCoord(coord: vec2<f32>, resolution: vec2<f32>) -> vec2<f32> {
     // bottom left is [-1,-1] and top right is [1,1]
    return (2.0 * coord - resolution) / min(resolution.x, resolution.y) * vec2f(1.,-1.);
 }
+//@mod----------------------------------------------------------------------------------------------
+// modular function between to floats.
+fn modf32(a:f32, b:f32) -> f32 { return a  - b * floor(a / b); }
 //@ssaa----------------------------------------------------------------------------------------------
 // smoothstep antialias with fwidth
 fn ssaa(v: f32) -> f32 { return smoothstep(-1.,1.,v/fwidth(v)); }
