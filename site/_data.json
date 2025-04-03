@@ -22,6 +22,18 @@
   },
   "shaders": [
     {
+      "id": "conformal",
+      "path": "complex/conformal",
+      "title": "Conformal",
+      "description": "Conformal transformation of a grid",
+      "image": "",
+      "tags": [],
+      "license": "cc-by",
+      "sketch": false,
+      "debug": true,
+      "fx": false
+    },
+    {
       "id": "logsphere",
       "path": "complex/logsphere",
       "title": "Log Polar Spherical",
