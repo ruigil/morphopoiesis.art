@@ -22,6 +22,18 @@
   },
   "shaders": [
     {
+      "id": "logsphere",
+      "path": "complex/logsphere",
+      "title": "Log Polar Spherical",
+      "description": "Using the Log Polar Spherical mapping with raymarching",
+      "image": "",
+      "tags": [],
+      "license": "cc-by",
+      "sketch": false,
+      "debug": true,
+      "fx": false
+    },
+    {
       "id": "gradients",
       "path": "utils/gradients",
       "title": "Gradients",
