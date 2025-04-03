@@ -30,7 +30,7 @@
       "tags": [],
       "license": "cc-by",
       "sketch": false,
-      "debug": true,
+      "debug": false,
       "fx": false
     },
     {
@@ -42,7 +42,7 @@
       "tags": [],
       "license": "cc-by",
       "sketch": false,
-      "debug": true,
+      "debug": false,
       "fx": false
     },
     {
@@ -54,7 +54,7 @@
       "tags": [],
       "license": "cc-by",
       "sketch": false,
-      "debug": true,
+      "debug": false,
       "fx": false
     },
     {
@@ -90,7 +90,7 @@
       "tags": [],
       "license": "cc-by",
       "sketch": false,
-      "debug": true,
+      "debug": false,
       "fx": false
     },
     {
