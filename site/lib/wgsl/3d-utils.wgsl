@@ -66,3 +66,16 @@ fn box( p:vec3f , size: vec3f) -> f32 {
     let d = abs(p) - size * .5;
     return min( max(d.x, max(d.y,d.z)), 0. ) + length(max(d , 0.));
 }
+
+fn setCamera( screen: vec2<f32>, eye: vec3<f32>, lookAt: vec3<f32>, fov: f32 ) -> Ray {
+
+    // orthonormal basis
+    let fw = normalize(lookAt - eye);
+    let rt = cross( vec3(0.,1.,0.), fw );
+    let up = cross(fw, rt);
+
+    let dir = vec3(screen * tan(fov * .5 ), 1.);
+
+    // inital camera ray
+    return Ray(eye ,  normalize( mat3x3(rt,up,fw) * dir ) );
+}

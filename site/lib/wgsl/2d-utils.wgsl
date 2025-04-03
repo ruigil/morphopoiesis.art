@@ -65,3 +65,7 @@ fn spiral(uv:vec2f, b:f32,  s: f32) -> f32 {
     
     return min( abs(l1 - l) , abs(l2 - l)  ) - s;
 }
+fn logPolarCoord(coord: vec2<f32>, resolution: vec2<f32>) -> vec2<f32> {
+    let norm = normCoord(coord,resolution) ;
+    return vec2(log(length(norm)), atan2(norm.y,norm.x));
+}
