@@ -650,6 +650,8 @@ export const Poiesis = async (canvas: HTMLCanvasElement) => {
 
     const createRenderPipeline = (shaderModule: GPUShaderModule, pipelineLayout:GPUPipelineLayout, spec: PSpec, vertexBufferLayout?:GPUVertexBufferLayout[]) => {            
              
+        if ( spec.defs.entries?.vertex && !spec.defs.entries?.fragment) throw new Error("Vertex entrypoint exist but Fragment entry point is missing");
+        if ( !spec.defs.entries?.vertex && spec.defs.entries?.fragment) throw new Error("Fragment entrypoint exist but Vertex entry point is missing");
         if ( !spec.defs.entries?.vertex || !spec.defs.entries?.fragment) return undefined;
 
         const vertexEntryPoint = spec.defs.entries.vertex.name;
@@ -674,8 +676,9 @@ export const Poiesis = async (canvas: HTMLCanvasElement) => {
     }
 
     const build = ( wgslSpec : PSpec ): PoiesisInstance => {
-
+        console.log("build")
         const shaderModule = createShaderModule(wgslSpec);
+        console.log("module created")
         const geometry = createGeometry(wgslSpec);
         const uniforms = createUniforms(wgslSpec);
         const storages = createStorage(wgslSpec);
