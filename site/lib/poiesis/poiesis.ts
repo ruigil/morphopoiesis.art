@@ -676,9 +676,7 @@ export const Poiesis = async (canvas: HTMLCanvasElement) => {
     }
 
     const build = ( wgslSpec : PSpec ): PoiesisInstance => {
-        console.log("build")
         const shaderModule = createShaderModule(wgslSpec);
-        console.log("module created")
         const geometry = createGeometry(wgslSpec);
         const uniforms = createUniforms(wgslSpec);
         const storages = createStorage(wgslSpec);
