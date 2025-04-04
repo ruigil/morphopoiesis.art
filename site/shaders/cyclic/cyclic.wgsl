@@ -1,6 +1,14 @@
 // This work is licensed under CC BY 4.0 
 // https://creativecommons.org/licenses/by/4.0/
 
+// The cyclic cellular automaton can be interpreted as a model to 
+// thermodynamic cycles. Each cell can be in a discrete state from 1 to N, and
+// if one of its neighbors is the successor state, modular N+1, (which means that 0 is the 
+// successor state of N, then the next iteration the cell becomes its successor.
+// We can see each state as a specie, zebras eat grass, lions eat zebras, and microbes eat lions when they die,
+// repeating the cycle.
+// https://en.wikipedia.org/wiki/Cyclic_cellular_automaton
+
 struct Sys {
     time: f32,
     resolution: vec2<f32>,

@@ -3,9 +3,9 @@ import { PSpec, Definitions, square, scaleAspect } from "../../lib/poiesis/index
 export const cyclic = async (code: string, defs: Definitions) => {
 
     const spec = (w: number, h: number): PSpec => {
-        const size = scaleAspect(w, h, 128);
+        const size = scaleAspect(w, h, 512);
         
-        // Initialize with random states (0-3)
+        // Initialize with random states (0-6)
         const current = Array.from({ length: size.x * size.y }, () => Math.floor(Math.random() * 4));
 
         // Define colors for each state (RGB values)
@@ -13,7 +13,7 @@ export const cyclic = async (code: string, defs: Definitions) => {
             [50, 50, 200],    // State 0: Blue
             [200, 50, 50],    // State 1: Red
             [50, 200, 50],    // State 2: Green
-            [200, 200, 50]    // State 3: Yellow
+            [200, 200, 50],   // State 3: Yellow
         ];
 
         return {
