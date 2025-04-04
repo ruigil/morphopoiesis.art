@@ -7,6 +7,7 @@ const shader =  {
     "tags": [],
     "license" : "cc-by",
     "sketch" : false,
+    "dynamic" : false,
     "debug" : true,
     "fx" : false
 }
@@ -19,6 +20,7 @@ shader.title = prompt(`Shader Title [${shader.id}]:`) || shader.id;
 shader.description = prompt(`Shader Description [${shader.id}]: `) || shader.id;
 shader.license = prompt(`Shader Licence [cc-by]: `) || "cc-by";
 shader.debug = Boolean(prompt(`Debug [true]: `) == "");
+shader.dynamic = Boolean(prompt(`Dynamic [false]: `) !== "");
 shader.sketch = Boolean(prompt(`Sketch [false]: `) != "");
 shader.fx = Boolean(prompt(`FXHASH [false]: `) != "");
 
@@ -57,8 +59,21 @@ fn vertexMain(@location(0) pos: vec2<f32>) -> @builtin(position) vec4f  {
 fn fragmentMain(@builtin(position) coord: vec4f) -> @location(0) vec4f {        
     return vec4f(1.,1.,0., 1.);
 }
-    `
-    
+`
+
+    const wgslDynamicTemplate = `
+import { shaderGenerator } from "../../../lib/generators.ts";
+
+const wgslCode = () => {
+    return ` + "`" + wgslTemplate + "`" + `
+}
+
+export default async function* (data: Lume.Data) {
+    const s = data.shaders.find( (s:any) => s.id === "${shader.id}" );
+    s.wgsl = wgslCode();
+    yield* shaderGenerator(s,'../..');
+}`
+
     const writeFile = (path: string, data: string): string => {
         try {
             Deno.writeTextFileSync(path, data );
@@ -70,7 +85,9 @@ fn fragmentMain(@builtin(position) coord: vec4f) -> @location(0) vec4f {
     
     Deno.mkdirSync(`./site/shaders/${shader.path}`, { recursive: true });
     console.log(writeFile(`./site/shaders/${shader.path}/${shader.id}.ts`, TsTemplate));
-    console.log(writeFile(`./site/shaders/${shader.path}/${shader.id}.wgsl`, wgslTemplate));
-    console.log(writeFile(`./site/_data.json`, JSON.stringify(data, null, 2)));
-    
+    if (!shader.dynamic) 
+        console.log(writeFile(`./site/shaders/${shader.path}/${shader.id}.wgsl`, wgslTemplate));
+    else
+        console.log(writeFile(`./site/shaders/${shader.path}/${shader.id}.page.ts`, wgslDynamicTemplate));
+    console.log(writeFile(`./site/_data.json`, JSON.stringify(data, null, 2)));    
 }

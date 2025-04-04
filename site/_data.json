@@ -22,6 +22,62 @@
   },
   "shaders": [
     {
+      "id": "mandelbrot",
+      "path": "mandelbrot",
+      "title": "Mandelbrot Fractal",
+      "description": "A colorful visualization of the Mandelbrot set with interactive zooming and panning",
+      "image": "",
+      "tags": [
+        "fractal",
+        "mandelbrot",
+        "complex",
+        "interactive",
+        "2d"
+      ],
+      "license": "cc-by",
+      "sketch": false,
+      "dynamic": false,
+      "debug": true,
+      "fx": false
+    },
+    {
+      "id": "terrain",
+      "path": "terrain",
+      "title": "Procedural Terrain",
+      "description": "A procedural landscape with mountains and valleys using raymarching and SDFs",
+      "image": "",
+      "tags": [
+        "terrain",
+        "landscape",
+        "raymarching",
+        "sdf",
+        "3d"
+      ],
+      "license": "cc-by",
+      "sketch": false,
+      "dynamic": false,
+      "debug": true,
+      "fx": false
+    },
+    {
+      "id": "cyclic",
+      "path": "cyclic",
+      "title": "Cyclic Cellular Automata",
+      "description": "A 4-state cyclic cellular automata where each state transitions to the next in a cycle when enough neighbors are in the next state",
+      "image": "",
+      "tags": [
+        "cellular automata",
+        "cyclic",
+        "mouse",
+        "4-state"
+      ],
+      "license": "cc-by",
+      "sketch": true,
+      "dynamic": false,
+      "debug": true,
+      "fx": false
+    },
+    {
       "id": "coloring",
       "path": "complex/coloring",
       "title": "Domain Coloring",

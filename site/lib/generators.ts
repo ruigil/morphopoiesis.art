@@ -349,9 +349,9 @@ export const script = (shader: Shader, rpath: string) => {
   
     return /*ts*/ `
       import { animate } from '${rpath}/../lib/poiesis/index.ts';
-      ${shader.debug && `import { Pane } from '${rpath}/../lib/tweakpane/tweakpane-4.0.3.min.js';` }
-
-      ${ shader.dynamic ? shader.spec : `import { ${shader.id} } from '${rpath}/../shaders/${shader.path}/${shader.id}.ts'` }
+      import { Pane } from '${rpath}/../lib/tweakpane/tweakpane-4.0.3.min.js';
+  
+      import { ${shader.id} } from '${rpath}/../shaders/${shader.path}/${shader.id}.ts';
 
       document.addEventListener('DOMContentLoaded', async (event)  => {
         const canvas = document.querySelector("#canvas");

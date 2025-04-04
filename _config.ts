@@ -18,9 +18,10 @@ import readInfo from "lume/plugins/reading_info.ts";
 const site = lume({
   src: "./site",
   location: new URL("https://morphopoiesis.art"),
-}, {
+}, 
+{
   modules: {
-    extensions: [".ts", ".js"],
+    extensions: [".ts", ".js"]  
   }
 });
 
@@ -28,7 +29,6 @@ const site = lume({
 site.ignore("/lib");
 site.copy("/assets/img/svg");
 site.copy("/assets/video");
-//site.copy([".wgsl"]);
 
 // plugins
 site.use(attributes());
