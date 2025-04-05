@@ -66,8 +66,8 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
     // Get the color for the current state
     let stateColor = uni.colors[u32(input.state)];
     
-    // Mix with white background based on the circle shape
-    return vec4f(mix(vec3<f32>(1.0), stateColor/255., d), 1.);
+    // Mix with blac background based on the circle shape
+    return vec4f(mix(vec3<f32>(0.0), stateColor/255., 1.), 1.);
 }      
 
 @compute @workgroup_size(8, 8)
