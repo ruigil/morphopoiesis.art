@@ -63,7 +63,7 @@
       "id": "cyclic",
       "path": "cyclic",
       "title": "Cyclic Cellular Automata",
-      "description": "A 4-state cyclic cellular automata that generates randomly thermodinamic cycles. The mouse paints the initial state.",
+      "description": "A 4-state cyclic cellular automata that generates random thermodinamic cycles. The mouse paints the initial state.",
       "image": "",
       "tags": [
         "cellular automata",
