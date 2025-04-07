@@ -22,6 +22,19 @@
   },
   "shaders": [
     {
+      "id": "chaosgame",
+      "path": "chaosgame",
+      "title": "Chaos Game",
+      "description": "An implementation of the Chaos Game algorithm that generates fractals like the Sierpinski triangle. Move your mouse to choose the polygon and step size.",
+      "image": "",
+      "tags": ["fractal", "chaos game", "sierpinski", "iterative"],
+      "license": "cc-by",
+      "sketch": true,
+      "dynamic": false,
+      "debug": false,
+      "fx": false
+    },
+    {
       "id": "mandelbrot",
       "path": "mandelbrot",
       "title": "Mandelbrot Fractal",

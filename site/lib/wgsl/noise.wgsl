@@ -218,3 +218,12 @@ fn fractalNoise3d(p:vec3f, o: i32) -> f32 {
 fn hash2( seed: vec2u) -> vec2f {
     return vec2f( vec2f(pcg2d(seed)) * (1. / f32(0xffffffffu)) ) ;
 }
+
+// generates a gaussian distribution from two uniform distributions
+// using the Box-Muller transform
+// https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
+fn boxMuller(u1: f32, u2: f32) -> vec2f {
+    let r = sqrt(-2.0 * log(u1));
+    let theta = 2.0 * 3.14159265359 * u2;
+    return vec2f(r * cos(theta), r * sin(theta));
+}
