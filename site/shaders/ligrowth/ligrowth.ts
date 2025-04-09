@@ -31,14 +31,6 @@ export const ligrowth = (code: string,defs: Definitions, fx:any ) => {
         
         let mode = fx ? seededRandom(4) : [.4,.2,.1,3];
         
-        const unipane = { 
-            phase: {
-                x: mode[0],
-                y: mode[1],
-                z: mode[2]
-            },
-            object: mode[3]
-        }
         return {
             code: code,
             defs: defs,
@@ -69,7 +61,41 @@ export const ligrowth = (code: string,defs: Definitions, fx:any ) => {
             ],
             computeGroupCount: 16,
             bindings: [ [0,1,2,3,4,5], [0,1,3,2,4,5] ],
-            unipane: { get: () => unipane, map: (u:any) =>  ({ params: { mode: [ u.phase.x, u.phase.y, u.phase.z, u.object] }}) }
+            unipane: { 
+                config: (pane,params) => {
+
+                    const panes = [];
+                    params.phase = { x: mode[0], y: mode[1], z: mode[2] };
+                    const p = pane.addBinding(params, 'phase', { readOnly: false, color: { type: 'float' }  })
+                    p.on('change', (ev:any) => {
+                        mode = [ev.value.x, ev.value.y, ev.value.z, mode[3]];
+                    });
+                    panes.push(p);
+                    params.object = mode[3];
+                    const o = pane.addBlade({
+                        view: 'list',
+                        label: 'IFS',
+                        options: [
+                          {text: 'Devil', value: 0},
+                          {text: 'Magician', value: 1},
+                          {text: 'Square', value: 2},
+                          {text: 'Circle', value: 3},
+                          {text: 'Hexagon', value: 4},
+                          {text: 'Triangle', value: 5},
+                          {text: 'Poly', value: 6},
+                          {text: 'Star', value: 7},
+                          {text: 'Hexagon', value: 8},
+                          {text: 'Perlin', value: 9},
+                        ],
+                        value: 0,
+                    })
+                    o.on('change', (ev:any) => {
+                        mode[3] = ev.value;
+                    });
+                    panes.push(p);
+
+                } 
+            }
         }
     }
 
