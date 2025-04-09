@@ -1,7 +1,7 @@
 import { Shader } from "../lib/generators.ts";
 
 export const title = "Shaders";
-export const layout = "shaders.layout.ts";
+export const layout = "page.layout.ts";
 
 export default ({ shaders }: Lume.Data ) : string => {
 
@@ -25,11 +25,10 @@ export default ({ shaders }: Lume.Data ) : string => {
         <style>
             .works {
                 margin: 0;
-                padding: 20px;
+                padding: 0px;
                 display: flex;
                 flex-direction: column;
                 gap: 1rem;
-                background-color: #333333;
                 color: #fff;
             }
             .cards-list {
@@ -39,7 +38,7 @@ export default ({ shaders }: Lume.Data ) : string => {
                 gap: 10px;
             }
             .card {
-                background-color: #222222;
+                background-color: var(--sl-panel-background-color);
                 display: flex;
                 flex-direction: column;
                 align-items: center;
