@@ -107,10 +107,14 @@
       "id": "coloring",
       "path": "complex/coloring",
       "title": "Domain Coloring",
-      "description": "Using domain coloring to visualize complex functions",
-      "tags": [],
+      "description": "Using domain coloring technique to visualize complex functions. Look at the code to see the different functions.",
+      "tags": [
+        "complex",
+        "coloring",
+        "domain coloring"
+      ],
       "license": "cc-by",
-      "sketch": false,
+      "sketch": true,
       "debug": false,
       "fx": false
     },
