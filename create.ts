@@ -3,7 +3,6 @@ const shader =  {
     "path": "",
     "title": "",
     "description": "",
-    "image": "",
     "tags": [],
     "license" : "cc-by",
     "sketch" : false,
