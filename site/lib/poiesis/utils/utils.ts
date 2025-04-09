@@ -131,7 +131,6 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
             }
             poiesis = context.build( shaderSpec )
             if (bufferListeners) {
-                console.log("Adding buffer listeners", bufferListeners);
                 poiesis.addBufferListeners(bufferListeners);
             }
             start();

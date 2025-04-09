@@ -242,7 +242,6 @@ export const script = (shader: Shader, rpath: string) => {
     const fillParam = () => {
       return /* ts */ `
         const PARAMS = {
-          name: '${shader.title}',
           fps: '',
           frame: 0,
           elapsed: '',
@@ -287,7 +286,6 @@ export const script = (shader: Shader, rpath: string) => {
         let specunis = null;
         let specstorages = null;
 
-  
       `
     }
   
