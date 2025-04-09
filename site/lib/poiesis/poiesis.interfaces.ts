@@ -110,7 +110,7 @@ export interface PSpec {
     computeGroupCount?: number;
     clearColor?: { r:number, g:number, b:number, a:number }
     bindings?: Array<Array<number>>;
-    unipane?: { get: () => unknown, map: (u:unknown) => unknown };
+    unipane?: { config: (pane: any, params: any) => void };
 }
 
 
@@ -124,6 +124,10 @@ export interface Controls {
 // listener for the fps
 export interface FPSListener {
     onFPS: (fps: { fps: string, time: string, frame: number}) => void;
+}
+
+export interface SpecListener {
+    onSpec: (spec: PSpec) => void;
 }
 
 export interface BaseVariable {

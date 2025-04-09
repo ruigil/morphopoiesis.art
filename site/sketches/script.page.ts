@@ -56,7 +56,7 @@ const script = (shader:Shader) => {
             const fpsListener = (fps) => { fpsSmall.textContent = fps.fps + " fps"};
 
             const spec = await ${shader.id}(code,defs);
-            const anim = animate(spec, canvas, undefined , { onFPS: fpsListener } );
+            const anim = animate(spec, canvas, { onFPS: fpsListener } );
             anim.start();
             
             document.addEventListener('keypress', function(event) {

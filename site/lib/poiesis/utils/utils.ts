@@ -1,4 +1,4 @@
-import { BufferListener, FPSListener, PoiesisInstance, PSpec } from "../poiesis.interfaces.ts";
+import { BufferListener, FPSListener, PoiesisInstance, PSpec, SpecListener } from "../poiesis.interfaces.ts";
 import { Poiesis } from "../poiesis.ts";
 
 export * from "./geometry.ts";
@@ -36,7 +36,7 @@ export const scaleAspect = (w:number,h:number,scale:number) => {
     return { x: Math.floor(w / cellSize + .5) , y: Math.floor(h / cellSize + .5) };
 }
 
-export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasElement, unis?: Record<string,any>, fpsListener?: FPSListener, bufferListeners?: BufferListener[] ) => {
+export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasElement, fpsListener?: FPSListener, bufferListeners?: BufferListener[], specListener?: SpecListener ) => {
 
     const mouse: Array<number> = [0,0,0,0];
     const mButtons: Array<number> = [0,0,0];
@@ -109,7 +109,7 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
                         buttons: mButtons,
                         resolution: resolution,
                         aspect: aspectRatio 
-                    }, ...(shaderSpec?.uniforms ? shaderSpec.uniforms(frame) : {}), ...unis },
+                    }, ...(shaderSpec?.uniforms ? shaderSpec.uniforms(frame) : {}) },
                     frame);
 
                 frame++;            
@@ -126,8 +126,12 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
             stop();
             const context = await Poiesis(canvas)
             shaderSpec = spec(canvas.width, canvas.height)
+            if (specListener) {
+                specListener.onSpec(shaderSpec);
+            }
             poiesis = context.build( shaderSpec )
             if (bufferListeners) {
+                console.log("Adding buffer listeners", bufferListeners);
                 poiesis.addBufferListeners(bufferListeners);
             }
             start();

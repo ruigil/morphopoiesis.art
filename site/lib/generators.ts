@@ -241,22 +241,13 @@ export const script = (shader: Shader, rpath: string) => {
   
     const fillParam = () => {
       return /* ts */ `
-        let s = spec(canvas.width, canvas.height);
-        let specuni = s.unipane;
-        let specstorage = s.storages ? s.storages.filter( s => s.read ) : [];
-        const su = specuni ? specuni.get() : {};
-        const uniforms = specuni ? specuni.map(su) : {};
         const PARAMS = {
           name: '${shader.title}',
           fps: '',
           frame: 0,
           elapsed: '',
-          debug: '',
-          test_results: '',
-          delay: 0,
-          ...su
+          delay: 0
         };
-        specstorage.forEach( ss => PARAMS[ss.name] = '');
       `
     }
   
@@ -271,29 +262,7 @@ export const script = (shader: Shader, rpath: string) => {
         const crtl = pane.addFolder({
           title: 'Controls',
         });
-        if (specuni) {
-          const unis = pane.addFolder({
-            title: 'Uniforms',
-            expanded: false,
-          });
-          for (let key in su) {
-            const u = unis.addBinding(PARAMS, key, { readonly: false });
-            u.on('change', (ev) => {
-              const mu = specuni.map({...su, [key]: ev.value });
-              for (let mukey in mu) {
-                uniforms[mukey] = mu[mukey];
-              }
-            });
-          }
-        }
-        specstorage.forEach( ss => {
-          pane.addFolder({ title: ss.name, expanded: false})
-            .addBinding(PARAMS,ss.name, {
-              readonly: true,
-              multiline: true,
-              rows: 20,
-          });        
-        })
+
   
         const pp = crtl.addButton({
           title: 'pause',
@@ -309,22 +278,15 @@ export const script = (shader: Shader, rpath: string) => {
           label: 'Reset',   
         }).on('click', () => {
           anim.reset();
-          specuni = spec(canvas.width, canvas.height).unipane;
-          if (specuni) {
-            const su = specuni.get();
-            for (let sukey in su) {
-              PARAMS[sukey] = su[sukey];
-            }
-            const mu = specuni.map(su);
-            for (let mukey in mu) {
-              uniforms[mukey] = mu[mukey];
-            }
-          }
         });
 
         crtl.addBinding(PARAMS, 'delay', { readonly: false }).on('change', (ev) => {
           anim.delay(ev.value);
         });
+        
+        let specunis = null;
+        let specstorages = null;
+
   
       `
     }
@@ -333,6 +295,34 @@ export const script = (shader: Shader, rpath: string) => {
       return /* ts */ `
         const fpsListener = {
           onFPS: (fps) => { PARAMS.fps = fps.fps + " fps"; PARAMS.elapsed = fps.time; PARAMS.frame = fps.frame }
+        };
+        const specListener = {
+          onSpec: (spec) => { 
+            let s = spec;
+            let storages = s.storages ? s.storages.filter( s => s.read ) : [];
+            
+            storages.forEach( ss => PARAMS[ss.name] = '');
+
+
+            if (s.unipane) {
+              if (specunis) specunis.dispose();
+              specunis = pane.addFolder({
+                title: 'Uniforms',
+                expanded: true,
+              });
+              s.unipane.config(specunis, PARAMS);
+            }
+            if (specstorages) specstorages.forEach( s => s.dispose());
+            specstorages = storages.map( ss => {
+                let sp = pane.addFolder({ title: ss.name, expanded: false});
+                sp.addBinding(PARAMS,ss.name, {
+                  readonly: true,
+                  multiline: true,
+                  rows: 20,
+                });
+                return sp;        
+            })
+          }
         };
         const bufferListeners = [
           {
@@ -367,7 +357,7 @@ export const script = (shader: Shader, rpath: string) => {
         ${ shader.debug && fillParam() }
         ${ shader.debug && tweakPane() }
 
-        const anim = animate(spec, canvas, ${ shader.debug ?  'uniforms, fpsListener, bufferListeners' : '{}' } );
+        const anim = animate(spec, canvas, ${ shader.debug ?  'fpsListener, bufferListeners, specListener' : '{}' } );
         anim.start();
           
         ${ saveScreenshot(shader.id) }
