@@ -9,7 +9,7 @@ export type Shader = {
     image: string,
     tags: string[],
     sketch: boolean,
-    debug: boolean,
+    panel: boolean,
     fx: boolean,
     spec: string,
     wgsl: string,
@@ -336,10 +336,10 @@ export const script = (shader: Shader, rpath: string) => {
     }
   
     return /*ts*/ `
-      import { animate } from '${rpath}/../lib/poiesis/index.ts';
-      import { Pane } from '${rpath}/../lib/tweakpane/tweakpane-4.0.3.min.js';
-  
+      import { animate } from '${rpath}/../lib/poiesis/index.ts';  
       import { ${shader.id} } from '${rpath}/../shaders/${shader.path}/${shader.id}.ts';
+      
+      ${shader.panel ? `import { Pane } from '${rpath}/../lib/tweakpane/tweakpane-4.0.3.min.js';`: '' }
 
       document.addEventListener('DOMContentLoaded', async (event)  => {
         const canvas = document.querySelector("#canvas");
@@ -351,11 +351,11 @@ export const script = (shader: Shader, rpath: string) => {
   
         const spec = await ${shader.id}(code,defs, fx);
   
-        ${ shader.debug && listeners() }
-        ${ shader.debug && fillParam() }
-        ${ shader.debug && tweakPane() }
+        ${ shader.panel && listeners() }
+        ${ shader.panel && fillParam() }
+        ${ shader.panel && tweakPane() }
 
-        const anim = animate(spec, canvas, ${ shader.debug ?  'fpsListener, bufferListeners, specListener' : '{}' } );
+        const anim = animate(spec, canvas, {} ${ shader.panel ?  ', fpsListener, bufferListeners, specListener' : '' } );
         anim.start();
           
         ${ saveScreenshot(shader.id) }

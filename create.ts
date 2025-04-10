@@ -1,14 +1,15 @@
+// new shader
 const shader =  {
-    "id": "",
-    "path": "",
-    "title": "",
-    "description": "",
-    "tags": [],
-    "license" : "cc-by",
-    "sketch" : false,
-    "dynamic" : false,
-    "debug" : true,
-    "fx" : false
+    id: "",
+    path: "",
+    title: "",
+    description: "",
+    tags: [],
+    license : "cc-by",
+    sketch : false,
+    dynamic : false,
+    panel : true,
+    fx : false
 }
 
 console.log("Please enter shader creation parameters...");
@@ -18,7 +19,7 @@ shader.path = prompt(`Shader Path [${shader.id}]:`) || shader.id;
 shader.title = prompt(`Shader Title [${shader.id}]:`) || shader.id;
 shader.description = prompt(`Shader Description [${shader.id}]: `) || shader.id;
 shader.license = prompt(`Shader Licence [cc-by]: `) || "cc-by";
-shader.debug = Boolean(prompt(`Debug [true]: `) == "");
+shader.panel = Boolean(prompt(`Panel [true]: `) == "");
 shader.dynamic = Boolean(prompt(`Dynamic [false]: `) !== "");
 shader.sketch = Boolean(prompt(`Sketch [false]: `) != "");
 shader.fx = Boolean(prompt(`FXHASH [false]: `) != "");
