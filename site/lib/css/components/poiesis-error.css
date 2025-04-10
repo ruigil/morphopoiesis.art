@@ -1,0 +1,40 @@
+.poiesis-error {
+    background-color: rgba(30, 30, 30, 0.9);
+    color: #fff;
+    border-radius: 4px;
+    padding: 12px;
+    margin: 10px 0;
+    font-family: sans-serif;
+    max-width: 100%;
+    overflow-x: auto;
+    display:none;
+    margin: 20px auto;
+}
+.poiesis-error.fatal {
+    border-left: 4px solid #ff5555;
+}
+.poiesis-error-title {
+    margin: 0 0 8px 0;
+    color: #ff5555;
+    font-size: 16px;
+}
+.poiesis-error-message {
+    margin: 0 0 8px 0;
+}
+.poiesis-error-suggestion {
+    margin: 8px 0;
+    font-style: italic;
+    color: #aaa;
+}
+.poiesis-error-details {
+    background-color: rgba(0, 0, 0, 0.3);
+    padding: 8px;
+    margin: 8px 0 0 0;
+    border-radius: 2px;
+    font-family: monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    overflow-x: auto;
+    max-height: 200px;
+    overflow-y: auto;
+}

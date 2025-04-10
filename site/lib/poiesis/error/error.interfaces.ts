@@ -45,13 +45,7 @@ export interface PoiesisError {
 export interface ErrorManagerOptions {
   /** Whether to log errors to the console */
   logToConsole?: boolean;
-  
-  /** Whether to display errors in the DOM */
-  displayInDOM?: boolean;
-  
-  /** CSS selector for the error container element */
-  errorElementSelector?: string;
-  
+    
   /** Whether to throw fatal errors */
   throwFatalErrors?: boolean;
 }

@@ -111,6 +111,7 @@ export default ( data : Lume.Data, helpers: Lume.Helpers) => {
       </head>
       <body class="flex flex-col sl-theme-dark">
         ${ toolbar(data) }
+        <div id="poiesis-error" class="poiesis-error"></div>
         ${data.content}
         ${ footer(data, helpers) }
       </body>

@@ -1,6 +1,8 @@
-import { getErrorManager } from "./error/error-manager.ts";
-import { createShaderModuleWithErrorHandling, validateShaderRequirements } from "./error/index.ts";
-import { initializeWebGPU } from "./error/webgpu-support.ts";
+import { 
+    initializeWebGPU, 
+    validateShaderRequirements 
+} from "./error/index.ts";
+
 import { 
     BufferListener,
     Geometry, 
@@ -228,11 +230,7 @@ export const Poiesis = async (canvas: HTMLCanvasElement) => {
             );
         }
         
-        return createShaderModuleWithErrorHandling(
-            state.device,
-            spec.code,
-            spec.label || "Custom shader"
-        );
+        return state.device.createShaderModule({ code: spec.code });
     }
 
     const createGeometry = (spec: PSpec): Geometry => {

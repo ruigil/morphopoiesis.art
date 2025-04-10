@@ -3,6 +3,7 @@
 @import './components/shader.css';
 @import './components/footer.css';
 @import './components/panel.css';
+@import './components/poiesis-error.css';
 
 /* shoelace ui */
 @import './styles/light.css';

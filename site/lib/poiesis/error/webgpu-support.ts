@@ -103,24 +103,6 @@ export const checkWebGPUSupport = async (): Promise<WebGPUSupportResult> => {
   // Check if the device can be created
   try {
     const device = await adapter.requestDevice();
-    
-    // Add a device lost handler
-    device.lost.then((info) => {
-      const errorManager = getErrorManager();
-      console.log(`WebGPU device was lost: ${info.message}`)
-      /*
-      errorManager.error(
-        'runtime',
-        `WebGPU device was lost: ${info.message}`,
-        {
-          fatal: true,
-          suggestion: 'Try refreshing the page or updating your graphics drivers',
-          details: `Reason: ${info.reason}`
-        }
-      );*/
-    });
-    
-    // Clean up the test device
     device.destroy();
   } catch (e) {
     const error: PoiesisError = {
@@ -147,10 +129,7 @@ export const checkWebGPUSupport = async (): Promise<WebGPUSupportResult> => {
  * @param fallbackElement Optional element to display fallback content in
  * @returns A promise that resolves to a GPUDevice if successful
  */
-export const initializeWebGPU = async (
-  canvas: HTMLCanvasElement,
-  fallbackElement?: HTMLElement
-): Promise<{ device: GPUDevice; context: GPUCanvasContext } | null> => {
+export const initializeWebGPU = async ( canvas: HTMLCanvasElement ): Promise<{ device: GPUDevice; context: GPUCanvasContext } | null> => {
   const errorManager = getErrorManager();
   
   // Check if WebGPU is supported
@@ -160,20 +139,7 @@ export const initializeWebGPU = async (
     if (support.errors.length > 0) {
       errorManager.handleError(support.errors[0]);
     }
-    
-    // Show fallback content if provided
-    if (fallbackElement) {
-      fallbackElement.style.display = 'block';
-      fallbackElement.innerHTML = `
-        <div class="webgpu-fallback">
-          <h2>WebGPU Not Supported</h2>
-          <p>Your browser or device doesn't support WebGPU, which is required for this application.</p>
-          <p>Please try using a recent version of Chrome, Edge, or Firefox with WebGPU enabled.</p>
-          <p><a href="https://caniuse.com/webgpu" target="_blank">Learn more about WebGPU support</a></p>
-        </div>
-      `;
-    }
-    
+        
     return null;
   }
   
