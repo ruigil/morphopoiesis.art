@@ -7,7 +7,7 @@ Morphopoiesis follows a modular architecture centered around the Poiesis framewo
 ### Architecture Layers
 
 1. **Presentation Layer**
-   - Static site generator (appears to be using Deno)
+   - Static site generator (using Deno)
    - HTML/CSS templates and layouts
    - User interface components
 
