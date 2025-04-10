@@ -30,7 +30,7 @@
       "license": "cc-by",
       "sketch": true,
       "dynamic": false,
-      "debug": false,
+      "debug": true,
       "fx": false
     },
     {

@@ -1,3 +1,6 @@
+import { getErrorManager } from "./error/error-manager.ts";
+import { createShaderModuleWithErrorHandling, validateShaderRequirements } from "./error/index.ts";
+import { initializeWebGPU } from "./error/webgpu-support.ts";
 import { 
     BufferListener,
     Geometry, 
@@ -25,37 +28,16 @@ import { square } from "./utils/utils.ts";
 
 export const Poiesis = async (canvas: HTMLCanvasElement) => {
     let state: PoiesisState;
+    let errorManager = getErrorManager();
 
-    if (!canvas) {
-        throw new Error("Canvas is not defined");
-    }
-    
-    const context = canvas.getContext("webgpu") as GPUCanvasContext;
-    if (!context) {
-        throw new Error("WebGPU not supported on this browser! <br/>WebGPU is a new standard for graphics on the web.<br/>The standard is currently implemented only <a href='https://caniuse.com/webgpu'>on certain browsers</a>.<br/> For the full experience please use a supported browser. <br/>");
-    }
-    
-    const adapter = await navigator.gpu.requestAdapter();
-    if (!adapter) {
-        throw new Error("No appropriate GPUAdapter found. WebGPU may not be fully supported on this device/browser.");
-    }
-
-    //console.log(adapter.limits);
-    const device = await adapter.requestDevice();
-    if (!device) {
-        throw new Error("No device found !");
-    }
-
-    context.configure({
-        device: device,
-        format: navigator.gpu.getPreferredCanvasFormat(),
+    errorManager.configure({
+        logToConsole: false,
+        displayInDOM: true,
+        throwFatalErrors: true,
     });
 
-
-    state = {
-        context: context,
-        device: device
-    }
+    const result = await initializeWebGPU(canvas)
+    if (result) { state = result; }
     
     const makeBufferView = (variable: VariableType, size: number = 1): BufferView =>  {
         
@@ -97,7 +79,7 @@ export const Poiesis = async (canvas: HTMLCanvasElement) => {
         
         const createPrimitiveView = (type: string, buffer: ArrayBuffer, offset: number, size: number): TypedArray => {      
             const AT = getArrayType(type);
-            return new AT(buffer, offset, size / AT.BYTES_PER_ELEMENT);
+            return new AT(buffer).subarray(offset / AT.BYTES_PER_ELEMENT, (offset + size) / AT.BYTES_PER_ELEMENT);
         }
                 
         const createStructView = (def: StructType, baseOffset: number): Record<string, unknown> => {
@@ -244,11 +226,20 @@ export const Poiesis = async (canvas: HTMLCanvasElement) => {
   
     const createShaderModule = (spec: PSpec) => {
         if (!spec.code) throw new Error("Code is not defined in spec");
-
-        return state.device.createShaderModule({
-            label: "Custom shader",
-            code: spec.code
-        });
+        // Check if the shader has specific requirements
+        if (spec.requirements) {
+            validateShaderRequirements(
+                state.device,
+                spec.requirements.features || [],
+                spec.requirements.limits || {}
+            );
+        }
+        
+        return createShaderModuleWithErrorHandling(
+            state.device,
+            spec.code,
+            spec.label || "Custom shader"
+        );
     }
 
     const createGeometry = (spec: PSpec): Geometry => {

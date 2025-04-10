@@ -1,5 +1,3 @@
-import { Buffer } from "node:buffer";
-
 export interface PoiesisContext {
     build: (a: PSpec) => PoiesisInstance
 }
@@ -111,6 +109,13 @@ export interface PSpec {
     clearColor?: { r:number, g:number, b:number, a:number }
     bindings?: Array<Array<number>>;
     unipane?: { config: (pane: any, params: any) => void };
+    
+    // New properties for enhanced error handling
+    label?: string;
+    requirements?: {
+        features?: string[];
+        limits?: Record<string, number>;
+    };
 }
 
 
@@ -203,5 +208,4 @@ export interface BufferView {
     update: (newBuffer: ArrayBuffer) => void;
   }
   
-export type TypedArray = Float32Array | Int32Array | Uint32Array | Uint8Array;  
-  
+export type TypedArray = Float32Array | Int32Array | Uint32Array | Uint8Array;
