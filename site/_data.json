@@ -22,6 +22,18 @@
   },
   "shaders": [
     {
+      "id": "eca",
+      "path": "eca",
+      "title": "Elementary Cellular Automata",
+      "description": "Wolfram's Elementary Cellular Automata with all 256 rules. Move your mouse horizontally to cycle through the rules. The current rule is displayed in the top right corner.",
+      "tags": ["cellular automata", "wolfram", "elementary", "mouse"],
+      "license": "cc-by",
+      "sketch": true,
+      "dynamic": false,
+      "debug": false,
+      "fx": false
+    },
+    {
       "id": "ifs",
       "path": "ifs",
       "title": "IFS",
