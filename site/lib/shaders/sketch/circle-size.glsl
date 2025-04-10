@@ -22,7 +22,7 @@ void main() {
     float t = .2* T * 6.283;
     // big circle center
     vec2 c = r + 3. * vec2(cos(t), sin(t*2.));
-    // calculate the radius of circles, based on the distance
+    // calculate the radius of circles, based onP the distance
     // from the big circle 
     float radius = .4 - (length(c)*.05);
 

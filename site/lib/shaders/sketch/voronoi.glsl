@@ -52,7 +52,7 @@ void main() {
     vec2 r = ref(UV, R) * 6.;
 
     // noise scaling to animate
-    r *= 2. + noise(r*.3+T)*2. + sin(T);
+    //r *= 2. + noise(r*.3+T)*2. + sin(T);
 
     // voronoi of the plane
     vec4 v = voronoi(r);
