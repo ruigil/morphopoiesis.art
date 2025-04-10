@@ -1,9 +1,4 @@
 import { 
-    initializeWebGPU, 
-    validateShaderRequirements 
-} from "./error/index.ts";
-
-import { 
     BufferListener,
     Geometry, 
     ReadStorage, 
@@ -24,6 +19,11 @@ import {
     TypedArray,
     StructType,
 } from "./poiesis.interfaces.ts";
+
+import { 
+    initializeWebGPU, 
+    validateShaderRequirements 
+} from "./error/index.ts";
 
 import { square } from "./utils/utils.ts";
 
