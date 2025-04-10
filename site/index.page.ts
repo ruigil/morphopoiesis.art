@@ -1,8 +1,7 @@
 import { Data } from "lume/core/file.ts";
 
-export const title = "Home";
-export const motto = "studies on the synthesis of form";
-export const layout = "base.layout.ts";
+export const title = "morphopoiesis";
+export const layout = "front.layout.ts";
 export const url = "/";
 
 const post = (data: Data, { date }: Lume.Helpers) => {
@@ -36,17 +35,8 @@ export default ({ search }: Lume.Data, helpers: Lume.Helpers): string => {
   return /* html */`
     <main class="flex flex-col flex-grow screen w-full">
       <div class="grow"></div>
-      <div class="pt-4  text-2xl desc text-center text-5xl font-bold h-20 w-full desc backdrop-blur">&darr; studies on the synthesis of form &darr;</div>
     </main>
-    <div class="featured w-full">
-      <div class="container w-full max-w-4xl mx-auto p-10 mb-20">
-        <h1>Featured</h1>
-        <div class="mt-4 flex flex-col gap-4">
-          ${items()}
-        </div>
-      </div>
-    </div>
-    <div id="error" class="full-window"></div>
+    <div id="error-container" class="full-window"></div>
     <canvas class="full-window" id="canvas"></canvas>
     <style>
       .screen {

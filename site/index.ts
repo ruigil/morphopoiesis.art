@@ -18,7 +18,7 @@ const featureShader = async () => {
     }
   } : {
     params: {
-      mode: [0,0,0,3]
+      mode: [.0,.0,.9,3]
     }
   };
 
@@ -29,7 +29,7 @@ const featureShader = async () => {
         if (dark) {
           color.params.mode = [.4,.2,.1,3];
         } else {
-          color.params.mode = [0,0,0,3];
+          color.params.mode = [.0,.0,.9,3];
         }
       }
     });
