@@ -396,7 +396,7 @@ export const animate = (spec: (w:number,h:number) => PSpec, canvas: HTMLCanvasEl
         const rect = canvas.getBoundingClientRect();
         mouse[0] = (x - rect.left) / rect.width;
         mouse[1] = (y - rect.top) / rect.height;
-        shaderSpec?.mouse && shaderSpec.mouse(mouse[0], mouse[1], frame); 
+        shaderSpec?.mouse && shaderSpec.mouse(mouse[0], mouse[1]); 
     }
     
     canvas.addEventListener('mousemove', (event:MouseEvent) => updateMouse(event.clientX, event.clientY));
