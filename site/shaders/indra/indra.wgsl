@@ -24,8 +24,12 @@ fn hsv(h: f32, s: f32, v: f32) -> vec3f {
 
 @fragment
 fn fragmentMain(@builtin(position) coord: vec4f) -> @location(0) vec4f {
-    let scale = 10.;
-    let uv = normCoord(coord.xy, sys.resolution) * scale;
+    let scale = 1. ;
+    let uvc = normCoord(coord.xy, sys.resolution) * scale;
+
+    let p = toPolar(uvc);
+
+    let uv = vec2f(log(p.x)-sys.time, p.y * 13 / TAU);
 
     let s = vec2<f32>(sqrt(3.0), 1.);
 
@@ -39,11 +43,27 @@ fn fragmentMain(@builtin(position) coord: vec4f) -> @location(0) vec4f {
 
     let f = stroke(hex(huv.xy), .05, false) * fill(circle(huv.xy, .1), false);
 
-    return vec4f(vec3f(f),1.); 
+    let hh = vec2u(abs(huv.zw * vec2(1000,1000)));
+
+    let hash = f32(pcg(hh.x + hh.y )) / f32(0xffffffffu);
+
+    let color = hsv2rgb( vec3(hash, 1., length(uvc)));
+
+    return vec4f(color* f,1.); 
 }
 
 
+fn hsv2rgb(c :vec3f) -> vec3f {
+    let k = vec4f(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    let p = abs(fract(c.xxx + k.xyz) * 6.0 - k.www);
+    return c.z * mix(k.xxx, clamp(p - k.xxx, vec3(0.0), vec3(1.0)), c.y);
+}
 
+fn pcg(v: u32) -> u32 {
+	let state = v * 747796405u + 2891336453u;
+	let word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+	return (word >> 22u) ^ word;
+}
 
 //@normCoord-----------------------------------------------------------------------------------------
 // normalized coordinates
@@ -103,3 +123,6 @@ fn spiral(uv:vec2f, b:f32,  s: f32) -> f32 {
 }
 
 
+//-------------------------------------- complex math
+fn toCarte(z : vec2f) -> vec2f { return z.x * vec2(cos(z.y),sin(z.y)); }
+fn toPolar(z : vec2f) -> vec2f { return vec2(length(z),atan2(z.y,z.x)); }
