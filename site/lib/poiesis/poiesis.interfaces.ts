@@ -98,8 +98,8 @@ export interface VAttr {
 export interface PSpec {
     code: string;
     defs: Definitions;
-    uniforms?: (f:number) => Record<string,any>;
-    mouse?: (x:number,y:number,frame:number) => void;
+    uniforms?: (frame:number) => Record<string,any>;
+    mouse?: (x:number,y:number) => void;
     geometry?: { vertex: VAttr, instance?: VAttr };
     storages?: Array<{ name: string, size: number, data?: Array<any>, read?:boolean, vertex?:boolean, }>;
     samplers?: Array<{ name : string, magFilter: string, minFilter: string }>;
@@ -109,7 +109,6 @@ export interface PSpec {
     clearColor?: { r:number, g:number, b:number, a:number }
     bindings?: Array<Array<number>>;
     unipane?: { config: (pane: any, params: any) => void };
-    
     // New properties for enhanced error handling
     label?: string;
     requirements?: {

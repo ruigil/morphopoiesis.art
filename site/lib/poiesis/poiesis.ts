@@ -28,13 +28,6 @@ import { square } from "./utils/utils.ts";
 
 export const Poiesis = async (canvas: HTMLCanvasElement) => {
     let state: PoiesisState;
-    let errorManager = getErrorManager();
-
-    errorManager.configure({
-        logToConsole: false,
-        displayInDOM: true,
-        throwFatalErrors: true,
-    });
 
     const result = await initializeWebGPU(canvas)
     if (result) { state = result; }
