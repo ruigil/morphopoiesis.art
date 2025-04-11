@@ -43,7 +43,7 @@ const featureShader = async () => {
   //const spec = await ligrowth(code,defs, undefined);
   const code = await loadWGSL(`./shaders/boids/boids.wgsl`);
   const defs = await loadJSON(`./shaders/boids/boids.json`);
-  const spec = await boids(code,defs, undefined);
+  const spec = await boids(code,defs);
 
   const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
   const anim = animate(spec, canvas, color);
