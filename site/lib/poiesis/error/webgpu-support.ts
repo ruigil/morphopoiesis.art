@@ -1,5 +1,5 @@
-import { PoiesisError, WebGPUSupportResult } from "./error.interfaces.ts";
-import { getErrorManager } from "./error-manager.ts";
+import { PoiesisError, RequiredFeatures, RequiredLimits, WebGPUSupportResult } from "./error.types.ts";
+import { ErrorManager } from "./index.ts";
 
 /**
  * Check if WebGPU is supported in the current browser and environment
@@ -126,18 +126,22 @@ export const checkWebGPUSupport = async (): Promise<WebGPUSupportResult> => {
 /**
  * Initialize WebGPU with fallback options
  * @param canvas The canvas element to use
- * @param fallbackElement Optional element to display fallback content in
  * @returns A promise that resolves to a GPUDevice if successful
  */
-export const initializeWebGPU = async ( canvas: HTMLCanvasElement ): Promise<{ device: GPUDevice; context: GPUCanvasContext } | null> => {
-  const errorManager = getErrorManager();
+export type WebGPUInitializationResult = {
+  device: GPUDevice;
+  context: GPUCanvasContext;
+} | null;
+
+export const initializeWebGPU = async ( canvas: HTMLCanvasElement ): Promise<WebGPUInitializationResult> => {
   
   // Check if WebGPU is supported
   const support = await checkWebGPUSupport();
   if (!support.supported) {
     // Handle the first error
     if (support.errors.length > 0) {
-      errorManager.handleError(support.errors[0]);
+      const error = support.errors[0];
+      ErrorManager.error(error.type, error.message);
     }
         
     return null;
@@ -146,7 +150,7 @@ export const initializeWebGPU = async ( canvas: HTMLCanvasElement ): Promise<{ d
   // Get the WebGPU context
   const context = canvas.getContext('webgpu');
   if (!context) {
-    errorManager.error(
+    ErrorManager.error(
       'initialization',
       'Failed to get WebGPU context from canvas',
       {
@@ -160,7 +164,7 @@ export const initializeWebGPU = async ( canvas: HTMLCanvasElement ): Promise<{ d
   // Request adapter
   const adapter = await navigator.gpu.requestAdapter();
   if (!adapter) {
-    errorManager.error(
+    ErrorManager.error(
       'initialization',
       'Failed to get GPU adapter',
       {
@@ -178,7 +182,7 @@ export const initializeWebGPU = async ( canvas: HTMLCanvasElement ): Promise<{ d
     
     // Add device lost handler
     device.lost.then((info) => {
-      errorManager.error(
+      ErrorManager.error(
         'runtime',
         `WebGPU device was lost: ${info.message}`,
         {
@@ -199,10 +203,10 @@ export const initializeWebGPU = async ( canvas: HTMLCanvasElement ): Promise<{ d
     
     return { device, context };
   } catch (e) {
-    errorManager.wrapError(
-      e instanceof Error ? e : new Error(String(e)),
+    const error = e instanceof Error ? e : new Error(String(e))
+    ErrorManager.error(
       'initialization',
-      'Failed to initialize WebGPU device',
+      'Failed to initialize WebGPU device: ' + error.message,
       {
         fatal: true,
         suggestion: 'Check browser console for more details'
@@ -218,10 +222,8 @@ export const initializeWebGPU = async ( canvas: HTMLCanvasElement ): Promise<{ d
  * @param requiredFeatures Array of feature names required by the shader
  * @returns An object with the check result and any missing features
  */
-export const checkRequiredFeatures = (
-  device: GPUDevice,
-  requiredFeatures: string[]
-): { supported: boolean; missingFeatures: string[] } => {
+
+export const checkRequiredFeatures = (device: GPUDevice, requiredFeatures: string[]): RequiredFeatures => {
   const missingFeatures: string[] = [];
   
   for (const feature of requiredFeatures) {
@@ -242,10 +244,8 @@ export const checkRequiredFeatures = (
  * @param requiredLimits Record of limit names and their minimum values
  * @returns An object with the check result and any insufficient limits
  */
-export const checkRequiredLimits = (
-  device: GPUDevice,
-  requiredLimits: Record<string, number>
-): { supported: boolean; insufficientLimits: Record<string, { required: number; actual: number }> } => {
+export const checkRequiredLimits = (device: GPUDevice, requiredLimits: Record<string, number>) : RequiredLimits => {
+  
   const insufficientLimits: Record<string, { required: number; actual: number }> = {};
   
   for (const [limitName, requiredValue] of Object.entries(requiredLimits)) {

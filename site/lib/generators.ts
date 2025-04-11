@@ -1,36 +1,36 @@
 import { WgslReflect, VariableInfo, MemberInfo, TypeInfo, StructInfo, ArrayInfo, TemplateInfo } from "./poiesis/wgsl-reflect/index.ts";
-import { ArrayType, BaseVariable, Definitions, PrimitiveType, StructType, TemplateType, Variable, VariableType } from "./poiesis/poiesis.interfaces.ts";
+import { ArrayType, BaseVariable, Definitions, PrimitiveType, StructType, TemplateType, Variable, VariableType } from "./poiesis/poiesis.types.ts";
 
 export type Shader = {
-    id: string,
-    title: string,
-    description: string,
-    path: string,
-    image: string,
-    tags: string[],
-    sketch: boolean,
-    panel: boolean,
-    fx: boolean,
-    spec: string,
-    wgsl: string,
-    dynamic: boolean,
-    license: string,
+  id: string,
+  title: string,
+  description: string,
+  path: string,
+  image: string,
+  tags: string[],
+  sketch: boolean,
+  panel: boolean,
+  fx: boolean,
+  spec: string,
+  wgsl: string,
+  dynamic: boolean,
+  license: string,
 }
 
 const reflect = (wgslCode: string) => {
   const makeDefinitions = (variables: VariableInfo[]): Record<string, Variable> => {
     const result: Record<string, Variable> = {};
-  
+
     const makeArrayType = (typeInfo: TypeInfo | null, elementSize?: number): VariableType => {
       if (!typeInfo) {
         return { name: "unknown", size: elementSize || 0, primitive: "unknown" } as PrimitiveType;
       }
-      
+
       // Base info for the type
       const baseInfo: BaseVariable = {
         size: elementSize || 0, // Use provided element size if available
       };
-      
+
       if (typeInfo instanceof StructInfo) {
         // Element is a struct
         const members: Record<string, VariableType> = {};
@@ -73,35 +73,35 @@ const reflect = (wgslCode: string) => {
           primitive: typeInfo.name
         } as PrimitiveType;
       }
-    }  
-      
+    }
+
     const makeDefinitionType = (variableInfo: VariableInfo | MemberInfo): VariableType => {
       // Start with the base info - size is already provided by the reflection API
       const baseInfo: BaseVariable = {
         size: variableInfo.size, // Total size in bytes
       };
-      
+
       // Add binding/group info if present (only on VariableInfo, not MemberInfo)
       if ('group' in variableInfo && variableInfo.group !== undefined) {
         baseInfo.group = variableInfo.group;
         baseInfo.binding = variableInfo.binding;
       }
-      
+
       // Add offset if present (usually on MemberInfo)
       if ('offset' in variableInfo && variableInfo.offset !== undefined) {
         baseInfo.offset = variableInfo.offset;
       }
-      
+
       // Add access if present
       if ('access' in variableInfo && variableInfo.access) {
         baseInfo.access = variableInfo.access;
       }
-      
+
       // Now create the typed structure based on the type
       if (!variableInfo.type) {
         return { ...baseInfo, primitive: "unknown" } as PrimitiveType;
       }
-      
+
       if (variableInfo.type instanceof StructInfo) {
         // It's a struct
         const members: Record<string, VariableType> = {};
@@ -120,13 +120,13 @@ const reflect = (wgslCode: string) => {
         // It's an array
         // For arrays, we need the stride between elements
         const elementStride = variableInfo.stride;
-        
+
         // Construct the element type
         const element = makeArrayType(
-          variableInfo.type.format, 
+          variableInfo.type.format,
           elementStride // Pass the stride as the element size
         );
-        
+
         return {
           ...baseInfo,
           array: {
@@ -153,11 +153,11 @@ const reflect = (wgslCode: string) => {
         } as PrimitiveType;
       }
     }
-      
+
     for (const variable of variables) {
       result[variable.name] = makeDefinitionType(variable) as Variable;
     }
-    
+
     return result;
   }
   const primitiveTypeName = (type: TypeInfo | null): string => {
@@ -165,38 +165,38 @@ const reflect = (wgslCode: string) => {
     if (type instanceof TemplateInfo) return primitiveTypeName(type.format);
     return type!.name;
   }
-  const sizeType = (type: TypeInfo | null, size:number = 0): number => {
-      if (type instanceof ArrayInfo) return sizeType(type.format, type.count);
-      if (type instanceof TemplateInfo) return sizeType(type.format, type.name === 'vec4' ? 4 : type.name === 'vec3' ?  3 : type.name === 'vec2' ? 2 : 1 );
-      // we assume only the primitives types u32, i32 and f32, so all 4 bytes 
-      return size * 4;
+  const sizeType = (type: TypeInfo | null, size: number = 0): number => {
+    if (type instanceof ArrayInfo) return sizeType(type.format, type.count);
+    if (type instanceof TemplateInfo) return sizeType(type.format, type.name === 'vec4' ? 4 : type.name === 'vec3' ? 3 : type.name === 'vec2' ? 2 : 1);
+    // we assume only the primitives types u32, i32 and f32, so all 4 bytes 
+    return size * 4;
   }
 
   const reflect = new WgslReflect(wgslCode);
   const uniformVariables = makeDefinitions(reflect.uniforms);
-  const storageVariables = makeDefinitions(reflect.storage.filter( s => s.resourceType === 1));
-  
-  const samplers = reflect.samplers.map( s => ({ name: s.name, group: s.group, binding: s.binding }))
-  const textures = reflect.textures.map( t => ({ name: t.name, group: t.group, binding: t.binding }))
-                    .concat( reflect.storage.filter( s => s.resourceType === 4).map( t => ({ name: t.name, group: t.group, binding: t.binding })))
+  const storageVariables = makeDefinitions(reflect.storage.filter(s => s.resourceType === 1));
+
+  const samplers = reflect.samplers.map(s => ({ name: s.name, group: s.group, binding: s.binding }))
+  const textures = reflect.textures.map(t => ({ name: t.name, group: t.group, binding: t.binding }))
+    .concat(reflect.storage.filter(s => s.resourceType === 4).map(t => ({ name: t.name, group: t.group, binding: t.binding })))
 
   const entries = {
-      ...(reflect.entry.vertex[0] ? 
+    ...(reflect.entry.vertex[0] ?
       {
-          vertex: {
+        vertex: {
           name: reflect.entry.vertex[0].name,
-          inputs: reflect.entry.vertex[0].inputs.map( i => 
-              ({ name: i.name, location: i.location,  type: primitiveTypeName(i.type), size: sizeType(i.type)}))
-          }
+          inputs: reflect.entry.vertex[0].inputs.map(i =>
+            ({ name: i.name, location: i.location, type: primitiveTypeName(i.type), size: sizeType(i.type) }))
+        }
       } : undefined),
-      ...(reflect.entry.fragment[0] ? {
-          fragment: {
-              name: reflect.entry.fragment[0].name
-          },
-      } : undefined),
-      ...(reflect.entry.compute ? {
-          computes:  reflect.entry.compute.map( c => ({ name: c.name }))
-      } : undefined)
+    ...(reflect.entry.fragment[0] ? {
+      fragment: {
+        name: reflect.entry.fragment[0].name
+      },
+    } : undefined),
+    ...(reflect.entry.compute ? {
+      computes: reflect.entry.compute.map(c => ({ name: c.name }))
+    } : undefined)
   }
 
   return {
@@ -205,30 +205,30 @@ const reflect = (wgslCode: string) => {
     entries: entries,
     uniforms: uniformVariables,
     storages: storageVariables,
-    bindGroupLength: reflect.getBindGroups()[0].length  
+    bindGroupLength: reflect.getBindGroups()[0].length
   } as Definitions;
-  
+
 }
 
 
 export const script = (shader: Shader, rpath: string) => {
 
-    const saveScreenshot = (id: string) => {
-      return /* ts */ `
+  const saveScreenshot = (id: string) => {
+    return /* ts */ `
         // Add keypress event listener
         document.addEventListener('keypress', function(event) {
           if (event.key === 's') { 
             let dataUrl = canvas.toDataURL('image/png');
             let link = document.createElement('a');
             link.href = dataUrl;
-            link.download = '${ id }.png';
+            link.download = '${id}.png';
             link.click();
           }
         });
       `
-    }
-    const resetKey = () => {
-      return /* ts */ `
+  }
+  const resetKey = () => {
+    return /* ts */ `
         // Add keypress event listener
         document.addEventListener('keypress', function(event) {
           if (event.key === 'r') { 
@@ -237,10 +237,10 @@ export const script = (shader: Shader, rpath: string) => {
           }
         });
       `
-    }
-  
-    const fillParam = () => {
-      return /* ts */ `
+  }
+
+  const fillParam = () => {
+    return /* ts */ `
         const PARAMS = {
           fps: '',
           frame: 0,
@@ -248,10 +248,10 @@ export const script = (shader: Shader, rpath: string) => {
           delay: 0
         };
       `
-    }
-  
-    const tweakPane = () => {
-      return /* ts */ `
+  }
+
+  const tweakPane = () => {
+    return /* ts */ `
         
         const pane = new Pane({ title: '${shader.title}'});
         
@@ -287,10 +287,10 @@ export const script = (shader: Shader, rpath: string) => {
         let specstorages = null;
 
       `
-    }
-  
-    const listeners = () => {
-      return /* ts */ `
+  }
+
+  const listeners = () => {
+    return /* ts */ `
         const fpsListener = {
           onFPS: (fps) => { PARAMS.fps = fps.fps + " fps"; PARAMS.elapsed = fps.time; PARAMS.frame = fps.frame }
         };
@@ -333,13 +333,13 @@ export const script = (shader: Shader, rpath: string) => {
           }
         ];
       `
-    }
-  
-    return /*ts*/ `
+  }
+
+  return /*ts*/ `
       import { animate } from '${rpath}/../lib/poiesis/index.ts';  
       import { ${shader.id} } from '${rpath}/../shaders/${shader.path}/${shader.id}.ts';
       
-      ${shader.panel ? `import { Pane } from '${rpath}/../lib/tweakpane/tweakpane-4.0.3.min.js';`: '' }
+      ${shader.panel ? `import { Pane } from '${rpath}/../lib/tweakpane/tweakpane-4.0.3.min.js';` : ''}
 
       document.addEventListener('DOMContentLoaded', async (event)  => {
         const canvas = document.querySelector("#canvas");
@@ -351,22 +351,22 @@ export const script = (shader: Shader, rpath: string) => {
   
         const spec = await ${shader.id}(code,defs, fx);
   
-        ${ shader.panel && listeners() }
-        ${ shader.panel && fillParam() }
-        ${ shader.panel && tweakPane() }
+        ${shader.panel && listeners()}
+        ${shader.panel && fillParam()}
+        ${shader.panel && tweakPane()}
 
-        const anim = animate(spec, canvas, {} ${ shader.panel ?  ', fpsListener, bufferListeners, specListener' : '' } );
+        const anim = animate(spec, canvas, {} ${shader.panel ? ', fpsListener, bufferListeners, specListener' : ''} );
         anim.start();
           
-        ${ saveScreenshot(shader.id) }
-        ${ resetKey() }
+        ${saveScreenshot(shader.id)}
+        ${resetKey()}
   
       });`
-  }
-  
+}
+
 export const htmlPage = (shader: Shader) => {
 
-    return /*html*/`
+  return /*html*/`
       <div id="error" class="full-window"></div>
       <canvas id="canvas" class="full-window"></canvas>
       
@@ -383,14 +383,14 @@ export const htmlPage = (shader: Shader) => {
           flex-direction: column;
       }
       </style>
-      ${ shader.fx ? '<script src="./fxhash.min.js"></script>' : '' }
+      ${shader.fx ? '<script src="./fxhash.min.js"></script>' : ''}
       <script type="module" src="index.js"></script>
     `;
 }
 const by = await Deno.readTextFile(`./site/lib/licenses/cc-by-4.0.md`);
 const byNcNd = await Deno.readTextFile(`./site/lib/licenses/cc-by-nc-nd-4.0.md`);
 
-const licenses:Record<string,string> = {
+const licenses: Record<string, string> = {
   "cc-by": by,
   "cc-by-nc-nd": byNcNd
 }
@@ -408,7 +408,7 @@ export const shaderGenerator = async function* (shader: Shader, rpath: string = 
   // Definitions file
   yield {
     url: `${rpath}/../shaders/${shader.path}/${shader.id}.json`,
-    content: `${ JSON.stringify(reflect( shader.wgsl ), null, 2)}`,
+    content: `${JSON.stringify(reflect(shader.wgsl), null, 2)}`,
   };
   // html page
   yield {
@@ -426,7 +426,7 @@ export const shaderGenerator = async function* (shader: Shader, rpath: string = 
   // shader code
   yield {
     url: `${rpath}/../shaders/${shader.path}/index.ts`,
-    content: script(shader,rpath),
+    content: script(shader, rpath),
   };
 
 }

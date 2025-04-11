@@ -1,43 +1,24 @@
-export const square = (x: number) => {
-    return [
-        -x, -x, 
-        x, -x,
-        x,  x,
-          
-        -x, -x,
-        x,  x,
-        -x,  x,
-    ]
-}
+export const square = (x: number) => [-x, -x, x, -x, x, x, -x, -x, x, x, -x, x]
 
-export const triangle = (x: number) => {
-    return [
-        -x, -x, 
-        x, -x,
-        0,  x,
-    ]
-}
+export const triangle = (x: number) => [-x, -x, x, -x, 0, x,]
 
-export const circle = (x: number, n: number) => {
-    const vertices = [];
-    for (let i = 0; i < n; i++) {
+export const circle = (x: number, n: number): number[] =>
+    Array.from({ length: n }, (_, i) => {
         const a = (i / n) * Math.PI * 2;
         const a2 = ((i + 1) / n) * Math.PI * 2;
-        vertices.push(0, 0, Math.cos(a) * x, Math.sin(a) * x, Math.cos(a2) * x, Math.sin(a2) * x);
-    }
-    return vertices;
-}
+        return [Math.cos(a) * x, Math.sin(a) * x, Math.cos(a2) * x, Math.sin(a2) * x];
+    }).flat();
 
-export const cube = (x: number) => {
-    return [
-        -x, -x, -x, x, -x, -x, x,  x, -x, -x,  x, -x, // -z face
-        -x, -x,  x, x, -x,  x, x,  x,  x, -x,  x,  x, // z face
-        -x, -x, -x, -x,  x, -x, -x,  x,  x, -x, -x,  x, // -x face
-        x, -x, -x, x,  x, -x, x,  x,  x, x, -x,  x, // x face
-        -x, -x, -x, -x, -x,  x, x, -x,  x, x, -x, -x, // -y face
-        -x,  x, -x, -x,  x,  x, x,  x,  x, x,  x, -x, // y face
+export const cube = (x: number) =>
+    [
+        -x, -x, -x, x, -x, -x, x, x, -x, -x, x, -x, // -z face
+        -x, -x, x, x, -x, x, x, x, x, -x, x, x, // z face
+        -x, -x, -x, -x, x, -x, -x, x, x, -x, -x, x, // -x face
+        x, -x, -x, x, x, -x, x, x, x, x, -x, x, // x face
+        -x, -x, -x, -x, -x, x, x, -x, x, x, -x, -x, // -y face
+        -x, x, -x, -x, x, x, x, x, x, x, x, -x, // y face
     ];
-}
+
 
 export const cornell = () => {
     const vertices = [
@@ -142,12 +123,12 @@ export const cornell = () => {
     ]
 
     const materials = [
-        { color: [0.73, 0.73, 0.73, 1.0], emission:[0.0, 0.0, 0.0, 0.0], metallic: 0, roughness: 0 }, // floor, ceiling, back wall
-        { color: [0.73, 0.73, 0.73, 1.0], emission:[0.0, 0.0, 0.0, 0.0], metallic: 1, roughness: 0 }, // tall block
-        { color: [0.73, 0.73, 0.73, 1.0], emission:[0.0, 0.0, 0.0, 0.0], metallic: 0, roughness: 0 }, // short block
-        { color: [0.73, 0.73, 0.73, 1.0], emission:[15.0, 15.0, 15.0, 1.0], metallic: 0, roughness: 0 }, // light
-        { color: [0.65, 0.05, 0.05, 1.0], emission:[0.0, 0.0, 0.0, 0.0], metallic: 0, roughness: 0 }, // left wall
-        { color: [0.12, 0.45, 0.15, 1.0], emission:[0.0, 0.0, 0.0, 0.0], metallic: 0, roughness: 0 } // right wall
+        { color: [0.73, 0.73, 0.73, 1.0], emission: [0.0, 0.0, 0.0, 0.0], metallic: 0, roughness: 0 }, // floor, ceiling, back wall
+        { color: [0.73, 0.73, 0.73, 1.0], emission: [0.0, 0.0, 0.0, 0.0], metallic: 1, roughness: 0 }, // tall block
+        { color: [0.73, 0.73, 0.73, 1.0], emission: [0.0, 0.0, 0.0, 0.0], metallic: 0, roughness: 0 }, // short block
+        { color: [0.73, 0.73, 0.73, 1.0], emission: [15.0, 15.0, 15.0, 1.0], metallic: 0, roughness: 0 }, // light
+        { color: [0.65, 0.05, 0.05, 1.0], emission: [0.0, 0.0, 0.0, 0.0], metallic: 0, roughness: 0 }, // left wall
+        { color: [0.12, 0.45, 0.15, 1.0], emission: [0.0, 0.0, 0.0, 0.0], metallic: 0, roughness: 0 } // right wall
     ]
 
     return { vertices, indices, meshes, materials }

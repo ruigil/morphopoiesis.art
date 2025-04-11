@@ -1,5 +1,5 @@
-import { ShaderErrorInfo } from "./error.interfaces.ts";
-import { getErrorManager } from "./error-manager.ts";
+import { ShaderErrorInfo } from "./error.types.ts";
+import { ErrorManager } from "./index.ts";
 
 /**
  * Common shader error patterns and their suggestions
@@ -134,10 +134,9 @@ export const createShaderModuleWithErrorHandling = (
   code: string,
   label: string = "Custom shader"
 ): GPUShaderModule => {
-  const errorManager = getErrorManager();
   
   if (!code || code.trim() === '') {
-    errorManager.error(
+    ErrorManager.error(
       'compilation',
       'Shader code is empty or undefined',
       {
@@ -164,7 +163,7 @@ export const createShaderModuleWithErrorHandling = (
           if (message.type === 'error') {
             const errorInfo = parseShaderError(message.message);
             
-            errorManager.error(
+            ErrorManager.error(
               'compilation',
               `Shader compilation error: ${message.message}`,
               {
@@ -176,7 +175,7 @@ export const createShaderModuleWithErrorHandling = (
             );
           } else if (message.type === 'warning') {
             // Log warnings but don't treat them as fatal
-            errorManager.error(
+            ErrorManager.error(
               'compilation',
               `Shader compilation warning: ${message.message}`,
               {
@@ -189,10 +188,10 @@ export const createShaderModuleWithErrorHandling = (
       }
     }).catch(e => {
       // Handle errors in getCompilationInfo itself
-      errorManager.wrapError(
-        e instanceof Error ? e : new Error(String(e)),
+      const error = e instanceof Error ? e : new Error(String(e));
+      ErrorManager.error(
         'compilation',
-        'Error checking shader compilation status',
+        'Error checking shader compilation status' + error.message,
         { fatal: false }
       );
     });
@@ -202,10 +201,9 @@ export const createShaderModuleWithErrorHandling = (
     // Handle immediate errors during shader module creation
     const errorInfo = parseShaderError(e instanceof Error ? e.message : String(e));
     
-    errorManager.wrapError(
-      e instanceof Error ? e : new Error(String(e)),
+    ErrorManager.error(
       'compilation',
-      'Shader compilation failed',
+      'Shader compilation failed' + errorInfo.message,
       {
         fatal: true,
         details: formatShaderErrorContext(code, errorInfo.lineNumber, errorInfo.columnNumber),
@@ -225,12 +223,9 @@ export const createShaderModuleWithErrorHandling = (
  * @param requiredLimits Record of limit names and their minimum values
  * @returns True if the device meets all requirements
  */
-export const validateShaderRequirements = (
-  device: GPUDevice,
-  requiredFeatures: string[] = [],
-  requiredLimits: Record<string, number> = {}
-): boolean => {
-  const errorManager = getErrorManager();
+export const validateShaderRequirements = 
+(device: GPUDevice,requiredFeatures: string[] = [], requiredLimits: Record<string, number> = {} ): boolean => {
+
   
   // Check features
   const missingFeatures: string[] = [];
@@ -241,7 +236,7 @@ export const validateShaderRequirements = (
   }
   
   if (missingFeatures.length > 0) {
-    errorManager.error(
+    ErrorManager.error(
       'compatibility',
       `Shader requires features not supported by this device: ${missingFeatures.join(', ')}`,
       {
@@ -269,7 +264,7 @@ export const validateShaderRequirements = (
       .map(([name, { required, actual }]) => `${name}: required ${required}, actual ${actual}`)
       .join('\n');
     
-    errorManager.error(
+    ErrorManager.error(
       'compatibility',
       'Shader requires device limits that exceed the capabilities of this device',
       {

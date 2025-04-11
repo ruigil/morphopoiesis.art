@@ -1,7 +1,7 @@
 /**
  * Defines the types of errors that can occur in the Poiesis framework
  */
-export type PoiesisErrorType = 
+export type PoiesisErrorType =
   | 'initialization'  // Errors during framework initialization
   | 'compatibility'   // Browser/device compatibility issues
   | 'compilation'     // Shader compilation errors
@@ -13,28 +13,21 @@ export type PoiesisErrorType =
 /**
  * Structured error object for Poiesis framework
  */
-export interface PoiesisError {
+export type PoiesisError = {
   /** The type of error that occurred */
   type: PoiesisErrorType;
-  
   /** Human-readable error message */
   message: string;
-  
   /** Additional technical details (stack trace, error context, etc.) */
   details?: string;
-  
   /** Suggested action to resolve the error */
   suggestion?: string;
-  
   /** Whether this error is fatal and should stop execution */
   fatal: boolean;
-  
   /** The original error object if this wraps another error */
   originalError?: Error;
-  
   /** Error code for programmatic handling */
   code?: string;
-  
   /** Additional context-specific data */
   context?: Record<string, unknown>;
 }
@@ -42,10 +35,9 @@ export interface PoiesisError {
 /**
  * Configuration options for the error manager
  */
-export interface ErrorManagerOptions {
+export type ErrorManagerOptions = {
   /** Whether to log errors to the console */
   logToConsole?: boolean;
-    
   /** Whether to throw fatal errors */
   throwFatalErrors?: boolean;
 }
@@ -58,19 +50,15 @@ export type ErrorCallback = (error: PoiesisError) => void;
 /**
  * Result of WebGPU support check
  */
-export interface WebGPUSupportResult {
+export type WebGPUSupportResult = {
   /** Whether WebGPU is supported at all */
   supported: boolean;
-  
   /** Specific features and their support status */
   features: Record<string, boolean>;
-  
   /** Any errors encountered during the check */
   errors: PoiesisError[];
-  
   /** Device limits if available */
   limits?: Record<string, number>;
-  
   /** Adapter info if available */
   adapter?: {
     name?: string;
@@ -81,19 +69,27 @@ export interface WebGPUSupportResult {
 /**
  * Information about a shader error
  */
-export interface ShaderErrorInfo {
+export type ShaderErrorInfo = {
   /** The error message */
   message: string;
-  
   /** The line number where the error occurred, if available */
   lineNumber?: number;
-  
   /** The column number where the error occurred, if available */
   columnNumber?: number;
-  
   /** Suggested fix for the error */
   suggestion?: string;
-  
   /** The error code if available */
   code?: string;
+}
+
+export type RequiredLimits = {
+  supported: boolean;
+  insufficientLimits: Record<string, { required: number; actual: number }>;
+}
+
+export type PoiesisErrorOptions = Partial<Omit<PoiesisError, 'type' | 'message' | 'originalError'>>;
+
+export type RequiredFeatures = {
+  supported: boolean;
+  missingFeatures: string[];
 }

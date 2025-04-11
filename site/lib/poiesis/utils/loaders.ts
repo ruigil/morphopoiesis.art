@@ -23,6 +23,6 @@ export const loadWebcam = async () => {
     await video.play();
     const videoSettings = stream.getVideoTracks()[0].getSettings();
     const capabilities = stream.getVideoTracks()[0].getCapabilities();
-    
-    return { video: video, settings: videoSettings, capabilities: capabilities }; 
+
+    return { video: video, settings: videoSettings, capabilities: capabilities };
 }
