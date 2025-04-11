@@ -40,7 +40,8 @@ export const boids = (code:string, defs:Definitions) => {
             computes: [
                 { name: "computeMain", workgroups:  [Math.ceil(numBoids / 64), 1, 1] },
             ],
-            bindings: [ [0,4,1,2], [0,4,2,1] ]
+            bindings: [ [0,4,1,2], [0,4,2,1] ],
+            clearColor: { r: 0, g: 0, b: 0, a: 0 },
         }
     }
 
