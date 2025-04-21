@@ -1,12 +1,13 @@
 
-import { loadJSON, loadWGSL, animate } from "./lib/poiesis/index.ts";
+import { loadJSON, loadWGSL, drawLoop, Poiesis } from "./lib/poiesis/index.ts";
 import { boids } from "./shaders/boids/boids.ts";
 
 
 const featureShader = async () => {
 
-  const body = document.querySelector('body');
-
+/*
+  // useful to configure uniform values based on the theme
+  const body = document.querySelector('body')!;
   const isDark = (): boolean => {
     const currentMode = globalThis.matchMedia("(prefers-color-scheme: dark)").matches.toString();
     return (localStorage.getItem("dark-theme") || currentMode) === "true"; // true = "dark", false = "light"
@@ -35,16 +36,16 @@ const featureShader = async () => {
     });
   });
 
-  observer.observe(body!, { attributes: true });
+  observer.observe(body, { attributes: true });
+*/
 
   const code = await loadWGSL(`./shaders/boids/boids.wgsl`);
   const defs = await loadJSON(`./shaders/boids/boids.json`);
   const spec = await boids(code,defs);
-
+  const gpu = await Poiesis();
   const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
-  const anim = animate(spec, canvas, color);
+  const anim = drawLoop(gpu, spec, canvas);
   anim.start();
-
 }
 
 document.addEventListener('DOMContentLoaded', () => {
