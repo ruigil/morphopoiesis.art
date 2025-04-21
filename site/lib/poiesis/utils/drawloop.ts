@@ -1,22 +1,12 @@
-import { BufferListener, FPSListener, PoiesisInstance, PSpec, SpecListener } from "../poiesis.types.ts";
-import { Poiesis } from "../poiesis.ts";
-import { ErrorManager } from "../error/index.ts";
+import { BufferListener, FPSListener, PoiesisGPU, PoiesisInstance, PSpec, SpecListener } from "../poiesis.types.ts";
 import { PoiesisError } from "../error/error.types.ts";
+import { ErrorManager } from "../index.ts";
 
-export * from "./geometry.ts";
-export * from "./loaders.ts";
 
-/**
- * Creates a debounced function that delays invoking func until after wait milliseconds have elapsed
- * since the last time the debounced function was invoked.
- * @param func The function to debounce
- * @param wait The number of milliseconds to delay
- * @returns A debounced version of the function
- */
 const debounce = <T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void => {
     let timeout: number | undefined;
 
-    // we need 'this' because the function is called in the execution context, not the lexical one one.
+    // we need 'this' because the function is called in the execution context, not the lexical one.
     return function (this: T, ...args: Parameters<T>): void {
         const later = () => {
             timeout = undefined;
@@ -28,51 +18,29 @@ const debounce = <T extends (...args: any[]) => any>(func: T, wait: number): (..
     };
 }
 
-const gaussian = (x: number, y: number, sigma: number): number => {
-    const pi = Math.PI;
-    return Math.exp(-(x * x + y * y) / (2.0 * sigma * sigma)) / (2.0 * pi * sigma * sigma);
-}
 
-export const createGaussianKernel = (sigma: number): number[] => {
-    const kernel: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0];
-    let sum = 0;
-
-    for (let i = 0; i < 9; i++) {
-        const x = i % 3;
-        const y = Math.floor(i / 3);
-        kernel[y * 3 + x] = gaussian(x - 1, y - 1, sigma);
-        sum += kernel[y * 3 + x];
-    }
-
-    // Normalize the kernel
-    for (let i = 0; i < 9; i++) {
-        let x = i % 3;
-        let y = Math.floor(i / 3);
-        kernel[y * 3 + x] /= sum;
-    }
-
-    return kernel;
-}
-
-
-export const scaleAspect = (w: number, h: number, scale: number) => {
-    const cellSize = Math.min(w, h) / scale;
-    return { x: Math.floor(w / cellSize + .5), y: Math.floor(h / cellSize + .5) };
-}
-
+// maybe a webcomponent ?
 const displayError = (error: PoiesisError) => {
-
+    const escapeHtml = (text: string): string => {
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;")
+            .replace(/\n/g, "<br/>");
+    }
     const errorElement = document.getElementById('poiesis-error')!
     errorElement.className = `poiesis-error ${error.type}${error.fatal ? ' fatal' : ''}`;
     errorElement.style.display = 'block';
     errorElement.innerHTML = `
       <h3 class="poiesis-error-title">${error.type} Error</h3>
-      <p class="poiesis-error-message">${error.message}</p>
+      <p class="poiesis-error-message">${escapeHtml(error.message)}</p>
       ${error.suggestion ? `<p class="poiesis-error-suggestion">Suggestion: ${error.suggestion}</p>` : ''}
       ${error.details ? `<pre class="poiesis-error-details">${error.details}</pre>` : ''}`
 }
 
-export const animate = (spec: (w: number, h: number) => PSpec, canvas: HTMLCanvasElement, unis = {}, fpsListener?: FPSListener, bufferListeners?: BufferListener[], specListener?: SpecListener) => {
+export const drawLoop = (gpu: PoiesisGPU, spec: (w: number, h: number) => PSpec, canvas: HTMLCanvasElement, unis = {}, fpsListener?: FPSListener, bufferListeners?: BufferListener[], specListener?: SpecListener) => {
 
     const mouse: Array<number> = [0, 0, 0, 0];
     const mButtons: Array<number> = [0, 0, 0];
@@ -81,8 +49,7 @@ export const animate = (spec: (w: number, h: number) => PSpec, canvas: HTMLCanva
 
     let shaderSpec: PSpec | null = null;
     let frame: number = 0;
-
-    ErrorManager.addErrorCallback( (error) => displayError(error) );
+    ErrorManager.addErrorCallback((error) => displayError(error));
 
     const controller = () => {
         let isRunning = false;
@@ -96,7 +63,7 @@ export const animate = (spec: (w: number, h: number) => PSpec, canvas: HTMLCanva
         let delayTimeout: number = 0;
 
         const fps = () => {
-            fpsListener && fpsListener.onFPS({ fps: (frame / elapsed).toFixed(2), time: elapsed.toFixed(1), frame: frame });
+            fpsListener && fpsListener.onFPS({ fps: (frame / elapsed), time: elapsed, frame: frame });
         }
 
         const start = () => {
@@ -138,8 +105,10 @@ export const animate = (spec: (w: number, h: number) => PSpec, canvas: HTMLCanva
             if (isRunning) {
                 elapsed = ((performance.now() - startTime) / 1000) - idle;
 
+                const uniforms = {... (shaderSpec?.uniforms ? shaderSpec.uniforms(frame) : {}), ...unis } 
+
                 await poiesis.run({
-                    // the variable in the shader MUST be 'sys'
+                    // the variable in the shader MUST be 'sys' for the system uniforms...
                     sys: {
                         frame: frame,
                         time: elapsed,
@@ -147,38 +116,28 @@ export const animate = (spec: (w: number, h: number) => PSpec, canvas: HTMLCanva
                         buttons: mButtons,
                         resolution: resolution,
                         aspect: aspectRatio
-                    }, ...(shaderSpec?.uniforms ? shaderSpec.uniforms(frame) : {}), ...unis
-                },
-                    frame);
-
-                frame++;
+                    }, ...uniforms
+                }, frame++ );
 
             } else {
                 idle = ((performance.now() - startTime) / 1000) - elapsed;
             }
 
-            if (delta != 0) delayTimeout = setTimeout(() => animationFrameId = requestAnimationFrame(() => run()), delta);
+            if (delta != 0) delayTimeout = setTimeout(() => animationFrameId = requestAnimationFrame(run), delta);
             else animationFrameId = requestAnimationFrame(run);
         }
 
         const reset = async () => {
             stop();
+            if (poiesis) await poiesis.destroy();
 
-            // Clear previous errors when resetting
-            //errorDisplay.clear();
-
-            const context = await Poiesis(canvas);
             shaderSpec = spec(canvas.width, canvas.height);
 
-            if (specListener) {
-                specListener.onSpec(shaderSpec);
-            }
+            specListener && specListener.onSpec(shaderSpec);
+            
+            poiesis = gpu.build(shaderSpec, canvas);
 
-            poiesis = context.build(shaderSpec);
-
-            if (bufferListeners) {
-                poiesis.addBufferListeners(bufferListeners);
-            }
+            bufferListeners &&  poiesis.addBufferListeners(bufferListeners);            
 
             start();
             if (animationFrameId == 0) run();
@@ -212,10 +171,11 @@ export const animate = (spec: (w: number, h: number) => PSpec, canvas: HTMLCanva
 
     const control = controller();
 
-    // Debounce the canvas resize function to prevent rapid context creation/destruction
     const canvasResize = async (entries: ResizeObserverEntry[]) => {
-        canvas.width = entries[0].target.clientWidth * devicePixelRatio;
-        canvas.height = entries[0].target.clientHeight * devicePixelRatio;
+        //canvas.width = entries[0].contentBoxSize[0].inlineSize;
+        //canvas.height = entries[0].contentBoxSize[0].blockSize;
+        canvas.width = entries[0].devicePixelContentBoxSize[0].inlineSize;
+        canvas.height = entries[0].devicePixelContentBoxSize[0].blockSize;
         resolution[0] = canvas.width;
         resolution[1] = canvas.height;
         const factor = Math.min(resolution[0], resolution[1]);

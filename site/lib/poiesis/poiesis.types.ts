@@ -1,30 +1,33 @@
-export type PoiesisContext = {
-  build: (a: PSpec) => PoiesisInstance
+export type PoiesisGPU = {
+  build: (spec: PSpec, canvas?: HTMLCanvasElement) => PoiesisInstance
+  features?: Record<string,boolean>;
+  limits?: Record<string,number>;
 }
 
 export type PoiesisInstance = {
   addBufferListeners: (listeners: BufferListener[]) => void
   run: (unis?: Record<string, unknown>, frame?: number) => Promise<void>
+  destroy: () => void
 }
 
 export type PoiesisState = {
-  context: GPUCanvasContext;
-  device: GPUDevice;
+  wgslSpec: PSpec
+  context?: GPUCanvasContext;
   geometry?: Geometry;
   uniforms?: Array<Uniform>;
   pipelines?: Pipelines;
-  storages?: StorageTypes;
+  textures?: Array<Texture>;
+  storages?: Array<Storage>;
   clearColor?: { r: number, g: number, b: number, a: number };
-  wgslSpec?: PSpec
-  bufferListeners?: Array<BufferListener>;
+  storageListeners?: Array<StorageListener>;
 }
 
 export type Geometry = {
+  vertices: number;
+  instances: number;
+  indexBuffer?: GPUBuffer
   vertexBuffer?: GPUBuffer
-  vertexCount: number;
   vertexBufferLayout?: GPUVertexBufferLayout[];
-  instances?: number;
-  instanceBuffer?: GPUBuffer;
 }
 
 export type Resource = {
@@ -35,14 +38,25 @@ export type Resource = {
 
 export type Uniform = Resource & {
   name: string
+  buffer: GPUBuffer;
   view: BufferView;
 };
 
-export type Storage = Resource;
+export type Storage = Resource & {
+  buffer: GPUBuffer;
+  read?: {
+    name: string;
+    listener?: BufferListener;
+    srcBuffer: GPUBuffer;
+    dstBuffer: GPUBuffer;
+    view: BufferView;  
+  }
+};
 
 export type Sampler = Resource
 
 export type Texture = Resource & {
+  texture?: GPUTexture;
   video?: HTMLVideoElement;
 }
 
@@ -52,16 +66,6 @@ export type ReadStorage = {
   srcBuffer: GPUBuffer;
   dstBuffer: GPUBuffer;
   view: BufferView;
-}
-
-export type VertexStorage = {
-  buffer: GPUBuffer;
-}
-
-export type StorageTypes = {
-  storages: Array<Storage>;
-  readStorages: Array<ReadStorage>;
-  vertexStorages: Array<VertexStorage>;
 }
 
 export type Compute = {
@@ -75,8 +79,14 @@ export type ComputeGroupPipeline = {
   computeGroupCount: number;
 }
 
+export type RenderPipeline = {
+  pipeline: GPURenderPipeline;
+  depthTexture?: GPUTexture;
+  descriptor: GPURenderPassDescriptor;
+}
+
 export type Pipelines = {
-  render?: GPURenderPipeline;
+  render?: RenderPipeline;
   compute?: ComputeGroupPipeline;
   bindings: (index: number) => GPUBindGroup;
 }
@@ -86,19 +96,20 @@ export type BufferListener = {
   onRead: (view: BufferView) => void;
 }
 
-export type VAttr = {
-  data?: Array<number>;
-  attributes: Array<string>;
-  instances?: number;
+export type StorageListener = BufferListener & {
+  storage: Storage;  
 }
 
+export type Vertex = {
+  vertices: number, instances?: number, depth?: boolean, index?: TypedArray, data?: TypedArray;
+}
 
 export type PSpec = {
   code: string;
   defs: Definitions;
   uniforms?: (frame: number) => Record<string, any>;
   mouse?: (x: number, y: number) => void;
-  geometry?: { vertex: VAttr, instance?: VAttr };
+  geometry?: Vertex;
   storages?: Array<{ name: string, size: number, data?: Array<any>, read?: boolean, vertex?: boolean, }>;
   samplers?: Array<{ name: string, magFilter: string, minFilter: string }>;
   textures?: Array<{ name: string, data: ImageBitmap | HTMLVideoElement | undefined, storage?: boolean }>;
@@ -115,7 +126,6 @@ export type PSpec = {
   };
 }
 
-
 // controls for the draw loop
 export type Controls = {
   play?: boolean;
@@ -125,7 +135,7 @@ export type Controls = {
 
 // listener for the fps
 export type FPSListener = {
-  onFPS: (fps: { fps: string, time: string, frame: number }) => void;
+  onFPS: (fps: { fps: number, time: number, frame: number }) => void;
 }
 
 export type SpecListener = {

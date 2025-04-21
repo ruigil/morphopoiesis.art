@@ -43,28 +43,22 @@ export type ErrorManagerOptions = {
 }
 
 /**
+ * Initialize WebGPU with fallback options
+ * @param canvas The canvas element to use
+ * @returns A promise that resolves to a GPUDevice if successful
+ */
+export type WebGPUInitializationResult = {
+  device: GPUDevice;
+  features?: Record<string, boolean>;
+  /** Device limits if available */
+  limits?: Record<string, number>;
+};
+
+/**
  * Callback function for error handling
  */
 export type ErrorCallback = (error: PoiesisError) => void;
 
-/**
- * Result of WebGPU support check
- */
-export type WebGPUSupportResult = {
-  /** Whether WebGPU is supported at all */
-  supported: boolean;
-  /** Specific features and their support status */
-  features: Record<string, boolean>;
-  /** Any errors encountered during the check */
-  errors: PoiesisError[];
-  /** Device limits if available */
-  limits?: Record<string, number>;
-  /** Adapter info if available */
-  adapter?: {
-    name?: string;
-    description?: string;
-  };
-}
 
 /**
  * Information about a shader error

@@ -1,5 +1,5 @@
 
-import { PSpec, Definitions, scaleAspect, square } from "../../lib/poiesis/index.ts";
+import { PSpec, Definitions, scaleAspect, quad } from "../../lib/poiesis/index.ts";
 
 export const wfc = (code: string,defs: Definitions ) => {
 
@@ -10,20 +10,14 @@ export const wfc = (code: string,defs: Definitions ) => {
         return { 
             code: code, 
             defs: defs,
-            geometry: {
-                vertex: {
-                    data: square(1.),
-                    attributes: ["pos"],
-                    instances: size.x * size.y    
-                }
-            },
+            geometry: { ...quad(1.), instances: size.x * size.y },
             uniforms: () => ({
                 uni: {
                     size: [size.x, size.y],
                 }
             }),
             storages: [
-                { name: "current", size: current.length, data: current } ,
+                { name: "current", size: current.length, data: current },
                 { name: "next", size: current.length, data:current },
                 { name: "min_value", size: 1, data:[0xFFFF] },
             ],

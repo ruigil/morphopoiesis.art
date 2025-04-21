@@ -22,8 +22,8 @@ struct SimParams {
   distances : vec4<f32>
 }
 
-@group(0) @binding(0) var<uniform> params : SimParams;
 @group(0) @binding(4) var<uniform> sys : Sys;
+@group(0) @binding(0) var<uniform> params : SimParams;
 @group(0) @binding(1) var<storage, read> particlesA : array<Particle>;
 @group(0) @binding(2) var<storage, read_write> particlesB : array<Particle>;
 
@@ -31,29 +31,29 @@ struct SimParams {
 struct VertexOutput {
   @builtin(position) position : vec4<f32>,
   @location(0) uv : vec2<f32>,
-  @location(1) state : vec2<f32>
+  @location(1) state : f32
 }
 
 struct VertexInput {
-  @location(0) partPos : vec2<f32>,
-  @location(1) partVel : vec2<f32>,
-  @location(2) partPha : vec2<f32>,
-  @location(3) apos : vec2<f32>
+  @location(0) apos : vec2<f32>
 }
 
 @vertex
-fn vertMain( input: VertexInput) -> VertexOutput {
+fn vertMain( input: VertexInput, @builtin(instance_index) index: u32)-> VertexOutput {
 
-  let angle = -atan2(input.partVel.x, input.partVel.y);
+  let part = particlesA[index];
+  let angle = -atan2(part.vel.x, part.vel.y);
+
   let pos = vec2(
     (input.apos.x * cos(angle)) - (input.apos.y * sin(angle)),
     (input.apos.x * sin(angle)) + (input.apos.y * cos(angle))
   ) * params.scale; // scale
-  
+
+
   var output : VertexOutput;
-  output.position = vec4((pos/sys.aspect) + input.partPos, 0.0, 1.0);
+  output.position = vec4((pos/sys.aspect) + part.pos, 0.0, 1.0);
   output.uv = input.apos;
-  output.state = input.partPha;
+  output.state = part.pha;
   return output;
 }
 
@@ -64,7 +64,7 @@ fn color( phase: f32) -> f32 {
 @fragment
 fn fragMain(input : VertexOutput) -> @location(0) vec4<f32> {
   let d = (1. - smoothstep(0.,.01, length( vec2(abs(input.uv.x) + .6,input.uv.y)) - .9 )  ) ;
-  let phase = ((input.state.x * 3.14) + sys.time) * 10.;
+  let phase = ((input.state * 3.14) + sys.time) * 10.;
   return vec4(vec3(1. - d) * vec3(color(phase+3.14) , color(phase + 1.52), color(phase )),1.0);
 }
 

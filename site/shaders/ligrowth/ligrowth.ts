@@ -1,5 +1,5 @@
 
-import { PSpec, Definitions, scaleAspect, square } from "../../lib/poiesis/index.ts";
+import { PSpec, Definitions, scaleAspect, square, quad } from "../../lib/poiesis/index.ts";
 
 
 export const ligrowth = (code: string,defs: Definitions, fx:any ) => {
@@ -34,13 +34,7 @@ export const ligrowth = (code: string,defs: Definitions, fx:any ) => {
         return {
             code: code,
             defs: defs,
-            geometry: {
-                vertex: {
-                    data: square(1.),
-                    attributes: ["pos"],
-                    instances: size.x * size.y    
-                }
-            },
+            geometry: { ...quad(1.), instances: size.x * size.y },
             uniforms: () => ({
                 params: {
                     size: [size.x, size.y],

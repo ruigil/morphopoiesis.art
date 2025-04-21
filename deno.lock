@@ -52,7 +52,8 @@
     "npm:tailwindcss@3.3.3": "3.3.3_postcss@8.4.27",
     "npm:tailwindcss@3.3.5": "3.3.5_postcss@8.4.31",
     "npm:tailwindcss@3.4.1": "3.4.1_postcss@8.4.33",
-    "npm:url@*": "0.11.3"
+    "npm:url@*": "0.11.3",
+    "npm:wgpu-matrix@*": "3.4.0"
   },
   "npm": {
     "@alloc/quick-lru@5.2.0": {
@@ -3113,6 +3114,9 @@
     },
     "webidl-conversions@3.0.1": {
       "integrity": "sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ=="
+    },
+    "wgpu-matrix@3.4.0": {
+      "integrity": "sha512-kXHrbAPKEn9A32Wf4wVldyx9MmnzwhuB5p8GCqoJP3ItU5+iDT4J3aTQwPZWkfb153hwGtqZtUwR2M+ipJKadg=="
     },
     "what-the-diff@0.6.0": {
       "integrity": "sha512-8BgQ4uo4cxojRXvCIcqDpH4QHaq0Ksn2P3LYfztylC5LDSwZKuGHf0Wf7sAStjPLTcB8eCB8pJJcPQSWfhZlkg=="

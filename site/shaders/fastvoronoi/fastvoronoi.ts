@@ -1,4 +1,4 @@
-import { PSpec, Definitions, square, scaleAspect } from "../../lib/poiesis/index.ts";
+import { PSpec, Definitions, scaleAspect, quad } from "../../lib/poiesis/index.ts";
 
 export const fastvoronoi = (code:string, defs:Definitions) => {
 
@@ -24,13 +24,7 @@ export const fastvoronoi = (code:string, defs:Definitions) => {
         return {
             code: code,
             defs: defs,
-            geometry: {
-                vertex: {
-                    data: square(1.),
-                    attributes: ["pos"],
-                    instances: size.x * size.y
-                }
-            },
+            geometry: { ...quad(1), instances: size.x * size.y },
             uniforms: () => ({
                 params: {
                     size: [size.x, size.y],

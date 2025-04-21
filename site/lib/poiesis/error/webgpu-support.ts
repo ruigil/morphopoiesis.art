@@ -1,16 +1,7 @@
-import { PoiesisError, RequiredFeatures, RequiredLimits, WebGPUSupportResult } from "./error.types.ts";
+import { PoiesisError, RequiredFeatures, RequiredLimits, WebGPUInitializationResult } from "./error.types.ts";
 import { ErrorManager } from "./index.ts";
 
-/**
- * Check if WebGPU is supported in the current browser and environment
- * @returns A promise that resolves to a WebGPUSupportResult object
- */
-export const checkWebGPUSupport = async (): Promise<WebGPUSupportResult> => {
-  const result: WebGPUSupportResult = {
-    supported: false,
-    features: {},
-    errors: []
-  };
+export const initializeWebGPU = async (): Promise<WebGPUInitializationResult> => {
   
   // Check if the WebGPU API is available
   if (!navigator.gpu) {
@@ -20,49 +11,25 @@ export const checkWebGPUSupport = async (): Promise<WebGPUSupportResult> => {
       suggestion: 'Try using Chrome 113+, Edge 113+, or Firefox with WebGPU enabled',
       fatal: true
     };
-    
-    result.errors.push(error);
-    return result;
+
+    ErrorManager.error(error);
+    throw new Error('WebGPU is not supported in this browser');
   }
-  
-  // Try to get an adapter
-  let adapter: GPUAdapter | null;
-  try {
-    adapter = await navigator.gpu.requestAdapter();
-    if (!adapter) {
-      const error: PoiesisError = {
-        type: 'compatibility',
-        message: 'No appropriate GPUAdapter found',
-        suggestion: 'Your device may not support WebGPU or may have outdated drivers',
-        fatal: true
-      };
       
-      result.errors.push(error);
-      return result;
-    }
-  } catch (e) {
+  // Request adapter
+  const adapter = await navigator.gpu.requestAdapter();
+  if (!adapter) {
     const error: PoiesisError = {
-      type: 'compatibility',
-      message: 'Error requesting GPUAdapter',
-      details: e instanceof Error ? e.message : String(e),
-      suggestion: 'Check if your browser has WebGPU enabled in the flags',
-      fatal: true,
-      originalError: e instanceof Error ? e : undefined
+      type: 'initialization',
+      message: 'Failed to get GPU adapter',
+      suggestion: 'Your device may not support WebGPU or may have outdated drivers',
+      fatal: true
     };
-    
-    result.errors.push(error);
-    return result;
+    ErrorManager.error(error);
+    throw new Error('Failed to get GPU adapter');
   }
-  
-  // Get adapter info if available
-  result.adapter = {
-    // The name property might not be available in all implementations
-    name: (adapter as any).name || undefined,
-    description: undefined // Not available in the current WebGPU spec
-  };
-  
   // Check specific features
-  result.features = {
+  const features = {
     // Core WebGPU features
     computeShaders: true, // All WebGPU implementations must support compute shaders
     
@@ -78,7 +45,7 @@ export const checkWebGPUSupport = async (): Promise<WebGPUSupportResult> => {
   };
   
   // Check limits
-  result.limits = {
+  const limits = {
     maxTextureDimension1D: adapter.limits.maxTextureDimension1D,
     maxTextureDimension2D: adapter.limits.maxTextureDimension2D,
     maxTextureDimension3D: adapter.limits.maxTextureDimension3D,
@@ -99,121 +66,39 @@ export const checkWebGPUSupport = async (): Promise<WebGPUSupportResult> => {
     maxComputeWorkgroupSizeZ: adapter.limits.maxComputeWorkgroupSizeZ,
     maxComputeWorkgroupsPerDimension: adapter.limits.maxComputeWorkgroupsPerDimension
   };
-  
-  // Check if the device can be created
-  try {
-    const device = await adapter.requestDevice();
-    device.destroy();
-  } catch (e) {
+
+
+  // Request device
+  const device = await adapter.requestDevice();
+  if (!device) {
     const error: PoiesisError = {
       type: 'compatibility',
       message: 'Failed to create WebGPU device',
-      details: e instanceof Error ? e.message : String(e),
       suggestion: 'Your device may not meet the minimum requirements for WebGPU',
       fatal: true,
-      originalError: e instanceof Error ? e : undefined
     };
-    
-    result.errors.push(error);
-    return result;
+    ErrorManager.error(error);
+    throw new Error('Failed to create WebGPU device');
   }
   
-  // If we got here, WebGPU is supported
-  result.supported = true;
-  return result;
-};
-
-/**
- * Initialize WebGPU with fallback options
- * @param canvas The canvas element to use
- * @returns A promise that resolves to a GPUDevice if successful
- */
-export type WebGPUInitializationResult = {
-  device: GPUDevice;
-  context: GPUCanvasContext;
-} | null;
-
-export const initializeWebGPU = async ( canvas: HTMLCanvasElement ): Promise<WebGPUInitializationResult> => {
-  
-  // Check if WebGPU is supported
-  const support = await checkWebGPUSupport();
-  if (!support.supported) {
-    // Handle the first error
-    if (support.errors.length > 0) {
-      const error = support.errors[0];
-      ErrorManager.error(error.type, error.message);
+  // Add device lost handler
+  device.lost.then((info) => {
+    if (info.reason === 'destroyed') {
+      return;
     }
-        
-    return null;
-  }
+    const error: PoiesisError = {
+      type: 'runtime',
+      message: `WebGPU device was lost: ${info.message}`,
+      suggestion: 'Try refreshing the page or updating your graphics drivers',
+      details: `Reason: ${info.reason}`,
+      fatal: true
+    };
+    ErrorManager.error(error);
+    throw new Error(`WebGPU device was lost: ${info.message}`);
+  });
   
-  // Get the WebGPU context
-  const context = canvas.getContext('webgpu');
-  if (!context) {
-    ErrorManager.error(
-      'initialization',
-      'Failed to get WebGPU context from canvas',
-      {
-        fatal: true,
-        suggestion: 'Make sure the canvas element is properly initialized'
-      }
-    );
-    return null;
-  }
-  
-  // Request adapter
-  const adapter = await navigator.gpu.requestAdapter();
-  if (!adapter) {
-    ErrorManager.error(
-      'initialization',
-      'Failed to get GPU adapter',
-      {
-        fatal: true,
-        suggestion: 'Your device may not support WebGPU or may have outdated drivers'
-      }
-    );
-    return null;
-  }
-  
-  // Request device
-  let device: GPUDevice;
-  try {
-    device = await adapter.requestDevice();
-    
-    // Add device lost handler
-    device.lost.then((info) => {
-      ErrorManager.error(
-        'runtime',
-        `WebGPU device was lost: ${info.message}`,
-        {
-          fatal: true,
-          suggestion: 'Try refreshing the page or updating your graphics drivers',
-          details: `Reason: ${info.reason}`
-        }
-      );
-    });
-    
-    // Configure the context
-    const preferredFormat = navigator.gpu.getPreferredCanvasFormat();
-    context.configure({
-      device,
-      format: preferredFormat,
-      alphaMode: 'premultiplied'
-    });
-    
-    return { device, context };
-  } catch (e) {
-    const error = e instanceof Error ? e : new Error(String(e))
-    ErrorManager.error(
-      'initialization',
-      'Failed to initialize WebGPU device: ' + error.message,
-      {
-        fatal: true,
-        suggestion: 'Check browser console for more details'
-      }
-    );
-    return null;
-  }
+  // we can have several contextes with the same device...
+  return { device, features, limits };
 };
 
 /**

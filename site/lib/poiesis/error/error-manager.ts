@@ -9,8 +9,8 @@ export const PoiesisErrorManager = () => {
   const state = {
     errorCallbacks: [] as ErrorCallback[],
     options: {
-      logToConsole: true,
-      throwFatalErrors: true
+      logToConsole: false,
+      throwFatalErrors: false
     } as ErrorManagerOptions,
   }
 
@@ -58,20 +58,7 @@ export const PoiesisErrorManager = () => {
     }
   }
 
-  /**
-   * Create and handle an error in one step
-   * @param type The type of error
-   * @param message The error message
-   * @param options Additional error options
-   */
-  const error = (type: PoiesisError['type'], message: string, options: PoiesisErrorOptions = {}): void => {
-    const error: PoiesisError = {
-      type,
-      message,
-      fatal: options.fatal ?? false,
-      ...options
-    };
-
+  const error = (error: PoiesisError): void => {
     handleError(error);
   }
 

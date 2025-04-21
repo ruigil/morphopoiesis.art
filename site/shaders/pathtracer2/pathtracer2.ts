@@ -16,7 +16,7 @@ export const pathtracer2 = async (code:string, defs:Definitions) => {
             code: code,
             defs: defs,
             uniforms: (f:number) => uniforms,
-            mouse: (x:number,y:number, frame:number) => {  uniforms.params.lookFrom = [(x*5.)-2.5,2. + (y*3.5) - 1.75,5];  },
+            mouse: (x:number,y:number) => {  uniforms.params.lookFrom = [(x*5.)-2.5,2. + (y*3.5) - 1.75,5];  },
             storages: [
                 { name: "debug", size: 1, read: true },
                 { name: "samples", size: size.x * size.y },

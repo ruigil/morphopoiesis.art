@@ -1,6 +1,224 @@
+export const cubeVertexSize = 4 * 10; // Byte size of one cube vertex.
+export const cubePositionOffset = 0;
+export const cubeColorOffset = 4 * 4; // Byte offset of cube vertex color attribute.
+export const cubeUVOffset = 4 * 8;
+export const cubeVertexCount = 36;
+
+
+export const letterF = () =>{
+    const positions = [
+    // left column
+    -50,  75,  15,
+    -20,  75,  15,
+    -50, -75,  15,
+    -20, -75,  15,
+
+   // top rung
+    -20,  75,  15,
+     50,  75,  15,
+    -20,  45,  15,
+     50,  45,  15,
+
+   // middle rung
+    -20,  15,  15,
+     20,  15,  15,
+    -20, -15,  15,
+     20, -15,  15,
+
+   // left column back
+    -50,  75, -15,
+    -20,  75, -15,
+    -50, -75, -15,
+    -20, -75, -15,
+
+   // top rung back
+    -20,  75, -15,
+     50,  75, -15,
+    -20,  45, -15,
+     50,  45, -15,
+
+   // middle rung back
+    -20,  15, -15,
+     20,  15, -15,
+    -20, -15, -15,
+     20, -15, -15,
+    ];
+   
+    const indices = [
+        0,  2,  1,    2,  3,  1,   // left column
+        4,  6,  5,    6,  7,  5,   // top run
+        8, 10,  9,   10, 11,  9,   // middle run
+    
+       12, 13, 14,   14, 13, 15,   // left column back
+       16, 17, 18,   18, 17, 19,   // top run back
+       20, 21, 22,   22, 21, 23,   // middle run back
+    
+        0,  5, 12,   12,  5, 17,   // top
+        5,  7, 17,   17,  7, 19,   // top rung right
+        6, 18,  7,   18, 19,  7,   // top rung bottom
+        6,  8, 18,   18,  8, 20,   // between top and middle rung
+        8,  9, 20,   20,  9, 21,   // middle rung top
+        9, 11, 21,   21, 11, 23,   // middle rung right
+       10, 22, 11,   22, 23, 11,   // middle rung bottom
+       10,  3, 22,   22,  3, 15,   // stem right
+        2, 14,  3,   14, 15,  3,   // bottom
+        0, 12,  2,   12, 14,  2,   // left
+    ];
+    const quadColors = [
+        200,  70, 120,  // left column front
+        200,  70, 120,  // top rung front
+        200,  70, 120,  // middle rung front
+   
+         80,  70, 200,  // left column back
+         80,  70, 200,  // top rung back
+         80,  70, 200,  // middle rung back
+   
+         70, 200, 210,  // top
+        160, 160, 220,  // top rung right
+         90, 130, 110,  // top rung bottom
+        200, 200,  70,  // between top and middle rung
+        210, 100,  70,  // middle rung top
+        210, 160,  70,  // middle rung right
+         70, 180, 210,  // middle rung bottom
+        100,  70, 210,  // stem right
+         76, 210, 100,  // bottom
+        140, 210,  80,  // left
+    ];
+   
+    const numVertices = indices.length;
+    const vertexData = new Float32Array(7 * numVertices ); // xyz + color
+    //const colorData = new Uint8Array(vertexData.buffer);
+    //console.log(vertexData.length)
+    //console.log(colorData.length)
+    //console.log(numVertices)
+  
+    for (let i = 0; i < indices.length; ++i) {
+      const positionNdx = indices[i] * 3;
+      const position = positions.slice(positionNdx, positionNdx + 3);
+      vertexData.set(position, i * 7);
+   
+      const quadNdx = (i / 6 | 0) * 3;
+      const color = quadColors.slice(quadNdx, quadNdx + 3).map(v => v/255.);
+      vertexData.set(color, i * 7 + 3);
+      vertexData.set([1], i * 7 + 6);
+      
+      //colorData.set(color, i * 16 + 12);  // set RGB
+      //colorData[i * 16 + 15] = 255;       // set A
+    }
+    //console.log(vertexData)
+
+    return { data:vertexData, vertices: numVertices, depth: true };
+}
+
+
+export const cube = () => ({
+    vertices: 36,
+    data: new Float32Array([
+        // float4 position, float4 color, float2 uv,
+        1, -1, 1, 1,   1, 0, 1, 1,  0, 1,
+        -1, -1, 1, 1,  0, 0, 1, 1,  1, 1,
+        -1, -1, -1, 1, 0, 0, 0, 1,  1, 0,
+        1, -1, -1, 1,  1, 0, 0, 1,  0, 0,
+        1, -1, 1, 1,   1, 0, 1, 1,  0, 1,
+        -1, -1, -1, 1, 0, 0, 0, 1,  1, 0,
+      
+        1, 1, 1, 1,    1, 1, 1, 1,  0, 1,
+        1, -1, 1, 1,   1, 0, 1, 1,  1, 1,
+        1, -1, -1, 1,  1, 0, 0, 1,  1, 0,
+        1, 1, -1, 1,   1, 1, 0, 1,  0, 0,
+        1, 1, 1, 1,    1, 1, 1, 1,  0, 1,
+        1, -1, -1, 1,  1, 0, 0, 1,  1, 0,
+      
+        -1, 1, 1, 1,   0, 1, 1, 1,  0, 1,
+        1, 1, 1, 1,    1, 1, 1, 1,  1, 1,
+        1, 1, -1, 1,   1, 1, 0, 1,  1, 0,
+        -1, 1, -1, 1,  0, 1, 0, 1,  0, 0,
+        -1, 1, 1, 1,   0, 1, 1, 1,  0, 1,
+        1, 1, -1, 1,   1, 1, 0, 1,  1, 0,
+      
+        -1, -1, 1, 1,  0, 0, 1, 1,  0, 1,
+        -1, 1, 1, 1,   0, 1, 1, 1,  1, 1,
+        -1, 1, -1, 1,  0, 1, 0, 1,  1, 0,
+        -1, -1, -1, 1, 0, 0, 0, 1,  0, 0,
+        -1, -1, 1, 1,  0, 0, 1, 1,  0, 1,
+        -1, 1, -1, 1,  0, 1, 0, 1,  1, 0,
+      
+        1, 1, 1, 1,    1, 1, 1, 1,  0, 1,
+        -1, 1, 1, 1,   0, 1, 1, 1,  1, 1,
+        -1, -1, 1, 1,  0, 0, 1, 1,  1, 0,
+        -1, -1, 1, 1,  0, 0, 1, 1,  1, 0,
+        1, -1, 1, 1,   1, 0, 1, 1,  0, 0,
+        1, 1, 1, 1,    1, 1, 1, 1,  0, 1,
+      
+        1, -1, -1, 1,  1, 0, 0, 1,  0, 1,
+        -1, -1, -1, 1, 0, 0, 0, 1,  1, 1,
+        -1, 1, -1, 1,  0, 1, 0, 1,  1, 0,
+        1, 1, -1, 1,   1, 1, 0, 1,  0, 0,
+        1, -1, -1, 1,  1, 0, 0, 1,  0, 1,
+        -1, 1, -1, 1,  0, 1, 0, 1,  1, 0,
+      ]),
+    depth: true
+})
+
+export const innerCircle = ({
+    radius = 1,
+    numSubdivisions = 24,
+    innerRadius = 0.0,
+    startAngle = 0,
+    endAngle = Math.PI * 2,
+    } = {}) => {
+    // 2 triangles per subdivision, 3 verts per tri, 2 values (xy) each.
+    const numVertices = numSubdivisions * 3 * 2;
+    const vertexData = new Float32Array(numSubdivisions * 3 * 2 * 2);
+    
+    let offset = 0;
+    const addVertex = (x:any, y:any) => {
+        vertexData[offset++] = x;
+        vertexData[offset++] = y;
+    };
+    
+    // 2 triangles per subdivision
+    //
+    // 0--1 4
+    // | / /|
+    // |/ / |
+    // 2 3--5
+    for (let i = 0; i < numSubdivisions; ++i) {
+        const angle1 = startAngle + (i + 0) * (endAngle - startAngle) / numSubdivisions;
+        const angle2 = startAngle + (i + 1) * (endAngle - startAngle) / numSubdivisions;
+    
+        const c1 = Math.cos(angle1);
+        const s1 = Math.sin(angle1);
+        const c2 = Math.cos(angle2);
+        const s2 = Math.sin(angle2);
+    
+        // first triangle
+        addVertex(c1 * radius, s1 * radius);
+        addVertex(c2 * radius, s2 * radius);
+        addVertex(c1 * innerRadius, s1 * innerRadius);
+    
+        // second triangle
+        addVertex(c1 * innerRadius, s1 * innerRadius);
+        addVertex(c2 * radius, s2 * radius);
+        addVertex(c2 * innerRadius, s2 * innerRadius);
+    }
+    
+    return {
+        data: vertexData,
+        vertices: numVertices,
+    };
+}
+
 export const square = (x: number) => [-x, -x, x, -x, x, x, -x, -x, x, x, -x, x]
 
-export const triangle = (x: number) => [-x, -x, x, -x, 0, x,]
+export const quad = (x: number) => {
+    return {
+        vertices: 6,
+        data: new Float32Array([-x, -x, x, -x, x, x, -x, -x, x, x, -x, x])
+    }
+}
+
+export const triangle = (x: number) => ({ vertices: 3, data: new Float32Array([-x, -x, x, -x, 0, x,]) })
 
 export const circle = (x: number, n: number): number[] =>
     Array.from({ length: n }, (_, i) => {
@@ -9,6 +227,7 @@ export const circle = (x: number, n: number): number[] =>
         return [Math.cos(a) * x, Math.sin(a) * x, Math.cos(a2) * x, Math.sin(a2) * x];
     }).flat();
 
+    /*
 export const cube = (x: number) =>
     [
         -x, -x, -x, x, -x, -x, x, x, -x, -x, x, -x, // -z face
@@ -18,7 +237,7 @@ export const cube = (x: number) =>
         -x, -x, -x, -x, -x, x, x, -x, x, x, -x, -x, // -y face
         -x, x, -x, -x, x, x, x, x, x, x, x, -x, // y face
     ];
-
+*/
 
 export const cornell = () => {
     const vertices = [
@@ -132,4 +351,8 @@ export const cornell = () => {
     ]
 
     return { vertices, indices, meshes, materials }
+}
+export const scaleAspect = (w: number, h: number, scale: number) => {
+    const cellSize = Math.min(w, h) / scale;
+    return { x: Math.floor(w / cellSize + .5), y: Math.floor(h / cellSize + .5) };
 }

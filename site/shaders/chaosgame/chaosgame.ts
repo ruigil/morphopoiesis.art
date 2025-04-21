@@ -1,6 +1,6 @@
-import { PSpec, Definitions, square, scaleAspect } from "../../lib/poiesis/index.ts";
+import { PSpec, Definitions, scaleAspect, quad } from "../../lib/poiesis/index.ts";
 
-export const chaosgame = async (code: string, defs: Definitions) => {
+export const chaosgame = (code: string, defs: Definitions) => {
 
     const spec = (w: number, h: number): PSpec => {
         const size = scaleAspect(w, h, 1024);
@@ -14,13 +14,7 @@ export const chaosgame = async (code: string, defs: Definitions) => {
         return {
             code: code,
             defs: defs,
-            geometry: {
-                vertex: {
-                    data: square(1.),
-                    attributes: ["pos"],
-                    instances: size.x * size.y  // One instance per pixel
-                }
-            },
+            geometry: { ...quad(1), instances: size.x * size.y },
             uniforms: () => ({
                 uni: {
                     size: [size.x, size.y],

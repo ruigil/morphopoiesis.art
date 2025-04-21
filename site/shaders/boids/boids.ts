@@ -13,16 +13,7 @@ export const boids = (code:string, defs:Definitions) => {
         return {
             code: code,
             defs: defs,
-            geometry: {
-                vertex: {
-                    data: triangle(1.),
-                    attributes: ["apos"]    
-                },
-                instance: {
-                    attributes: ["partPos","partVel","partPha"],
-                    instances: numBoids
-                }
-            },
+            geometry: { ...triangle(1.), instances: numBoids },
             uniforms: () => ({
                 params: {
                     boids: numBoids,
@@ -34,8 +25,8 @@ export const boids = (code:string, defs:Definitions) => {
                 }
             }),
             storages: [
-                { name: "particlesA", size: numBoids , data: boids, vertex: true} ,
-                { name: "particlesB", size: numBoids , vertex: true} 
+                { name: "particlesA", size: numBoids , data: boids} ,
+                { name: "particlesB", size: numBoids } 
             ],
             computes: [
                 { name: "computeMain", workgroups:  [Math.ceil(numBoids / 64), 1, 1] },

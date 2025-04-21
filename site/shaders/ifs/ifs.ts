@@ -1,4 +1,4 @@
-import { PSpec, Definitions, square, scaleAspect } from "../../lib/poiesis/index.ts";
+import { PSpec, Definitions, square, scaleAspect, quad } from "../../lib/poiesis/index.ts";
 
 export const ifs = async (code: string, defs: Definitions) => {
 
@@ -211,16 +211,9 @@ export const ifs = async (code: string, defs: Definitions) => {
         return {
             code: code,
             defs: defs,
-            geometry: {
-                vertex: {
-                    data: square(1.),
-                    attributes: ["pos"],
-                    instances: size.x * size.y  // One instance per pixel
-                }
-            },
+            geometry: { ...quad(1), instances: size.x * size.y },
             uniforms: (frame) => {
                 //unis.uni.ifs.transforms[0].scale[0] = 0.0 + frame / 1000
-                console.log();
                 return unis;
             },
             mouse: (x,y) => {

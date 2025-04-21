@@ -1,4 +1,4 @@
-import { ShaderErrorInfo } from "./error.types.ts";
+import { PoiesisError, ShaderErrorInfo } from "./error.types.ts";
 import { ErrorManager } from "./index.ts";
 
 /**
@@ -135,17 +135,6 @@ export const createShaderModuleWithErrorHandling = (
   label: string = "Custom shader"
 ): GPUShaderModule => {
   
-  if (!code || code.trim() === '') {
-    ErrorManager.error(
-      'compilation',
-      'Shader code is empty or undefined',
-      {
-        fatal: true,
-        suggestion: 'Ensure the shader code is properly loaded before compilation'
-      }
-    );
-    throw new Error('Shader code is empty or undefined');
-  }
   
   try {
     // Create the shader module
@@ -162,55 +151,43 @@ export const createShaderModuleWithErrorHandling = (
         for (const message of info.messages) {
           if (message.type === 'error') {
             const errorInfo = parseShaderError(message.message);
+            const error:PoiesisError = {
+              type: 'compilation',
+              message: `Shader compilation error: ${message.message}`,
+              fatal: true,
+              details: formatShaderErrorContext(code, message.lineNum, message.linePos),
+              suggestion: errorInfo.suggestion,
+              code: errorInfo.code
+            }
             
-            ErrorManager.error(
-              'compilation',
-              `Shader compilation error: ${message.message}`,
-              {
-                fatal: true,
-                details: formatShaderErrorContext(code, message.lineNum, message.linePos),
-                suggestion: errorInfo.suggestion,
-                code: errorInfo.code
-              }
-            );
+            ErrorManager.error(error);
           } else if (message.type === 'warning') {
+            const error:PoiesisError = {
+              type: 'compilation',
+              message: `Shader compilation warning: ${message.message}`,
+              fatal: false,
+              details: formatShaderErrorContext(code, message.lineNum, message.linePos),
+            }
             // Log warnings but don't treat them as fatal
-            ErrorManager.error(
-              'compilation',
-              `Shader compilation warning: ${message.message}`,
-              {
-                fatal: false,
-                details: formatShaderErrorContext(code, message.lineNum, message.linePos)
-              }
-            );
+            ErrorManager.error(error);
           }
         }
       }
-    }).catch(e => {
-      // Handle errors in getCompilationInfo itself
-      const error = e instanceof Error ? e : new Error(String(e));
-      ErrorManager.error(
-        'compilation',
-        'Error checking shader compilation status' + error.message,
-        { fatal: false }
-      );
-    });
-    
+    })
+
     return shaderModule;
   } catch (e) {
     // Handle immediate errors during shader module creation
     const errorInfo = parseShaderError(e instanceof Error ? e.message : String(e));
-    
-    ErrorManager.error(
-      'compilation',
-      'Shader compilation failed' + errorInfo.message,
-      {
-        fatal: true,
-        details: formatShaderErrorContext(code, errorInfo.lineNumber, errorInfo.columnNumber),
-        suggestion: errorInfo.suggestion,
-        code: errorInfo.code
-      }
-    );
+    const error:PoiesisError = {
+      type: 'compilation',
+      message: `Shader compilation failed: ${errorInfo.message}`,
+      fatal: true,
+      details: formatShaderErrorContext(code, errorInfo.lineNumber, errorInfo.columnNumber),
+      suggestion: errorInfo.suggestion,
+      code: errorInfo.code
+    }
+    ErrorManager.error(error);
     
     throw e;
   }
@@ -236,14 +213,13 @@ export const validateShaderRequirements =
   }
   
   if (missingFeatures.length > 0) {
-    ErrorManager.error(
-      'compatibility',
-      `Shader requires features not supported by this device: ${missingFeatures.join(', ')}`,
-      {
-        fatal: true,
-        suggestion: 'Try using a device with more advanced WebGPU capabilities'
-      }
-    );
+    const error:PoiesisError = {
+      type: 'compatibility',
+      message: `Shader requires features not supported by this device: ${missingFeatures.join(', ')}`,
+      fatal: true,
+      suggestion: 'Try using a device with more advanced WebGPU capabilities',
+    }
+    ErrorManager.error(error);
     return false;
   }
   
@@ -263,16 +239,15 @@ export const validateShaderRequirements =
     const limitDetails = Object.entries(insufficientLimits)
       .map(([name, { required, actual }]) => `${name}: required ${required}, actual ${actual}`)
       .join('\n');
-    
-    ErrorManager.error(
-      'compatibility',
-      'Shader requires device limits that exceed the capabilities of this device',
-      {
+      const error:PoiesisError = {
+        type: 'compatibility',
+        message: 'Shader requires device limits that exceed the capabilities of this device',
         fatal: true,
         details: limitDetails,
         suggestion: 'Try reducing workgroup sizes or simplifying the shader'
       }
-    );
+      
+    ErrorManager.error(error);
     return false;
   }
   
