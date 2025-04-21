@@ -1,6 +1,6 @@
 import lume from "lume/mod.ts";
 import attributes from "lume/plugins/attributes.ts";
-import base_path from "lume/plugins/base_path.ts";
+import basePath from "lume/plugins/base_path.ts";
 import katex from "lume/plugins/katex.ts";
 import date from "lume/plugins/date.ts";
 import esbuild from "lume/plugins/esbuild.ts";
@@ -31,9 +31,9 @@ site.copy("/assets/img/svg");
 site.copy("/assets/video");
 
 // plugins
+site.use(basePath());
 site.use(attributes());
 site.use(sitemap());
-site.use(base_path());
 site.use(date());
 site.use(tailwindcss( { extensions: [".html"] } ));
 site.use(postcss());

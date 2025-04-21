@@ -1,14 +1,14 @@
 export const title = "404 Not found";
 
-export const layout = "about.layout.ts";
+export const layout = "page.layout.ts";
 
 export default (): string => {
 
 	return /* html */`
-    	<h1>Error 404 - Page not found :( </h1>
-    	<p>
+    	<h1>Page not found :( </h1>
+    	<p >
     		<svg  version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 60 60" xml:space="preserve">
-				<g>
+				<g fill="currentColor">
 					<path d="M0,0v12v2v46h60V14v-2V0H0z M20,39h-3v8c0,0.552-0.448,1-1,1s-1-0.448-1-1v-8H9c-0.552,0-1-0.448-1-1V27
 						c0-0.552,0.448-1,1-1s1,0.448,1,1v10h5v-2c0-0.552,0.448-1,1-1s1,0.448,1,1v2h3c0.552,0,1,0.448,1,1S20.552,39,20,39z M36,41.5
 						c0,3.584-2.916,6.5-6.5,6.5S23,45.084,23,41.5v-9c0-3.584,2.916-6.5,6.5-6.5s6.5,2.916,6.5,6.5V41.5z M51,39h-3v8
