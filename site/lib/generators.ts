@@ -145,6 +145,16 @@ const reflect = (wgslCode: string) => {
             primitive: variableInfo.type.format ? variableInfo.type.format.name : "unknown"
           }
         } as TemplateType;
+      } else if (variableInfo.type.name.startsWith('vec')) {
+        // It's a vector type (vec2, vec3, vec4)
+        const typeName = variableInfo.type.name.endsWith('f') ? 'f32' : variableInfo.type.name.endsWith('i') ? 'i32' : 'u32';
+        return {
+          ...baseInfo,
+          template: {
+            size: baseInfo.size,
+            primitive: typeName,
+          }  
+        } as TemplateType;
       } else {
         // It's a primitive type
         return {
@@ -205,7 +215,7 @@ const reflect = (wgslCode: string) => {
     entries: entries,
     uniforms: uniformVariables,
     storages: storageVariables,
-    bindGroupLength: reflect.getBindGroups()[0].length
+    bindGroupLength: reflect.getBindGroups()[0] ? reflect.getBindGroups()[0].length : 0,
   } as Definitions;
 
 }
@@ -239,44 +249,58 @@ export const script = (shader: Shader, rpath: string) => {
       `
   }
 
-  const fillParam = () => {
-    return /* ts */ `
-        const PARAMS = {
-          fps: '',
-          frame: 0,
-          elapsed: '',
-          delay: 0
-        };
-      `
-  }
-
   const tweakPane = () => {
     return /* ts */ `
+        const PARAMS = {
+          fps: 0,
+          frame: 0,
+          elapsed: 0,
+          delay: 0
+        };
         
         const pane = new Pane({ title: '${shader.title}'});
         
         pane.addBinding(PARAMS, 'fps', { readonly: true });
-        pane.addBinding(PARAMS, 'frame', { readonly: true });
+        pane.addBinding(PARAMS, 'frame', { readonly: true,  format: (v) => v });
         pane.addBinding(PARAMS, 'elapsed', { readonly: true });
         const crtl = pane.addFolder({
           title: 'Controls',
         });
 
-  
+        const feat = pane.addFolder({
+          title: 'GPU Features',
+          expanded: false
+        });
+
+        Object.entries(gpu.features).forEach(([k,v]) => {
+          PARAMS[k] = v;
+          feat.addBinding(PARAMS, k, { readonly: true });        
+        });
+
+        const limits = pane.addFolder({
+          title: 'GPU Limits',
+          expanded: false
+        });
+
+        Object.entries(gpu.limits).forEach(([k,v]) => {
+          PARAMS[k] = v;
+          limits.addBinding(PARAMS, k, { readonly: true, format: (v) => v });        
+        });
+
         const pp = crtl.addButton({
           title: 'pause',
           label: 'Play/Pause',   
         })
         pp.on('click', (e) => {
           pp.title = (pp.title === 'pause') ? 'play' : 'pause';
-          anim.togglePlayPause();
+          loop.togglePlayPause();
         });
 
         crtl.addButton({
           title: 'reset',
           label: 'Reset',   
         }).on('click', () => {
-          anim.reset();
+          loop.reset();
         });
 
         crtl.addBinding(PARAMS, 'delay', { readonly: false }).on('change', (ev) => {
@@ -292,7 +316,7 @@ export const script = (shader: Shader, rpath: string) => {
   const listeners = () => {
     return /* ts */ `
         const fpsListener = {
-          onFPS: (fps) => { PARAMS.fps = fps.fps + " fps"; PARAMS.elapsed = fps.time; PARAMS.frame = fps.frame }
+          onFPS: (fps) => { PARAMS.fps = fps.fps; PARAMS.elapsed = fps.time; PARAMS.frame = fps.frame }
         };
         const specListener = {
           onSpec: (spec) => { 
@@ -336,27 +360,29 @@ export const script = (shader: Shader, rpath: string) => {
   }
 
   return /*ts*/ `
-      import { animate } from '${rpath}/../lib/poiesis/index.ts';  
+      import { Poiesis, drawLoop } from '${rpath}/../lib/poiesis/index.ts'; 
       import { ${shader.id} } from '${rpath}/../shaders/${shader.path}/${shader.id}.ts';
       
       ${shader.panel ? `import { Pane } from '${rpath}/../lib/tweakpane/tweakpane-4.0.3.min.js';` : ''}
+      
 
       document.addEventListener('DOMContentLoaded', async (event)  => {
         const canvas = document.querySelector("#canvas");
-
-        const fx = ('$fx' in window) ? $fx : undefined;
       
+        const fx = ('$fx' in window) ? $fx : undefined;
+
         const code = await (await fetch('./${shader.id}.wgsl')).text();
         const defs = await (await fetch('./${shader.id}.json')).json();
   
+        const gpu = await Poiesis();
+
         const spec = await ${shader.id}(code,defs, fx);
   
         ${shader.panel && listeners()}
-        ${shader.panel && fillParam()}
         ${shader.panel && tweakPane()}
 
-        const anim = animate(spec, canvas, {} ${shader.panel ? ', fpsListener, bufferListeners, specListener' : ''} );
-        anim.start();
+        const loop = drawLoop(gpu, spec, canvas, {} ${shader.panel ? ', fpsListener, bufferListeners, specListener' : ''} );
+        loop.start();
           
         ${saveScreenshot(shader.id)}
         ${resetKey()}
@@ -367,9 +393,7 @@ export const script = (shader: Shader, rpath: string) => {
 export const htmlPage = (shader: Shader) => {
 
   return /*html*/`
-      <div id="error" class="full-window"></div>
-      <canvas id="canvas" class="full-window"></canvas>
-      
+      <canvas id="canvas" class="full-window"></canvas>      
       <style>
       .full-window {
           position: fixed;
