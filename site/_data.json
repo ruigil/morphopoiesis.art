@@ -22,11 +22,28 @@
   },
   "shaders": [
     {
+      "id": "tree",
+      "path": "tree",
+      "title": "Tree",
+      "description": "Tree with hierarchical transformations",
+      "tags": ["3d", "mouse", "tree", "transformations"],
+      "license": "cc-by",
+      "sketch": false,
+      "dynamic": false,
+      "panel": true,
+      "fx": false
+    },
+    {
       "id": "eca",
       "path": "eca",
       "title": "Elementary Cellular Automata",
       "description": "Wolfram's Elementary Cellular Automata with all 256 rules. Move your mouse horizontally to cycle through the rules. The current rule is displayed in the top right corner.",
-      "tags": ["cellular automata", "wolfram", "elementary", "mouse"],
+      "tags": [
+        "cellular automata",
+        "wolfram",
+        "elementary",
+        "mouse"
+      ],
       "license": "cc-by",
       "sketch": true,
       "dynamic": false,
@@ -38,7 +55,11 @@
       "path": "ifs",
       "title": "IFS",
       "description": "IFS Fractal",
-      "tags": ["ifs", "fractal", "mouse"],
+      "tags": [
+        "ifs",
+        "fractal",
+        "mouse"
+      ],
       "license": "cc-by",
       "sketch": false,
       "dynamic": false,
