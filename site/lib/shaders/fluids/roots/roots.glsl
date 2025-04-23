@@ -11,7 +11,7 @@ vec3 gradient(vec3 brightness, vec3 saturation, vec3 frequency, vec3 offset, flo
 }
 
 vec3 nature(float t) {
-    return gradient( vec3(0.5), vec3(0.5), vec3(.7,.7,0.1), vec3(0.5,0.62,0.40), t );;
+    return gradient( vec3(0.5), vec3(0.5), vec3(.7,.4,0.1), vec3(.6,.5,.6), t );;
 }
 
  

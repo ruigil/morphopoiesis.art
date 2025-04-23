@@ -22,11 +22,40 @@
   },
   "shaders": [
     {
+      "id": "water",
+      "path": "water",
+      "title": "Water",
+      "description": "Water",
+      "tags": [],
+      "license": "cc-by",
+      "sketch": false,
+      "dynamic": false,
+      "panel": true,
+      "fx": false
+    },
+    {
+      "id": "metaxor",
+      "path": "metaxor",
+      "title": "Metaballs with XOR",
+      "description": "Conversion of GLSL shader",
+      "tags": [],
+      "license": "cc-by",
+      "sketch": false,
+      "dynamic": false,
+      "panel": true,
+      "fx": false
+    },
+    {
       "id": "tree",
       "path": "tree",
       "title": "Tree",
       "description": "Tree with hierarchical transformations",
-      "tags": ["3d", "mouse", "tree", "transformations"],
+      "tags": [
+        "3d",
+        "mouse",
+        "tree",
+        "transformations"
+      ],
       "license": "cc-by",
       "sketch": false,
       "dynamic": false,

@@ -50,15 +50,15 @@ void mainImage( out vec4 U, in vec2 XY ) {
     
     int sense_num = 2;
     float sense_ang = .3;
-    float sense_dis = 200.;
-    float sense_oscil = 0.0;
+    float sense_dis = 2000.;
+    float sense_oscil = .2;
     float oscil_scale = 1.;
-    float oscil_pow = 1.;
-    float sense_force = 1.1;
+    float oscil_pow = 4.;
+    float sense_force = 1.;
     float distance_scale = 2.;
     float force_scale = 1.;
-    float trailing = 0.5;
-    float acceleration = 0.;
+    float trailing = 0.1;
+    float acceleration = 4.;
 
     if(C.M != 0.) //not vacuum
     {
