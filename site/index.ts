@@ -1,7 +1,28 @@
 
-import { loadJSON, loadWGSL, drawLoop, Poiesis } from "./lib/poiesis/index.ts";
+import { loadJSON, loadWGSL, drawLoop, Poiesis, ErrorManager, PoiesisError } from "./lib/poiesis/index.ts";
 import { boids } from "./shaders/boids/boids.ts";
 
+// maybe a webcomponent ?
+const displayError = (error: PoiesisError) => {
+    const escapeHtml = (text: string): string => {
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;")
+            .replace(/\n/g, "<br/>");
+    }
+    const errorElement = document.getElementById('poiesis-error')!
+    console.log(errorElement)
+    errorElement.className = `poiesis-error ${error.type}${error.fatal ? ' fatal' : ''}`;
+    errorElement.style.display = 'block';
+    errorElement.innerHTML = `
+      <h3 class="poiesis-error-title">${error.type} Error</h3>
+      <p class="poiesis-error-message">${escapeHtml(error.message)}</p>
+      ${error.suggestion ? `<p class="poiesis-error-suggestion">Suggestion: ${error.suggestion}</p>` : ''}
+      ${error.details ? `<pre class="poiesis-error-details">${error.details}</pre>` : ''}`
+}
 
 const featureShader = async () => {
 
@@ -42,6 +63,8 @@ const featureShader = async () => {
   const code = await loadWGSL(`./shaders/boids/boids.wgsl`);
   const defs = await loadJSON(`./shaders/boids/boids.json`);
   const spec = await boids(code,defs);
+  ErrorManager.addErrorCallback((error) => displayError(error));
+
   const gpu = await Poiesis();
   const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
   const anim = drawLoop(gpu, spec, canvas);

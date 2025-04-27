@@ -36,7 +36,7 @@ export default ({ search }: Lume.Data, helpers: Lume.Helpers): string => {
     <main class="flex flex-col flex-grow screen w-full">
       <div class="grow"></div>
     </main>
-    <div id="error-container" class="full-window"></div>
+    <div id="poiesis-error" class="full-window"></div>
     <canvas class="full-window" id="canvas"></canvas>
     <style>
       .screen {

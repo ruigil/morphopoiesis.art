@@ -468,13 +468,13 @@ const createBindGroupLayout = (device: GPUDevice, resources: Resource[]) => {
             case "sampler":
                 return {
                     binding: res.binding,
-                    visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE,
+                    visibility: GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE,
                     sampler: { type: "filtering" }
                 };
             case "texture":
                 return {
                     binding: res.binding,
-                    visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE,
+                    visibility: GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE,
                     texture: { viewDimension: "2d" }
                 };
             case "storage_texture":
@@ -486,7 +486,7 @@ const createBindGroupLayout = (device: GPUDevice, resources: Resource[]) => {
             case "external_texture":
                 return {
                     binding: res.binding,
-                    visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE,
+                    visibility: GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE,
                     externalTexture: { viewDimension: "2d" }
                 };
         }
@@ -813,17 +813,21 @@ export const Poiesis = async ():Promise<PoiesisGPU> => {
                 const computePass = encoder.beginComputePass();
 
                 for (let cg = 0; cg < pipelines.compute.computeGroupCount; cg++) {
+                    // The computeGroupCount property is used to run a iteration of all the computes
+                    // definined in the spec for each render view. It is the number of times 
+                    // all the computes defined will be executed before calling the vertex and fragment shader once.
+                    // we switch the bindings so it that it can ping-pong between buffers for each compute group
+                    // the bindings will end at the same state as if the compute group would be runned once.
+                    // so if we specify 2 compute group counts, it will actually rune 3 times to finish with the
+                    // bindinds in the same state, 1,3,5,7 for 2 binding, 1,4,7,10 for 3 bindings, etc..
                     const bg = bindGroup(frame + cg)
 
                     for (let c = 0; c < pipelines.compute.computeGroup.length; c++) {
                         const compute = pipelines.compute.computeGroup[c];
                         computePass.setPipeline(compute.pipeline);
                         for (let i = 0; i < compute.instances; i++) {
-                            const g = bindGroup(bg + i)
-                            // synchronization can be assured with atomics
-                            // but we can also have an input storage and output storage with a 
-                            // ping pong pattern that avoid synchronisation issues at the cost
-                            // of changing the bindgroup everytime
+                            // for each instance we dont switch the bindings, because it is 
+                            // meant to be used in the same compute group.
                             computePass.setBindGroup(0, pipelines.bindings(bg));
                             computePass.dispatchWorkgroups(...compute.workgroups);
                         }

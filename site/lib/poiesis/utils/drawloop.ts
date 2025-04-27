@@ -1,4 +1,4 @@
-import { BufferListener, FPSListener, PoiesisGPU, PoiesisInstance, PSpec, SpecListener } from "../poiesis.types.ts";
+import { BufferListener, FPSListener, PoiesisGPU, PoiesisInstance, PSpec, BuildListener } from "../poiesis.types.ts";
 import { PoiesisError } from "../error/error.types.ts";
 import { ErrorManager } from "../index.ts";
 
@@ -19,28 +19,8 @@ const debounce = <T extends (...args: any[]) => any>(func: T, wait: number): (..
 }
 
 
-// maybe a webcomponent ?
-const displayError = (error: PoiesisError) => {
-    const escapeHtml = (text: string): string => {
-        return text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;")
-            .replace(/\n/g, "<br/>");
-    }
-    const errorElement = document.getElementById('poiesis-error')!
-    errorElement.className = `poiesis-error ${error.type}${error.fatal ? ' fatal' : ''}`;
-    errorElement.style.display = 'block';
-    errorElement.innerHTML = `
-      <h3 class="poiesis-error-title">${error.type} Error</h3>
-      <p class="poiesis-error-message">${escapeHtml(error.message)}</p>
-      ${error.suggestion ? `<p class="poiesis-error-suggestion">Suggestion: ${error.suggestion}</p>` : ''}
-      ${error.details ? `<pre class="poiesis-error-details">${error.details}</pre>` : ''}`
-}
 
-export const drawLoop = (gpu: PoiesisGPU, spec: (w: number, h: number) => PSpec, canvas: HTMLCanvasElement, unis = {}, fpsListener?: FPSListener, bufferListeners?: BufferListener[], specListener?: SpecListener) => {
+export const drawLoop = (gpu: PoiesisGPU, spec: (w: number, h: number) => PSpec, canvas: HTMLCanvasElement, unis = {}, fpsListener?: FPSListener, buildListener?: BuildListener) => {
 
     const mouse: Array<number> = [0, 0, 0, 0];
     const mButtons: Array<number> = [0, 0, 0];
@@ -49,7 +29,6 @@ export const drawLoop = (gpu: PoiesisGPU, spec: (w: number, h: number) => PSpec,
 
     let shaderSpec: PSpec | null = null;
     let frame: number = 0;
-    ErrorManager.addErrorCallback((error) => displayError(error));
 
     const controller = () => {
         let isRunning = false;
@@ -131,13 +110,10 @@ export const drawLoop = (gpu: PoiesisGPU, spec: (w: number, h: number) => PSpec,
             stop();
             if (poiesis) await poiesis.destroy();
 
-            shaderSpec = spec(canvas.width, canvas.height);
-
-            specListener && specListener.onSpec(shaderSpec);
-            
+            shaderSpec = spec(canvas.width, canvas.height);            
             poiesis = gpu.build(shaderSpec, canvas);
 
-            bufferListeners &&  poiesis.addBufferListeners(bufferListeners);            
+            buildListener && buildListener.onBuild(shaderSpec,poiesis);
 
             start();
             if (animationFrameId == 0) run();

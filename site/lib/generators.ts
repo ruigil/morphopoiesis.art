@@ -249,6 +249,28 @@ export const script = (shader: Shader, rpath: string) => {
       `
   }
 
+  const displayError = () => {
+    return /* ts */ `
+      // maybe a webcomponent ?
+      const displayError = (error) => {
+        const escapeHtml = (text) => {
+          return text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;").replace('\\n', "<br/>");
+        }
+
+        const errorElement = document.getElementById('poiesis-error')!
+        console.log(errorElement)
+        errorElement.className = 'poiesis-error' + error.type + (error.fatal ? ' fatal' : '')
+        errorElement.style.display = 'block';
+        errorElement.innerHTML = '<h3 class="poiesis-error-title">' + error.type + ' Error</h3>' +
+          '<p class="poiesis-error-message">' + escapeHtml(error.message) + '</p>' +
+          (error.suggestion ? '<p class="poiesis-error-suggestion">Suggestion: ' + error.suggestion + '</p>' : '') +
+          (error.details ? '<pre class="poiesis-error-details">' + escapeHtml(error.message) + '</p>' : '') +
+          (error.suggestion ? '<p class="poiesis-error-suggestion">Suggestion: ' + error.suggestion + '</p>' : '') + 
+          (error.details ? '<pre class="poiesis-error-details">' + error.details + '</pre>' : '')
+      }
+    `
+  }
+
   const tweakPane = () => {
     return /* ts */ `
         const PARAMS = {
@@ -309,6 +331,7 @@ export const script = (shader: Shader, rpath: string) => {
         
         let specunis = null;
         let specstorages = null;
+        let bufferListeners = [];
 
       `
   }
@@ -318,8 +341,8 @@ export const script = (shader: Shader, rpath: string) => {
         const fpsListener = {
           onFPS: (fps) => { PARAMS.fps = fps.fps; PARAMS.elapsed = fps.time; PARAMS.frame = fps.frame }
         };
-        const specListener = {
-          onSpec: (spec) => { 
+        const buildListener = {
+          onBuild: (spec,instance) => { 
             let s = spec;
             let storages = s.storages ? s.storages.filter( s => s.read ) : [];
             
@@ -336,35 +359,34 @@ export const script = (shader: Shader, rpath: string) => {
             }
             if (specstorages) specstorages.forEach( s => s.dispose());
             specstorages = storages.map( ss => {
-                let sp = pane.addFolder({ title: ss.name, expanded: false});
+                let sp = pane.addFolder({ title: ss.name, expanded: true});
                 sp.addBinding(PARAMS,ss.name, {
                   readonly: true,
                   multiline: true,
-                  rows: 20,
+                  rows: 10,
                 });
                 return sp;        
             })
+            const bufferListeners = storages.map(ss => {
+              return {
+                name: ss.name,
+                onRead: (view) => { PARAMS[ss.name] =  JSON.stringify(view.get(),null,4) } 
+              } 
+            });
+            instance.addBufferListeners(bufferListeners);
           }
         };
-        const bufferListeners = [
-          {
-            name: 'debug',
-            onRead: (view) => { PARAMS.debug =  JSON.stringify(view.get(),null,4) } 
-          },
-          {
-            name: 'test_results',
-            onRead: (view) => { PARAMS.test_results =  JSON.stringify(view.get(),null,4) } 
-          }
-        ];
+
       `
   }
 
   return /*ts*/ `
-      import { Poiesis, drawLoop } from '${rpath}/../lib/poiesis/index.ts'; 
+      import { Poiesis, drawLoop, ErrorManager } from '${rpath}/../lib/poiesis/index.ts'; 
       import { ${shader.id} } from '${rpath}/../shaders/${shader.path}/${shader.id}.ts';
       
       ${shader.panel ? `import { Pane } from '${rpath}/../lib/tweakpane/tweakpane-4.0.3.min.js';` : ''}
       
+      ${  displayError() }
 
       document.addEventListener('DOMContentLoaded', async (event)  => {
         const canvas = document.querySelector("#canvas");
@@ -374,6 +396,9 @@ export const script = (shader: Shader, rpath: string) => {
         const code = await (await fetch('./${shader.id}.wgsl')).text();
         const defs = await (await fetch('./${shader.id}.json')).json();
   
+        console.log('error')
+        ErrorManager.addErrorCallback((error) => displayError(error));
+  
         const gpu = await Poiesis();
 
         const spec = await ${shader.id}(code,defs, fx);
@@ -381,7 +406,7 @@ export const script = (shader: Shader, rpath: string) => {
         ${shader.panel && listeners()}
         ${shader.panel && tweakPane()}
 
-        const loop = drawLoop(gpu, spec, canvas, {} ${shader.panel ? ', fpsListener, bufferListeners, specListener' : ''} );
+        const loop = drawLoop(gpu, spec, canvas, {} ${shader.panel ? ', fpsListener, buildListener' : ''} );
         loop.start();
           
         ${saveScreenshot(shader.id)}

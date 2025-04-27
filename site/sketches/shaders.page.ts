@@ -32,7 +32,7 @@ const shaderContent = async (shader: Shader, data: Lume.Data) => {
         <canvas id="canvas" style="position:absolute;top:0;left:0;right:0;bottom:0;"></canvas>
       </div>
       <div class="flex flex-col gap-2">
-      <div id="error"></div>
+      <div id="poiesis-error"></div>
       <strong>${shader.title}</strong>
         <div>${shader.description}</div>
         <div class="flex-wrap">${shader.tags?.map((tag: string) => `<sl-tag >${tag}</sl-tag>`).join(" ")}</div>

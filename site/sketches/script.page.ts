@@ -3,9 +3,23 @@ import { Shader } from "../lib/generators.ts";
 const script = (shader:Shader) => {
     
     return /*ts*/ `
-        import { Poiesis, drawLoop } from '../lib/poiesis/index.ts';
+        import { Poiesis, drawLoop, ErrorManager } from '../lib/poiesis/index.ts';
         import { ${shader.id} } from '../shaders/${shader.path}/${shader.id}.ts';
-
+        const displayError = (error) => {
+          const escapeHtml = (text) => {
+            return text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;").replace('\\n', "<br/>");
+          }
+  
+          const errorElement = document.getElementById('poiesis-error')!
+          console.log(errorElement)
+          errorElement.className = 'poiesis-error ' + error.type + (error.fatal ? ' fatal' : '')
+          errorElement.style.display = 'block';
+          errorElement.innerHTML = '<h3 class="poiesis-error-title">' + error.type + ' Error</h3>' +
+            '<p class="poiesis-error-message">' + escapeHtml(error.message) + '</p>' +
+            (error.suggestion ? '<p class="poiesis-error-suggestion">Suggestion: ' + error.suggestion + '</p>' : '') +
+            (error.details ? '<pre class="poiesis-error-details">' + escapeHtml(error.message) + '</p>' : '')
+        }
+  
         document.addEventListener('DOMContentLoaded', async (event)  => {
             const canvas = document.querySelector("#canvas");
             const play = document.querySelector("#play") as HTMLButtonElement;
@@ -56,6 +70,8 @@ const script = (shader:Shader) => {
             const fpsListener = {
               onFPS: (fps) => { fpsSmall.textContent = fps.fps.toFixed(2) + " fps"}
             }
+            
+            ErrorManager.addErrorCallback((error) => displayError(error));
 
             const gpu = await Poiesis();
             const spec = await ${shader.id}(code,defs);

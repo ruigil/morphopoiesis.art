@@ -138,8 +138,8 @@ export type FPSListener = {
   onFPS: (fps: { fps: number, time: number, frame: number }) => void;
 }
 
-export type SpecListener = {
-  onSpec: (spec: PSpec) => void;
+export type BuildListener = {
+  onBuild: (spec: PSpec, poiesis: PoiesisInstance) => void;
 }
 
 export type BaseVariable = {
