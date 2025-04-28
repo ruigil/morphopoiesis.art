@@ -72,14 +72,11 @@ fn fragMain(input : VertexOutput) -> @location(0) vec4<f32> {
   return vec4( 1. - input.state ,1.0) ;
 }
 
-// index the fluid array, keeping the coordinates in the simulation space
-fn ix( x: i32, y: i32 ) -> u32 {
+// Index the cells array, in a wrap around mode, 
+// keeping the coordinates in the simulation space
+fn ix(x: i32, y: i32) -> u32 {
   let s = vec2<i32>(sim.size);
-
-  let r: vec2<u32> = vec2<u32>( 
-    select( u32(x % s.x), u32((x % s.x) + s.x), x < 0), 
-    select( u32(y % s.y), u32((y % s.y) + s.y), y < 0) 
-  );
+  let r: vec2<u32> = vec2<u32>(u32((x + s.x) % s.x),u32((y + s.y) % s.y )); 
 
   return r.x + r.y * u32(sim.size.x);
 }
@@ -172,22 +169,21 @@ fn computeDivergence(@builtin(global_invocation_id) cell : vec3<u32>) {
 }
 
 // compute the pressure field, using the divergence as a source
-// this is a Gauss-Seidel relaxation, and it is solved iteratively
-// we use the Jacobi method, which is a bit slower but more stable
+// we use the Jacobi relaxation, which is slower but more stable
 @compute @workgroup_size(8, 8)
 fn pressureSolver(@builtin(global_invocation_id) cell : vec3<u32>) {
 
   // cell coordinates
   let cc = vec2<i32>( cell.xy );
 
-  let c = fluidA[ ix(cc.x,cc.y) ];
+  let c = fluidB[ ix(cc.x,cc.y) ];
   if (c.solid == 1. ) { return; };
 
   // get the left, right, top and bottom cells
-  let lc = fluidA[ ix(cc.x - 1, cc.y) ];
-  let rc = fluidA[ ix(cc.x + 1, cc.y) ];
-  let bc = fluidA[ ix(cc.x, cc.y - 1) ];
-  let tc = fluidA[ ix(cc.x, cc.y + 1) ];
+  let lc = fluidB[ ix(cc.x - 1, cc.y) ];
+  let rc = fluidB[ ix(cc.x + 1, cc.y) ];
+  let bc = fluidB[ ix(cc.x, cc.y - 1) ];
+  let tc = fluidB[ ix(cc.x, cc.y + 1) ];
   
   // boundary conditions
   let l = select(lc.pressure, c.pressure, lc.solid == 1.);
@@ -206,14 +202,14 @@ fn subtractPressureGradient(@builtin(global_invocation_id) cell : vec3<u32>) {
   // cell coordinates
   let cc = vec2<i32>( cell.xy );
 
-  let c = fluidA[ ix(cc.x,cc.y) ];
+  let c = fluidB[ ix(cc.x,cc.y) ];
   if (c.solid == 1. ) { return; };
 
   // get the left, right, top and bottom cells
-  let lc = fluidA[ ix(cc.x - 1, cc.y) ].pressure;
-  let rc = fluidA[ ix(cc.x + 1, cc.y) ].pressure;
-  let bc = fluidA[ ix(cc.x, cc.y - 1) ].pressure;
-  let tc = fluidA[ ix(cc.x, cc.y + 1) ].pressure;
+  let lc = fluidB[ ix(cc.x - 1, cc.y) ].pressure;
+  let rc = fluidB[ ix(cc.x + 1, cc.y) ].pressure;
+  let bc = fluidB[ ix(cc.x, cc.y - 1) ].pressure;
+  let tc = fluidB[ ix(cc.x, cc.y + 1) ].pressure;
 
   fluidB[ ix(cc.x,cc.y) ].velocity -= vec2<f32>( (rc - lc) * .5, (tc - bc) * .5);
 }

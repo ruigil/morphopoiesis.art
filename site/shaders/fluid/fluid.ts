@@ -39,7 +39,6 @@ export const fluid = (code:string, defs:Definitions) => {
                 { name: "pressureSolver", workgroups: [wx, wy, 1], instances: 40},
                 { name: "subtractPressureGradient", workgroups: [wx, wy, 1]}
             ],
-            computeGroupCount: 1,
             bindings: [ [0,1,2,3,4], [0,1,3,2,4] ]
         }
     }
