@@ -3,7 +3,7 @@ import { PSpec, Definitions, scaleAspect, quad } from "../../lib/poiesis/index.t
 export const fastvoronoi = (code:string, defs:Definitions) => {
 
     const spec = (w:number,h:number):PSpec => {
-        const numSeeds = 17;
+        const numSeeds = 23;
         const size = scaleAspect(w,h,512); 
 
         const aspect = { x: size.x / Math.min(size.x, size.y), y: size.y / Math.min(size.x, size.y) }
@@ -38,9 +38,9 @@ export const fastvoronoi = (code:string, defs:Definitions) => {
                 { name: "cellNext", size: size.x * size.y }
             ],
             computes: [
-                { name: "jumpFlood", workgroups: [Math.ceil(size.x / 8), Math.ceil(size.y / 8), 1], instances: instances },
                 { name: "initCells", workgroups: [Math.ceil(size.x / 8), Math.ceil(size.y / 8), 1] },
                 { name: "computeSeeds", workgroups: [Math.ceil(numSeeds / 64), 1, 1] },
+                { name: "jumpFlood", workgroups: [Math.ceil(size.x / 8), Math.ceil(size.y / 8), 1], instances: instances },
                 ],
             bindings: [ [0,1,2,3,4], [0,1,3,2,4] ]
         }

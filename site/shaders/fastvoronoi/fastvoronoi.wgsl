@@ -11,7 +11,7 @@ struct Sys {
 };
 
 struct SimParams {
-  size: vec2<f32>,
+  size: vec2<u32>,
   seeds: f32,
   steps: u32
 }
@@ -49,17 +49,17 @@ struct VertexOutput {
 @vertex
 fn vertMain( input: VertexInput) -> VertexOutput {
   
-    let i = f32(input.instance); 
-    let cell = vec2f(i % params.size.x, floor(i / params.size.x) );
+    let i = input.instance; 
+    let cell = vec2f(f32(i % params.size.x), f32(i / params.size.x) );
     let distance = cellCurrent[input.instance].distance;
     let kind = cellCurrent[input.instance].kind;
 
-    let cellSize = 2. / params.size.xy ;
+    let cellSize = 2. / vec2<f32>(params.size.xy) ;
     // The cell(0,0) is a the top left corner of the screen.
     // The cell(params.size.x,params.size.y) is a the bottom right corner of the screen.
-    let cellOffset =  vec2(cell.x, params.size.y - 1. - cell.y) * cellSize + (cellSize * .5) ;
+    let cellOffset =  vec2(f32(cell.x), f32(params.size.y) - 1. - f32(cell.y)) * cellSize + (cellSize * .5) ;
     // input.pos is in the range [-1,1]...[1,1] and it's the same coord system as the uv of the screen
-    let cellPos =  (input.pos  / params.size.xy) + cellOffset - 1.; 
+    let cellPos =  (input.pos  / vec2f(params.size.xy)) + cellOffset - 1.; 
 
     var output: VertexOutput;
     output.pos = vec4f(cellPos, 0., 1.);
@@ -71,7 +71,7 @@ fn vertMain( input: VertexInput) -> VertexOutput {
 @fragment
 fn fragMain(input : VertexOutput) -> @location(0) vec4<f32> {
     
-    let d = exp( 10. * -(input.distance/ (max(params.size.x,params.size.y)) ) );
+    let d = exp( 10. * -(input.distance/ f32(max(params.size.x,params.size.y)) ) );
     let k = input.distance/(input.kind+1);
     let w = .5 + .5 * cos(k);
     
@@ -81,7 +81,7 @@ fn fragMain(input : VertexOutput) -> @location(0) vec4<f32> {
 @compute @workgroup_size(8, 8)
 fn initCells(@builtin(global_invocation_id) cell : vec3<u32>) {
     // keep the simulation in the range [0,size]
-    if (cell.x >= u32(params.size.x) || cell.y >= u32(params.size.y)) { return; }
+    if (any(cell.xy >= vec2<u32>(params.size))) { return; }
     
     cellNext[ cell.y * u32(params.size.x) + cell.x ] = Cell(vec2(10000), 1000., 0., params.steps);
 }
@@ -99,8 +99,8 @@ fn computeSeeds(@builtin(global_invocation_id) id : vec3<u32>) {
     pos = fract( (pos + 1.) * .5) * 2. - 1.;
     seeds[i].pos = pos;
 
-    let current = vec2<u32>( floor( (pos + 1.)  * .5 * params.size ) );
-    cellNext[current.y * u32(params.size.x) + current.x ] = Cell(current, 0., seed.kind, params.steps);
+    let current = vec2<u32>( floor( (pos + 1.)  * .5 * vec2f(params.size) ) );
+    cellNext[current.y * params.size.x + current.x ] = Cell(current, 0., seed.kind, params.steps);
 }
 
 // fill the cells with the closest seed neighbour in a log2 step size of the screen 
@@ -108,18 +108,18 @@ fn computeSeeds(@builtin(global_invocation_id) id : vec3<u32>) {
 @compute @workgroup_size(8, 8)
 fn jumpFlood(@builtin(global_invocation_id) cell : vec3<u32>) {
     // keep the simulation in the range [0,size]
-    if (cell.x >= u32(params.size.x) || cell.y >= u32(params.size.y)) { return; }
+    if any(cell.xy >= params.size) { return; }
 
-    let size = vec2<i32>(params.size);
-    let index = cell.y * u32(size.x) + cell.x;
-    let current = cellCurrent[ index ];
+    let index = cell.y * params.size.x + cell.x;
+    let current = cellNext[ index ];
+    let size = vec2i(params.size);
 
     var bestSeed = current;
     for(var x = -1; x <= 1; x++) {
         for(var y = -1; y <= 1; y++) {
             // wrap arround coordinates. 
             let offset =  (vec2i(cell.xy) + (vec2(x,y) * i32(current.step)) + (2*size)) % (size);
-            let cellNeighbour = cellCurrent[ offset.y * size.x + offset.x ];
+            let cellNeighbour = cellNext[ offset.y * size.x + offset.x ];
 
             // if we find a neighbour with a closer seed we switch the current cell for the new seed
             let dist = distance(vec2f(cell.xy),vec2f(cellNeighbour.coord));
