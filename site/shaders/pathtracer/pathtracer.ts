@@ -28,7 +28,6 @@ export const pathtracer = async (code:string, defs:Definitions) => {
                 { name: "pathTracer", workgroups: [ Math.ceil(size.x / 8), Math.ceil(size.y / 8), 1] },
                 { name: "denoise", workgroups: [ Math.ceil(size.x / 8), Math.ceil(size.y / 8), 1] },
             ],
-            computeGroupCount: 1,
             bindings: [ [0,1,2,3,5,6], [0,1,3,2,5,6] ]
         }
     }

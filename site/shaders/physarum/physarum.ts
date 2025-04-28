@@ -39,7 +39,6 @@ export const physarum = (code:string, defs:Definitions) => {
                 { name: "computeTrailmap", workgroups: [Math.ceil(size.x / 8), Math.ceil(size.y / 8), 1] },
                 { name: "computeAgents", workgroups: [Math.ceil(numAgents / 64), 1, 1] }
             ],
-            computeGroupCount: 1,
             bindings: [ [0,1,2,3,4], [0,1,3,2,4] ]
         }
     }
