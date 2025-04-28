@@ -9,8 +9,8 @@ const modeInOut = 2.;
 // input 'mode' accept 3 modes of operation, defined const above
 // return value is between [0,1]
 fn easePow(t:f32,p:f32, mode: f32) -> f32 {
-    let m = mode == modeInOut ? floor(mod(t*2.,2.)) : mode;
-    let f = mode == modeInOut ? 2. : 1.;
+    let m = f32(mode == select(mode,floor(mod(t*2.,2.)), modeInOut));
+    let f = f32(mode == select(1.,2.,modeInOut));
 
     return abs( m - pow( abs(m - t) * f, p) / f );
 }
