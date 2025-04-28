@@ -29,12 +29,12 @@ const script = (shader:Shader) => {
             const fpsSmall = document.querySelector("#fps") as HTMLDivElement;
           
             play.addEventListener('click', event => {
-              anim.togglePlayPause();
+              loop.togglePlayPause();
               play.name = play.name === "play" ? "pause" : "play";
             });
           
             reset.addEventListener('click', event => {
-              anim.reset();
+              loop.reset();
             });
 
             cam.addEventListener('click', event => {
@@ -80,8 +80,7 @@ const script = (shader:Shader) => {
             
             document.addEventListener('keypress', function(event) {
               if (event.key === 'r') { 
-              console.log('reset'); 
-                anim.reset()
+                loop.reset()
               }
             });
 

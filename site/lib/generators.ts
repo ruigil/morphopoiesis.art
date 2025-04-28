@@ -243,7 +243,7 @@ export const script = (shader: Shader, rpath: string) => {
         document.addEventListener('keypress', function(event) {
           if (event.key === 'r') { 
           console.log('reset'); 
-            anim.reset()
+            loop.reset()
           }
         });
       `
@@ -264,9 +264,7 @@ export const script = (shader: Shader, rpath: string) => {
         errorElement.innerHTML = '<h3 class="poiesis-error-title">' + error.type + ' Error</h3>' +
           '<p class="poiesis-error-message">' + escapeHtml(error.message) + '</p>' +
           (error.suggestion ? '<p class="poiesis-error-suggestion">Suggestion: ' + error.suggestion + '</p>' : '') +
-          (error.details ? '<pre class="poiesis-error-details">' + escapeHtml(error.message) + '</p>' : '') +
-          (error.suggestion ? '<p class="poiesis-error-suggestion">Suggestion: ' + error.suggestion + '</p>' : '') + 
-          (error.details ? '<pre class="poiesis-error-details">' + error.details + '</pre>' : '')
+          (error.details ? '<pre class="poiesis-error-details">' + escapeHtml(error.message) + '</p>' : '')
       }
     `
   }
@@ -326,7 +324,7 @@ export const script = (shader: Shader, rpath: string) => {
         });
 
         crtl.addBinding(PARAMS, 'delay', { readonly: false }).on('change', (ev) => {
-          anim.delay(ev.value);
+          loop.delay(ev.value);
         });
         
         let specunis = null;
