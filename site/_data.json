@@ -25,15 +25,16 @@
       "id": "charge",
       "path": "charge",
       "title": "Electric Field",
-      "description": "Visualization of electric fields and potentials using Gauss-Seidel relaxation",
+      "description": "Visualization of charges in electrical field. Red are positive charges and blue are negative charges. Charges also display an intensity and phase of the field.",
       "tags": [
         "physics",
         "electrostatics",
         "fields",
-        "simulation"
+        "simulation",
+        "mouse"
       ],
       "license": "cc-by",
-      "sketch": false,
+      "sketch": true,
       "dynamic": false,
       "panel": true,
       "fx": false

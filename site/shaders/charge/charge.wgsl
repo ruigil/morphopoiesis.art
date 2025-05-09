@@ -27,36 +27,23 @@ struct Cell {
   field: vec2<f32>,       // Electric field
 };
 
-
+struct Range {
+    min: f32,
+    max: f32,
+};
 
 struct VertexInput {
     @location(0) pos: vec2<f32>,
     @builtin(instance_index) instance: u32
 };
 
-struct Debug {
-    coord: vec2<u32>,
-    field: vec2<f32>,
-    pos: vec2<f32>,
-    vel: vec2<f32>,
-    charge: f32,
-    potential: f32,
-    max: f32,
-    min: f32,
-}
-
-struct Range {
-    min: f32,
-    max: f32,
-};
 
 struct VertexOutput {
     @builtin(position) pos: vec4<f32>,
-    @location(0) uv: vec2<f32>,
-    @location(1) potential: f32,
-    @location(2) field: vec2<f32>,
-    @location(3) potentialRange: vec2<f32>,
-    @location(4) charge: f32
+    @location(0) potential: f32,
+    @location(1) field: vec2<f32>,
+    @location(2) potentialRange: vec2<f32>,
+    @location(3) charge: f32
 };
 
 @group(0) @binding(0) var<uniform> sys : Sys;
@@ -67,9 +54,6 @@ struct VertexOutput {
 @group(0) @binding(5) var<storage, read> potentialRangeValue : Range;
 @group(0) @binding(6) var<storage, read_write> potentialRange : Range;
 @group(0) @binding(7) var<storage, read_write> partialPotential: array<Range>;
-@group(0) @binding(8) var<storage, read_write> debug : Debug;
-
-
 
 @vertex
 fn vertMain(input: VertexInput) -> VertexOutput {
@@ -85,10 +69,8 @@ fn vertMain(input: VertexInput) -> VertexOutput {
     // input.pos is in the range [-1,1]...[1,1] and it's the same coord system as the uv of the screen
     let cellPos = (input.pos / vec2f(sim.size.xy)) + cellOffset - 1.;
 
-    
     var output: VertexOutput;
     output.pos = vec4f(cellPos, 0., 1.);
-    output.uv = input.pos.xy;
     output.potential = cellData.potential;
     output.field = cellData.field;
     output.potentialRange = vec2<f32>(potentialRangeValue.max,potentialRangeValue.min);
@@ -113,7 +95,6 @@ fn fragMain(input: VertexOutput) -> @location(0) vec4<f32> {
 
     return vec4f(color, 1.0);
 }
-
 
 
 // we use Gauss-Seidel relaxation which is 2x faster than jacobi and uses the same field array
@@ -193,7 +174,6 @@ fn updateCharges(@builtin(global_invocation_id) c: vec3<u32>) {
     let force = charge * field; // / mass = 1
     velocity += force;
     velocity *= sim.damping; // damping
-    //velocity = normalize(velocity);
     pos += velocity * sim.dt; // dt 
 
     // bounds check
@@ -212,7 +192,7 @@ fn solvePotential(@builtin(global_invocation_id) cell: vec3<u32>) {
     // keep the simulation in bounds [0,size]
     if (any(cell.xy >= sim.size)) { return; } 
 
-    // cell coordinates
+    // cell integer coordinates
     let cc = vec2<i32>(cell.xy);
     
     // Get the current cell
@@ -244,24 +224,17 @@ fn computeField(
         @builtin(workgroup_id) workgroup_id: vec3<u32>,
         @builtin(num_workgroups) num_workgroups: vec3<u32>) {
 
+    // On the field computation we also do a reduction in the min and max values of the potential
+    // for displaying purposes.
+
     // Convert 2D local ID to 1D index for shared memory access
-    let local_index = local_id.x + local_id.y * 16u;
-    
+    let local_index = local_id.x + local_id.y * 16u;    
     // Initialize min,max with extreme values 
     range[local_index] = Range(infinity,-infinity);  // +∞, -∞
 
     if (any(cell.xy < sim.size)) {
         let cc = vec2<i32>(cell.xy);
         let potential = cellsB[idx(cc.x, cc.y)].potential;
-        let m = vec2<u32>(sys.mouse.xy * vec2f(sim.size));
-
-        debug.coord = m;
-
-        if ((m.x == cell.x) && (m.y == cell.y)) {
-            debug.potential = potential;
-            debug.charge = cellsB[idx(cc.x, cc.y)].charge;
-            debug.field = cellsB[idx(cc.x, cc.y)].field;
-        }
 
         let wh = vec2(1.); // cell width and height
         // Compute electric field using central differences: E = -∇φ
@@ -293,6 +266,7 @@ fn computeField(
 }
 
 
+// This function reduces further the potential values gathered in the compute field function
 @compute @workgroup_size(256, 1)  
 fn reducePotentialRange(
         @builtin(global_invocation_id) global_id: vec3<u32>,
@@ -337,8 +311,6 @@ fn reducePotentialRange(
             finalRange.min = min(finalRange.min,partialPotential[i].min);
             finalRange.max = max(finalRange.max,partialPotential[i].max);
         }
-        debug.min = finalRange.min;
-        debug.max = finalRange.max;
         // Write final result
         potentialRange = finalRange;
     }
