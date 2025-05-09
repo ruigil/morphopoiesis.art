@@ -20,7 +20,6 @@ fn fill(d: f32, invert: bool) -> f32 {
     return select(a, 1.0 - a, invert);
 }
 
-// Gradient functions (from gradients.glsl)
 fn gradient(brightness: vec3<f32>, saturation: vec3<f32>, frequency: vec3<f32>, offset: vec3<f32>, t: f32) -> vec3<f32> {
     return clamp(brightness + saturation * cos(TAU * (frequency * t + offset)), vec3<f32>(0.0), vec3<f32>(1.0));
 }
