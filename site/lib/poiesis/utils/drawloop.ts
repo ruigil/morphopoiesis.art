@@ -128,7 +128,8 @@ export const drawLoop = (gpu: PoiesisGPU, spec: (w: number, h: number) => PSpec,
         }
     }
 
-    const updateMouse = (x: number, y: number) => {
+    const updateMouse = (e:Event, x: number, y: number) => {
+        e.preventDefault();
         mouse[2] = mouse[0]; // last position x
         mouse[3] = mouse[1]; // last position y
         const rect = canvas.getBoundingClientRect();
@@ -137,13 +138,13 @@ export const drawLoop = (gpu: PoiesisGPU, spec: (w: number, h: number) => PSpec,
         shaderSpec?.mouse && shaderSpec.mouse(mouse[0], mouse[1]);
     }
 
-    canvas.addEventListener('mousemove', (event: MouseEvent) => updateMouse(event.clientX, event.clientY));
-    canvas.addEventListener('touchmove', (event: TouchEvent) => updateMouse(event.touches[0].clientX, event.touches[0].clientY), { passive: true });
+    canvas.addEventListener('mousemove', (event: MouseEvent) => updateMouse(event,event.clientX, event.clientY));
+    canvas.addEventListener('touchmove', (event: TouchEvent) => updateMouse(event,event.touches[0].clientX, event.touches[0].clientY));
 
     canvas.addEventListener('mousedown', (event) => { mButtons[event.button] = 1; });
     canvas.addEventListener('mouseup', (event) => { mButtons[event.button] = 0; });
-    canvas.addEventListener('touchstart', () => { mButtons[0] = 1; }, { passive: true });
-    canvas.addEventListener('touchend', () => { mButtons[0] = 0; }, { passive: true });
+    canvas.addEventListener('touchstart', () => { mButtons[0] = 1; });
+    canvas.addEventListener('touchend', () => { mButtons[0] = 0; });
 
     const control = controller();
 
