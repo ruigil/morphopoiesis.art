@@ -1,7 +1,4 @@
-import { BufferListener, FPSListener, PoiesisGPU, PoiesisInstance, PSpec, BuildListener } from "../poiesis.types.ts";
-import { PoiesisError } from "../error/error.types.ts";
-import { ErrorManager } from "../index.ts";
-
+import { FPSListener, PoiesisGPU, PoiesisInstance, PSpec, BuildListener } from "../poiesis.types.ts";
 
 const debounce = <T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void => {
     let timeout: number | undefined;
@@ -17,7 +14,6 @@ const debounce = <T extends (...args: any[]) => any>(func: T, wait: number): (..
         timeout = setTimeout(later, wait) as unknown as number;
     };
 }
-
 
 
 export const drawLoop = (gpu: PoiesisGPU, spec: (w: number, h: number) => PSpec, canvas: HTMLCanvasElement, unis = {}, fpsListener?: FPSListener, buildListener?: BuildListener) => {
