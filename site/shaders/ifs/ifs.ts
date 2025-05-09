@@ -304,7 +304,6 @@ export const ifs = async (code: string, defs: Definitions) => {
                             default:
                                 unis.uni.ifs = fern;
                         }
-                        console.log(ev);
                         modifyPanes();
                     });
 
