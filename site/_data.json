@@ -22,6 +22,23 @@
   },
   "shaders": [
     {
+      "id": "charge",
+      "path": "charge",
+      "title": "Electric Field",
+      "description": "Visualization of electric fields and potentials using Gauss-Seidel relaxation",
+      "tags": [
+        "physics",
+        "electrostatics",
+        "fields",
+        "simulation"
+      ],
+      "license": "cc-by",
+      "sketch": false,
+      "dynamic": false,
+      "panel": true,
+      "fx": false
+    },
+    {
       "id": "water",
       "path": "water",
       "title": "Water",
@@ -110,24 +127,6 @@
       "sketch": true,
       "dynamic": false,
       "panel": false,
-      "fx": false
-    },
-    {
-      "id": "mandelbrot",
-      "path": "mandelbrot",
-      "title": "Mandelbrot Fractal",
-      "description": "A colorful visualization of the Mandelbrot set with interactive zooming and panning",
-      "tags": [
-        "fractal",
-        "mandelbrot",
-        "complex",
-        "interactive",
-        "2d"
-      ],
-      "license": "cc-by",
-      "sketch": false,
-      "dynamic": false,
-      "panel": true,
       "fx": false
     },
     {
@@ -305,32 +304,6 @@
       "license": "cc-by",
       "sketch": true,
       "panel": false,
-      "fx": false
-    },
-    {
-      "id": "mandelbox",
-      "path": "mandelbox",
-      "title": "Mandelbox",
-      "description": "Mandelbox Fractal",
-      "tags": [
-        "fractal",
-        "raymarching",
-        "mouse"
-      ],
-      "license": "cc-by",
-      "sketch": false,
-      "panel": true,
-      "fx": false
-    },
-    {
-      "id": "mobius",
-      "path": "mobius",
-      "title": "Mobius",
-      "description": "Mobius Transform",
-      "tags": [],
-      "license": "cc-by",
-      "sketch": false,
-      "panel": true,
       "fx": false
     },
     {
