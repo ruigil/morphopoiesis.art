@@ -242,7 +242,6 @@ export const script = (shader: Shader, rpath: string) => {
         // Add keypress event listener
         document.addEventListener('keypress', function(event) {
           if (event.key === 'r') { 
-          console.log('reset'); 
             loop.reset()
           }
         });
@@ -258,13 +257,12 @@ export const script = (shader: Shader, rpath: string) => {
         }
 
         const errorElement = document.getElementById('poiesis-error')!
-        console.log(errorElement)
-        errorElement.className = 'poiesis-error' + error.type + (error.fatal ? ' fatal' : '')
+        errorElement.className = 'poiesis-error ' + error.type + (error.fatal ? ' fatal' : '')
         errorElement.style.display = 'block';
         errorElement.innerHTML = '<h3 class="poiesis-error-title">' + error.type + ' Error</h3>' +
           '<p class="poiesis-error-message">' + escapeHtml(error.message) + '</p>' +
           (error.suggestion ? '<p class="poiesis-error-suggestion">Suggestion: ' + error.suggestion + '</p>' : '') +
-          (error.details ? '<pre class="poiesis-error-details">' + escapeHtml(error.message) + '</p>' : '')
+          (error.details ? '<pre class="poiesis-error-details">' + error.details + '</pre>' : '')
       }
     `
   }
@@ -394,7 +392,6 @@ export const script = (shader: Shader, rpath: string) => {
         const code = await (await fetch('./${shader.id}.wgsl')).text();
         const defs = await (await fetch('./${shader.id}.json')).json();
   
-        console.log('error')
         ErrorManager.addErrorCallback((error) => displayError(error));
   
         const gpu = await Poiesis();

@@ -589,8 +589,18 @@ const createComputePipelines = (device: GPUDevice, shaderModule: GPUShaderModule
     for (let i = 0; i < spec.defs.entries.computes.length; i++) {
         const entryPoint = spec.defs.entries.computes[i].name;
         const c = computes[entryPoint];
-        if (!c) throw new Error(`Spec for compute ${entryPoint} not found!`);
 
+        if (!c) {
+            const error: PoiesisError = {
+                type: 'validation',
+                message: `Spec for compute ${entryPoint} not found!`,
+                suggestion: 'Define the compute properies in your spec or check your spelling',
+                details: `Reason: ${entryPoint} not found in spec`,
+                fatal: true
+            };
+            ErrorManager.error(error);
+            throw new Error(`Spec for compute ${entryPoint} not found!`);
+        }
         const pipeline = device.createComputePipeline({
             label: entryPoint,
             layout: pipelineLayout,
