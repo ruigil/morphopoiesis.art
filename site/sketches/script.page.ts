@@ -11,7 +11,6 @@ const script = (shader:Shader) => {
           }
   
           const errorElement = document.getElementById('poiesis-error')!
-          console.log(errorElement)
           errorElement.className = 'poiesis-error ' + error.type + (error.fatal ? ' fatal' : '')
           errorElement.style.display = 'block';
           errorElement.innerHTML = '<h3 class="poiesis-error-title">' + error.type + ' Error</h3>' +
