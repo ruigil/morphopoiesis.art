@@ -57,7 +57,7 @@ fn neon(t: f32) -> vec3<f32> {
 }
 
 fn royal(t: f32) -> vec3<f32> {
-    return gradient(vec3<f32>(0.5), vec3<f32>(0.5), vec3<f32>(0.7, 0.5, 0.7), vec3<f32>(0.35, 0.35, 0.9), t);
+    return gradient(vec3<f32>(0.5), vec3<f32>(0.5), vec3<f32>(0.7, 0.5, 0.7), vec3<f32>(0.35, 0.35, .0), t);
 }
 
 fn strawberry(t: f32) -> vec3<f32> {
@@ -65,7 +65,7 @@ fn strawberry(t: f32) -> vec3<f32> {
 }
 
 fn stripes(t: f32) -> vec3<f32> {
-    return gradient(vec3<f32>(0.5), vec3<f32>(5.0), vec3<f32>(1.0, 1.0, 1.0), vec3<f32>(0.0), t);
+    return gradient(vec3<f32>(0.5), vec3<f32>(5.0), vec3<f32>(1., 1., 1.), vec3<f32>(0.0,.0,0.), t);
 }
 
 fn vangogh(t: f32) -> vec3<f32> {

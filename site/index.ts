@@ -1,6 +1,6 @@
 
 import { loadJSON, loadWGSL, drawLoop, Poiesis, ErrorManager, PoiesisError } from "./lib/poiesis/index.ts";
-import { boids } from "./shaders/boids/boids.ts";
+import { slime } from "./shaders/works/slime/slime.ts";
 
 // maybe a webcomponent ?
 const displayError = (error: PoiesisError) => {
@@ -26,7 +26,7 @@ const displayError = (error: PoiesisError) => {
 
 const featureShader = async () => {
 
-/*
+
   // useful to configure uniform values based on the theme
   const body = document.querySelector('body')!;
   const isDark = (): boolean => {
@@ -34,13 +34,13 @@ const featureShader = async () => {
     return (localStorage.getItem("dark-theme") || currentMode) === "true"; // true = "dark", false = "light"
   }
 
-  const color = isDark() ? {
+  const unis = isDark() ? {
     params: {
-      mode: [.4,.2,.1,3]
+      inverse: 0
     }
   } : {
     params: {
-      mode: [.0,.0,.9,3]
+      inverse: 1
     }
   };
 
@@ -49,25 +49,24 @@ const featureShader = async () => {
       if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
         const dark = (mutation.target as HTMLBodyElement).classList.contains('sl-theme-dark');
         if (dark) {
-          color.params.mode = [.4,.2,.1,3];
+          unis.params.inverse = 0;
         } else {
-          color.params.mode = [.0,.0,.9,3];
+          unis.params.inverse = 1.;
         }
       }
     });
   });
 
   observer.observe(body, { attributes: true });
-*/
 
-  const code = await loadWGSL(`./shaders/boids/boids.wgsl`);
-  const defs = await loadJSON(`./shaders/boids/boids.json`);
-  const spec = await boids(code,defs);
+  const code = await loadWGSL(`./shaders/works/slime/slime.wgsl`);
+  const defs = await loadJSON(`./shaders/works/slime/slime.json`);
+  const spec = await slime(code,defs);
   ErrorManager.addErrorCallback((error) => displayError(error));
 
   const gpu = await Poiesis();
   const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
-  const anim = drawLoop(gpu, spec, canvas);
+  const anim = drawLoop(gpu, spec, canvas, unis);
   anim.start();
 }
 

@@ -407,8 +407,23 @@
       "fx": false
     },
     {
+      "id": "slime",
+      "path": "works/slime",
+      "title": "Slime",
+      "description": "Slime",
+      "tags": [
+        "physarum",
+        "palette",
+        "2d"
+      ],
+      "license": "cc-by-nc-nd",
+      "sketch": false,
+      "panel": true,
+      "fx": false
+    },
+    {
       "id": "ligrowth",
-      "path": "ligrowth",
+      "path": "works/ligrowth",
       "title": "Limits to Growth",
       "description": "This is an exploration of the limits to growth, with a diffuse limited aggregation algorithm, inspired by the book of the same name by Donella H. Meadows, Dennis L. Meadows, Jørgen Randers, and William W. Behrens III. ",
       "tags": [
