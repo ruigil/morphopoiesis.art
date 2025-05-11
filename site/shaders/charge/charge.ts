@@ -4,16 +4,16 @@ export const charge = (code: string, defs: Definitions) => {
 
     const spec = (w: number, h: number): PSpec => {
         // Reduced grid size with aspect ratio corrected for the simulation
-        const size = scaleAspect(w, h, 1024); 
+        const size = scaleAspect(w, h, 512); 
 
         // Initialize a cell with default values
         const charge = (charge: number, pos: [number,number], vel: [number,number] ) => (
             { charge: charge, pos: pos, vel: vel }
         );
         
-        const numCharges = 10000;
+        const numCharges = 200;
         const charges = Array.from({ length: numCharges }, (_,i) => {
-            const c = i == 0 ? 100. : i < numCharges / 10 ?  10. : 1.;
+            const c = i == 0 ? 10. : i < numCharges / 3 ?  -10. : 10.;
             const x = Math.random() * size.x ;
             const y = Math.random() * size.y ;
             
@@ -36,8 +36,8 @@ export const charge = (code: string, defs: Definitions) => {
                 sim: {
                     size: [size.x, size.y],
                     numCharges: numCharges,
-                    damping: .8,
-                    dt: .1
+                    damping: .5,
+                    dt: 1.
                 }
             }),
             storages: [
